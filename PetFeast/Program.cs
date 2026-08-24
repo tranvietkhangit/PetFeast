@@ -4,16 +4,15 @@ using PetFeast.Models;
 using PetFeast.Models.Interfaces;
 using PetFeast.Models.Services;
 using PetFeast.Models.Identity;
-using Microsoft.AspNetCore.Identity;
-var builder = WebApplication.CreateBuilder(args);
+using Microsoft.AspNetCore.Identity;var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<EmailService>();
 builder.Services.AddDbContext<PetFeastDBContext>(
 options => {options.UseSqlServer(builder.Configuration.GetConnectionString("PetFeastDBContextConnection"));});
-
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
@@ -31,6 +30,7 @@ builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
+builder.Services.AddScoped<PointsRepository>();
 
 builder.Services.AddDistributedMemoryCache();
 

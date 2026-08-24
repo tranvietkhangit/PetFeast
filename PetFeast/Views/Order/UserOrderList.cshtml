@@ -13,7 +13,6 @@
     <table class="table table-bordered align-middle">
 
         <thead class="table-primary">
-
             <tr>
                 <th>STT</th>
                 <th>Ngày đặt</th>
@@ -21,8 +20,8 @@
                 <th>Địa chỉ giao hàng</th>
                 <th>Tổng tiền</th>
                 <th>Trạng thái</th>
+                <th>Thao tác</th>
             </tr>
-
         </thead>
 
         <tbody>
@@ -95,6 +94,32 @@
                             <span class="badge bg-secondary">
                                 @order.Status
                             </span>
+                        }
+
+                    </td>
+                    <td class="text-center">
+
+                        @if (order.Status == "Chờ xác nhận")
+                        {
+                            <form asp-controller="Order"
+                                  asp-action="CancelMyOrder"
+                                  asp-route-id="@order.OrderId"
+                                  method="post"
+                                  onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng #@order.OrderId không?');">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="submit"
+                                        class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Hủy đơn
+                                </button>
+
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted small">-</span>
                         }
 
                     </td>

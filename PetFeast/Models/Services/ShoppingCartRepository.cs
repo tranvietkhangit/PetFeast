@@ -1,130 +1,302 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using PetFeast.Models.ShoppingCart;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using PetFeast.Data;
+using PetFeast.Models.Identity;
 using PetFeast.Models.Interfaces;
+using PetFeast.Models.ShoppingCart;
 
 namespace PetFeast.Models.Services
 {
     public class ShoppingCartRepository : IShoppingCartRepository
     {
+        private readonly PetFeastDBContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHttpContextAccessor _httpContext;
-        private const string CART_KEY = "ShoppingCart";
+
         public ShoppingCartRepository(
+            PetFeastDBContext context,
+            UserManager<ApplicationUser> userManager,
             IHttpContextAccessor httpContext)
         {
+            _context = context;
+            _userManager = userManager;
             _httpContext = httpContext;
         }
-        private void UpdateCartCount(List<ShoppingCartItem> cart)
-        {
-            var count = cart.Sum(x => x.Quantity);
 
-            _httpContext.HttpContext.Session
-                .SetInt32("CartCount", count);
+        // ==========================================
+        // LẤY USER ID HIỆN TẠI
+        // ==========================================
+
+        private string? GetCurrentUserId()
+        {
+            var user = _httpContext.HttpContext?.User;
+
+            if (user == null || !user.Identity?.IsAuthenticated == true)
+            {
+                return null;
+            }
+
+            return _userManager.GetUserId(user);
         }
+
+
+        // ==========================================
+        // LẤY CART CỦA USER
+        // ==========================================
+
+        private Cart? GetUserCart()
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return null;
+            }
+
+            return _context.Carts
+                .Include(c => c.Items)
+                .FirstOrDefault(c => c.UserId == userId);
+        }
+
+
+        // ==========================================
+        // TẠO CART NẾU CHƯA CÓ
+        // ==========================================
+
+        private Cart GetOrCreateUserCart()
+        {
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new InvalidOperationException(
+                    "Người dùng chưa đăng nhập.");
+            }
+
+            var cart = _context.Carts
+                .Include(c => c.Items)
+                .FirstOrDefault(c => c.UserId == userId);
+
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    UserId = userId
+                };
+
+                _context.Carts.Add(cart);
+                _context.SaveChanges();
+            }
+
+            return cart;
+        }
+
+
+        // ==========================================
+        // GET CART
+        // ==========================================
+
         public List<ShoppingCartItem> GetCart()
         {
-            var session =
-                _httpContext.HttpContext.Session;
-            var cart =
-                session.GetString(CART_KEY);
-            if (cart == null)
+            var userId = GetCurrentUserId();
+
+            if (string.IsNullOrEmpty(userId))
             {
                 return new List<ShoppingCartItem>();
             }
-            return JsonConvert.DeserializeObject<List<ShoppingCartItem>>(cart)
-                   ?? new List<ShoppingCartItem>();
-        }
-        private void SaveCart(List<ShoppingCartItem> cart)
-        {
-            _httpContext.HttpContext.Session
-                .SetString(
-                    CART_KEY,
-                    JsonConvert.SerializeObject(cart)
-                );
 
-            UpdateCartCount(cart);
+            var cartItems = _context.CartItems
+                .Include(x => x.Product)
+                .Include(x => x.Cart)
+                .Where(x => x.Cart.UserId == userId)
+                .ToList();
+
+            return cartItems.Select(x => new ShoppingCartItem
+            {
+                ProductId = x.ProductId,
+
+                ProductName = x.Product.ProductName,
+
+                ImageUrl = x.Product.ImageUrl,
+
+                Price = x.Product.DiscountPercent > 0
+                    ? x.Product.DiscountPrice
+                    : x.Product.Price,
+
+                Quantity = x.Quantity,
+
+                IsSelected = x.IsSelected
+
+            }).ToList();
         }
+
+
+        // ==========================================
+        // ADD TO CART
+        // ==========================================
+
         public void AddToCart(ShoppingCartItem item)
         {
-            var cart = GetCart();
-            var exist =
-                cart.FirstOrDefault(
-                    x => x.ProductId == item.ProductId);
-            if (exist != null)
+            var cart = GetOrCreateUserCart();
+
+            var existingItem = cart.Items
+                .FirstOrDefault(x =>
+                    x.ProductId == item.ProductId);
+
+            if (existingItem != null)
             {
-                exist.Quantity += item.Quantity;
+                existingItem.Quantity += item.Quantity;
             }
             else
             {
-                cart.Add(item);
+                cart.Items.Add(new CartItem
+                {
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    IsSelected = true
+                });
             }
-            SaveCart(cart);
+
+            _context.SaveChanges();
         }
+
+
+        // ==========================================
+        // REMOVE
+        // ==========================================
+
         public void Remove(int productId)
         {
-            var cart = GetCart();
-            var item =
-                cart.FirstOrDefault(
-                    x => x.ProductId == productId);
+            RemoveFromCart(productId);
+        }
+
+
+        public void RemoveFromCart(int productId)
+        {
+            var cart = GetUserCart();
+
+            if (cart == null)
+                return;
+
+            var item = cart.Items
+                .FirstOrDefault(x =>
+                    x.ProductId == productId);
+
             if (item != null)
             {
-                cart.Remove(item);
+                _context.CartItems.Remove(item);
+                _context.SaveChanges();
             }
-            SaveCart(cart);
         }
+
+
+        // ==========================================
+        // UPDATE QUANTITY
+        // ==========================================
+
         public void UpdateQuantity(
             int productId,
             int quantity)
         {
-            var cart = GetCart();
-            var item = cart.FirstOrDefault(
-                    x => x.ProductId == productId);
+            var cart = GetUserCart();
+
+            if (cart == null)
+                return;
+
+            var item = cart.Items
+                .FirstOrDefault(x =>
+                    x.ProductId == productId);
+
             if (item != null)
             {
                 item.Quantity = quantity;
+
+                _context.SaveChanges();
             }
-            SaveCart(cart);
         }
+
+
+        // ==========================================
+        // CLEAR CART
+        // ==========================================
+
         public void ClearCart()
         {
-            SaveCart(
-                new List<ShoppingCartItem>()
-            );
+            var cart = GetUserCart();
+
+            if (cart == null)
+                return;
+
+            _context.CartItems.RemoveRange(cart.Items);
+
+            _context.SaveChanges();
         }
-        public void UpdateSelect(int productId, bool isSelected)
+
+
+        // ==========================================
+        // UPDATE SELECT
+        // ==========================================
+
+        public void UpdateSelect(
+            int productId,
+            bool isSelected)
         {
-            var cart = GetCart();
+            var cart = GetUserCart();
 
-            var item = cart.FirstOrDefault(
-                x => x.ProductId == productId);
+            if (cart == null)
+                return;
 
+            var item = cart.Items
+                .FirstOrDefault(x =>
+                    x.ProductId == productId);
 
             if (item != null)
             {
                 item.IsSelected = isSelected;
+
+                _context.SaveChanges();
             }
-
-
-            SaveCart(cart);
         }
+
+
+        // ==========================================
+        // INCREASE
+        // ==========================================
+
         public void IncreaseQuantity(int productId)
         {
-            var cart = GetCart();
+            var cart = GetUserCart();
 
-            var item = cart.FirstOrDefault(x => x.ProductId == productId);
+            if (cart == null)
+                return;
+
+            var item = cart.Items
+                .FirstOrDefault(x =>
+                    x.ProductId == productId);
 
             if (item != null)
             {
                 item.Quantity++;
-            }
 
-            SaveCart(cart);
+                _context.SaveChanges();
+            }
         }
+
+
+        // ==========================================
+        // DECREASE
+        // ==========================================
+
         public void DecreaseQuantity(int productId)
         {
-            var cart = GetCart();
+            var cart = GetUserCart();
 
-            var item = cart.FirstOrDefault(x => x.ProductId == productId);
+            if (cart == null)
+                return;
+
+            var item = cart.Items
+                .FirstOrDefault(x =>
+                    x.ProductId == productId);
 
             if (item == null)
                 return;
@@ -133,23 +305,29 @@ namespace PetFeast.Models.Services
 
             if (item.Quantity <= 0)
             {
-                cart.Remove(item);
+                _context.CartItems.Remove(item);
             }
 
-            SaveCart(cart);
+            _context.SaveChanges();
         }
-        public void RemoveFromCart(int productId)
+
+
+        // ==========================================
+        // CART COUNT
+        // ==========================================
+
+        public int GetCartCount()
         {
-            var cart = GetCart();
+            var userId = GetCurrentUserId();
 
-            var item = cart.FirstOrDefault(x => x.ProductId == productId);
-
-            if (item != null)
+            if (string.IsNullOrEmpty(userId))
             {
-                cart.Remove(item);
+                return 0;
             }
 
-            SaveCart(cart);
+            return _context.CartItems
+                .Where(x => x.Cart.UserId == userId)
+                .Sum(x => (int?)x.Quantity) ?? 0;
         }
     }
 }

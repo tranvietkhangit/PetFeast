@@ -13,9 +13,47 @@
         </div>
         <!-- INFO -->
         <div class="col-lg-6">
-            <h1 class="fw-bold text-primary mb-3">
-                @Model.ProductName
-            </h1>
+            <div class="product-title-row">
+
+                <h1 class="fw-bold text-primary">
+                    @Model.ProductName
+                </h1>
+
+                @{
+                    bool isFavorite = ViewBag.IsFavorite ?? false;
+                }
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form class="favorite-box favorite-form"
+                          data-product-id="@Model.ProductId">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="button"
+                                class="favorite-btn @(isFavorite ? "is-favorite" : "not-favorite")"
+                                title="@(isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích")">
+
+                            <i class="bi @(isFavorite ? "bi-heart-fill" : "bi-heart") favorite-heart"></i>
+
+                        </button>
+
+                    </form>
+                }
+                else
+                {
+                    <a asp-area="Identity"
+                       asp-page="/Account/Login"
+                       asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                       class="favorite-box favorite-btn not-favorite"
+                       title="Đăng nhập để thêm vào yêu thích">
+
+                        <i class="bi bi-heart favorite-heart"></i>
+
+                    </a>
+                }
+
+            </div>
             @if (Model.DiscountPercent > 0)
             {
                 <h4 class="text-muted">
@@ -160,3 +198,328 @@
         }
     </div>
 </div>
+<script>
+    // ==========================================
+    // FAVORITE - PRODUCT DETAIL
+    // ==========================================
+
+    const favoriteForm =
+        document.querySelector(".favorite-form");
+
+    if (favoriteForm) {
+
+        const favoriteButton =
+            favoriteForm.querySelector(".favorite-btn");
+
+        const favoriteIcon =
+            favoriteButton.querySelector(".favorite-heart");
+
+        const productId =
+            favoriteForm.dataset.productId;
+
+        const token =
+            favoriteForm.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            ).value;
+
+
+        favoriteButton.addEventListener(
+            "click",
+            async function () {
+
+                if (favoriteButton.disabled) {
+                    return;
+                }
+
+                favoriteButton.disabled = true;
+
+                try {
+
+                    const formData =
+                        new FormData();
+
+                    formData.append(
+                        "productId",
+                        productId
+                    );
+
+                    formData.append(
+                        "__RequestVerificationToken",
+                        token
+                    );
+
+
+                    const response =
+                        await fetch(
+                            "/Favorite/ToggleAjax",
+                            {
+                                method: "POST",
+                                body: formData,
+                                headers: {
+                                    "X-Requested-With":
+                                        "XMLHttpRequest"
+                                }
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    // ==============================
+                    // CHƯA ĐĂNG NHẬP
+                    // ==============================
+
+                    if (data.requireLogin) {
+
+                        window.location.href =
+                            "/Identity/Account/Login?returnUrl="
+                            + encodeURIComponent(
+                                window.location.pathname +
+                                window.location.search
+                            );
+
+                        return;
+                    }
+
+
+                    if (!data.success) {
+
+                        throw new Error(
+                            "Không thể cập nhật yêu thích."
+                        );
+
+                    }
+
+
+                    // ==============================
+                    // ĐÃ YÊU THÍCH
+                    // ==============================
+
+                    if (data.isFavorite) {
+
+                        favoriteButton.classList.remove(
+                            "not-favorite"
+                        );
+
+                        favoriteButton.classList.add(
+                            "is-favorite"
+                        );
+
+                        favoriteIcon.classList.remove(
+                            "bi-heart"
+                        );
+
+                        favoriteIcon.classList.add(
+                            "bi-heart-fill"
+                        );
+
+                        favoriteButton.title =
+                            "Bỏ yêu thích";
+                    }
+
+
+                    // ==============================
+                    // BỎ YÊU THÍCH
+                    // ==============================
+
+                    else {
+
+                        favoriteButton.classList.remove(
+                            "is-favorite"
+                        );
+
+                        favoriteButton.classList.add(
+                            "not-favorite"
+                        );
+
+                        favoriteIcon.classList.remove(
+                            "bi-heart-fill"
+                        );
+
+                        favoriteIcon.classList.add(
+                            "bi-heart"
+                        );
+
+                        favoriteButton.title =
+                            "Thêm vào yêu thích";
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Favorite error:",
+                        error
+                    );
+
+                    alert(
+                        "Có lỗi xảy ra khi cập nhật yêu thích."
+                    );
+
+                }
+                finally {
+
+                    favoriteButton.disabled = false;
+
+                }
+
+            }
+        );
+    }
+</script>
+<style>
+
+    /* ========================================
+               TÊN SẢN PHẨM + NÚT YÊU THÍCH
+               ======================================== */
+
+    .product-title-row {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 25px;
+        margin-bottom: 22px;
+    }
+
+        .product-title-row h1 {
+            flex: 1;
+            font-size: 36px;
+            margin: 0 !important;
+        }
+
+
+    /* ========================================
+               FORM YÊU THÍCH
+               ======================================== */
+
+    .favorite-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        flex-shrink: 0;
+    }
+
+
+    /* ========================================
+               NÚT TRÁI TIM
+               ======================================== */
+
+    .favorite-btn {
+        width: 58px;
+        height: 58px;
+        padding: 0;
+        margin: 0;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        line-height: 1;
+        cursor: pointer;
+        background: #ffffff;
+        outline: none;
+        transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+
+        /* ========================================
+               CHƯA YÊU THÍCH
+               ======================================== */
+
+        .favorite-btn.not-favorite {
+            color: #222222;
+            border: 2px solid #222222;
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+
+            .favorite-btn.not-favorite:hover {
+                color: #ff4f70;
+                border-color: #ff4f70;
+                background: #fff7f8;
+                transform: scale(1.08);
+                box-shadow: 0 6px 18px rgba(255, 79, 112, 0.20);
+            }
+
+
+        /* ========================================
+               ĐÃ YÊU THÍCH
+               ======================================== */
+
+        .favorite-btn.is-favorite {
+            color: #ff4f70;
+            border: 2px solid #ff4f70;
+            background: #fff0f3;
+            transform: scale(1.03);
+            box-shadow: 0 5px 18px rgba(255, 79, 112, 0.25);
+        }
+
+
+            .favorite-btn.is-favorite:hover {
+                color: #ff2854;
+                border-color: #ff2854;
+                background: #ffe6eb;
+                transform: scale(1.1);
+                box-shadow: 0 7px 20px rgba(255, 40, 84, 0.30);
+            }
+
+
+    /* ========================================
+               HIỆU ỨNG TRÁI TIM
+               ======================================== */
+
+    .favorite-heart {
+        display: block;
+        line-height: 1;
+        transition: transform 0.2s ease;
+    }
+
+    .favorite-btn:hover .favorite-heart {
+        transform: scale(1.15);
+    }
+
+
+    /* ========================================
+               KHUNG ẢNH SẢN PHẨM
+               ======================================== */
+
+    .product-image-box {
+        background: #f8f9fa;
+        border-radius: 18px;
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 450px;
+    }
+
+        .product-image-box img {
+            max-height: 400px;
+            width: 100%;
+            object-fit: contain;
+        }
+
+
+    /* ========================================
+               RESPONSIVE
+               ======================================== */
+
+    @@media (max-width: 768px) {
+
+        .product-title-row h1 {
+            font-size: 28px;
+        }
+
+        .favorite-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 28px;
+        }
+    }
+
+</style>

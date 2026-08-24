@@ -255,3 +255,20 @@
         .product-search button:hover {
             background: #0f3c68;
         }
+/* ================================
+   DONUT CHART
+================================ */
+
+.donut-holder {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    margin: 15px auto;
+    flex-shrink: 0;
+}
+
+    .donut-holder canvas {
+        display: block !important;
+        width: 220px !important;
+        height: 220px !important;
+    }

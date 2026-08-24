@@ -31,12 +31,43 @@
         {
             <li>
                 <a class="dropdown-item"
+                   asp-controller="Home"
+                   asp-action="UserPoint">
+                    <i class="bi bi-coin"></i>
+                    <strong>
+                        @user?.Points điểm
+                    </strong>
+
+                </a>
+            </li>
+
+            <li><hr class="dropdown-divider"></li>
+            <li>
+                <a class="dropdown-item"
+                   asp-controller="Account"
+                   asp-action="Index">
+
+                    <i class="bi bi-person-circle me-2"></i>
+                    Tài khoản của tôi
+
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item"
                    asp-controller="Order"
                    asp-action="UserOrderList">
 
                     <i class="bi bi-bag"></i>
                     Đơn hàng của tôi
 
+                </a>
+            </li>
+            <li>
+                <a asp-controller="Favorite"
+                   asp-action="Index"
+                   class="dropdown-item">
+                    <i class="bi bi-heart"></i>
+                    Sản phẩm yêu thích
                 </a>
             </li>
 

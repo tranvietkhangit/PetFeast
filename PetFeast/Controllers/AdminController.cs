@@ -6,7 +6,7 @@ using PetFeast.Data;
 using PetFeast.Models.Identity;
 using PetFeast.Models.Interfaces;
 using PetFeast.Models.Products;
-
+using PetFeast.Models.Services;
 namespace PetFeast.Controllers
 {
     [Authorize(Roles = "Admin")]
@@ -15,40 +15,170 @@ namespace PetFeast.Controllers
         private readonly IProductRepository _productRepo;
         private readonly CategoryIRepository _categoryRepo;
         private readonly UserManager<ApplicationUser> _userManager;
-
-
         private readonly PetFeastDBContext _context;
+        private readonly PointsRepository _pointsRepository;
 
         public AdminController(
-         IProductRepository productRepo,
-         CategoryIRepository categoryRepo,
-         PetFeastDBContext context,
-         UserManager<ApplicationUser> userManager)
+            IProductRepository productRepo,
+            CategoryIRepository categoryRepo,
+            PetFeastDBContext context,
+            UserManager<ApplicationUser> userManager,
+            PointsRepository pointsRepository)
         {
             _productRepo = productRepo;
             _categoryRepo = categoryRepo;
             _context = context;
             _userManager = userManager;
+            _pointsRepository = pointsRepository;
         }
 
         public IActionResult Dashboard()
         {
-            ViewBag.TotalProducts =
-                _context.Products.Count();
+            var totalOrders = _context.Orders.Count();
+            var completedOrders = _context.Orders.Count(o => o.Status == "Hoàn thành");
+            var completionRate = totalOrders > 0 ? (int)Math.Round((double)completedOrders / totalOrders * 100) : 0;
 
-            ViewBag.TotalCategories =
-                _context.Categories.Count();
+            ViewBag.TotalProducts = _context.Products.Count();
+            ViewBag.TotalCategories = _context.Categories.Count();
+            ViewBag.TotalOrders = totalOrders;
+            ViewBag.CompletedOrders = completedOrders;
+            ViewBag.CompletionRate = completionRate;
 
-            ViewBag.TotalOrders =
-                _context.Orders.Count();
+            // Tổng doanh thu (không tính đơn hủy)
+            ViewBag.TotalRevenue = _context.Orders
+                .Where(o => o.Status != "Đã hủy")
+                .Sum(x => (decimal?)x.TotalAmount) ?? 0;
 
-            ViewBag.TotalRevenue =
-                _context.Orders.Sum(x => (decimal?)x.TotalAmount) ?? 0;
+            ViewBag.BestProducts = _productRepo.GetBestSellingProducts(5);
 
-            ViewBag.BestProducts =
-                _productRepo.GetBestSellingProducts(5);
+            // 5 đơn hàng mới đặt gần đây nhất
+            ViewBag.RecentOrders = _context.Orders
+                .OrderByDescending(o => o.OrderDate)
+                .Take(5)
+                .ToList();
 
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetDashboardRealtimeData()
+        {
+            var currentYear = DateTime.Now.Year;
+            var currentMonth = DateTime.Now.Month;
+
+            var totalProducts = await _context.Products.CountAsync();
+            var totalCategories = await _context.Categories.CountAsync();
+            var totalOrders = await _context.Orders.CountAsync();
+            var completedOrders = await _context.Orders.CountAsync(o => o.Status == "Hoàn thành");
+            var completionRate = totalOrders > 0 ? (int)Math.Round((double)completedOrders / totalOrders * 100) : 0;
+
+            // Doanh thu tháng hiện tại
+            var monthRevenue = await _context.Orders
+                .Where(o => o.OrderDate.Month == currentMonth && o.OrderDate.Year == currentYear && o.Status != "Đã hủy")
+                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+
+            // Tổng doanh thu toàn bộ
+            var totalRevenue = await _context.Orders
+                .Where(o => o.Status != "Đã hủy")
+                .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+
+            // Biểu đồ doanh thu 9 tháng năm nay vs năm trước
+            var revCurrentYear = new decimal[9];
+            var revPrevYear = new decimal[9];
+
+            for (int m = 1; m <= 9; m++)
+            {
+                revCurrentYear[m - 1] = await _context.Orders
+                    .Where(o => o.OrderDate.Year == currentYear && o.OrderDate.Month == m && o.Status != "Đã hủy")
+                    .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+
+                revPrevYear[m - 1] = await _context.Orders
+                    .Where(o => o.OrderDate.Year == (currentYear - 1) && o.OrderDate.Month == m && o.Status != "Đã hủy")
+                    .SumAsync(o => (decimal?)o.TotalAmount) ?? 0;
+            }
+
+            var bestProducts = _productRepo.GetBestSellingProducts(5);
+
+            // 5 đơn hàng mới nhất cho chu kỳ Polling Realtime
+            var recentOrders = await _context.Orders
+    .OrderByDescending(o => o.OrderDate)
+    .Take(5)
+    .Select(o => new
+    {
+        orderId = o.OrderId,
+        fullName = o.User != null && o.User.FullName != null
+            ? o.User.FullName
+            : o.CustomerName,
+        orderDate = o.OrderDate.ToString("dd/MM/yyyy HH:mm"),
+        totalAmount = o.TotalAmount,
+        status = o.Status
+    })
+    .ToListAsync();
+
+            return Json(new
+            {
+                totalRevenue = monthRevenue > 0 ? monthRevenue : totalRevenue,
+                totalOrders = totalOrders,
+                completedOrders = completedOrders,
+                completionRate = completionRate,
+                totalProducts = totalProducts,
+                totalCategories = totalCategories,
+                revenueCurrentYear = revCurrentYear,
+                revenuePrevYear = revPrevYear,
+                bestProducts = bestProducts,
+                recentOrders = recentOrders
+            });
+        }
+
+        // ================= 2. BÁO CÁO DOANH THU =================
+        public IActionResult RevenueReport(DateTime? fromDate, DateTime? toDate)
+        {
+            var start = fromDate ?? new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            var end = (toDate ?? DateTime.Now.Date).AddDays(1).AddTicks(-1);
+
+            ViewBag.FromDate = start.ToString("yyyy-MM-dd");
+            ViewBag.ToDate = (toDate ?? DateTime.Now.Date).ToString("yyyy-MM-dd");
+
+            var ordersList = _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .ThenInclude(p => p.Category)
+                .Where(o => o.Status != "Đã hủy" && o.OrderDate >= start && o.OrderDate <= end)
+                .OrderByDescending(o => o.OrderDate)
+                .ToList();
+
+            var totalRevenue = ordersList.Sum(x => x.TotalAmount);
+            var totalOrders = ordersList.Count;
+            var avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders) : 0;
+            var totalProductsSold = ordersList.SelectMany(o => o.OrderDetails).Sum(x => x.Quantity);
+
+            ViewBag.ReportTotalRevenue = totalRevenue;
+            ViewBag.ReportTotalOrders = totalOrders;
+            ViewBag.ReportAvgOrderValue = avgOrderValue;
+            ViewBag.ReportProductsSold = totalProductsSold;
+
+            var dailyRevenue = ordersList
+                .GroupBy(o => o.OrderDate.ToString("dd/MM"))
+                .Select(g => new { Date = g.Key, Revenue = g.Sum(x => x.TotalAmount) })
+                .ToList();
+
+            ViewBag.ChartLabels = dailyRevenue.Select(x => x.Date).ToArray();
+            ViewBag.ChartValues = dailyRevenue.Select(x => x.Revenue).ToArray();
+
+            var categoryRevenue = ordersList
+                .SelectMany(o => o.OrderDetails)
+                .GroupBy(od => od.Product?.Category?.CategoryName ?? "Khác")
+                .Select(g => new {
+                    CategoryName = g.Key,
+                    Revenue = g.Sum(x => x.Quantity * (x.Product != null ? x.Product.Price : 0))
+                })
+                .OrderByDescending(x => x.Revenue)
+                .ToList();
+
+            ViewBag.CatLabels = categoryRevenue.Select(x => x.CategoryName).ToArray();
+            ViewBag.CatValues = categoryRevenue.Select(x => x.Revenue).ToArray();
+
+            return View("Revenue/RevenueReport", ordersList);
         }
 
         // PRODUCT
@@ -303,18 +433,30 @@ namespace PetFeast.Controllers
 
                 _context.SaveChanges();
             }
-
             return RedirectToAction(nameof(OrderList));
         }
-        public IActionResult CompleteOrder(int id)
+        public async Task<IActionResult> CompleteOrder(int id)
         {
-            var order = _context.Orders.Find(id);
+            var order = await _context.Orders
+        .Include(x => x.OrderDetails)
+        .FirstOrDefaultAsync(x => x.OrderId == id);
 
-            if (order != null)
+            if (order == null)
+                return NotFound();
+
+            // Chỉ xử lý nếu đơn chưa hoàn thành
+            if (order.Status != "Hoàn thành")
             {
                 order.Status = "Hoàn thành";
 
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
+
+                // Tích điểm theo số lượng sản phẩm
+                int points = await _pointsRepository
+                    .AddPointsForOrderAsync(order);
+
+                TempData["Success"] =
+                    $"Đơn hàng #{order.OrderId} đã hoàn thành. Khách hàng nhận được {points} điểm.";
             }
 
             return RedirectToAction(nameof(OrderList));

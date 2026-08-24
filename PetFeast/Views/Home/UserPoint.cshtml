@@ -1,0 +1,125 @@
+﻿@model IEnumerable<PetFeast.Models.Points.PointTransaction>
+
+@{
+    ViewData["Title"] = "Điểm của tôi";
+
+    var currentPoints = Model.Sum(x => x.Points);
+}
+
+<div class="container mt-4">
+
+    <!-- ĐIỂM HIỆN TẠI -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body text-center">
+
+            <h4>
+                <i class="bi bi-coin"></i>
+                Điểm thành viên
+            </h4>
+
+            <h1 class="fw-bold text-primary">
+                @currentPoints
+            </h1>
+
+            <p class="text-muted mb-0">
+                1 điểm = 100đ
+            </p>
+
+        </div>
+    </div>
+
+    <!-- LỊCH SỬ -->
+    <div class="card shadow-sm">
+
+        <div class="card-header">
+            <h5 class="mb-0">
+                Lịch sử điểm
+            </h5>
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table table-hover mb-0">
+
+                <thead>
+                    <tr>
+                        <th>Thời gian</th>
+                        <th>Nội dung</th>
+                        <th>Đơn hàng</th>
+                        <th class="text-end">
+                            Điểm
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4"
+                                class="text-center py-4 text-muted">
+                                Chưa có lịch sử điểm
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+
+                                <td>
+                                    @item.CreatedAt.ToString(
+                                    "dd/MM/yyyy HH:mm")
+                        </td>
+
+                        <td>
+                            @item.Description
+                        </td>
+
+                        <td>
+                            @if (item.OrderId.HasValue)
+                                    {
+                                        <span>
+                                            #@item.OrderId
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            -
+                                        </span>
+                                    }
+                                </td>
+
+                                <td class="text-end fw-bold">
+
+                                    @if (item.Points > 0)
+                                    {
+                                        <span class="text-success">
+                                            +@item.Points
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger">
+                                            @item.Points
+                                        </span>
+                                    }
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>

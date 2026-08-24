@@ -2,6 +2,11 @@
 
 @{
     var sliderId = "slider_" + Guid.NewGuid().ToString("N");
+
+    var favoriteProductIds =
+        ViewBag.FavoriteProductIds
+        as HashSet<int>
+        ?? new HashSet<int>();
 }
 
 <div class="product-slider-wrapper">
@@ -15,84 +20,130 @@
 
         @foreach (var item in Model)
         {
+            bool isFavorite =
+            favoriteProductIds.Contains(item.ProductId);
+
             <div class="product-item">
 
                 <div class="card h-100 shadow-sm product-card">
 
+                    <!-- ẢNH + FAVORITE -->
+                    <div class="product-image-wrapper">
 
-                    <a asp-controller="Product"
-                       asp-action="Detail"
-                       asp-route-id="@item.ProductId"
-                       class="product-image-link">
+                        <a asp-controller="Product"
+                           asp-action="Detail"
+                           asp-route-id="@item.ProductId"
+                           class="product-image-link">
+
+                            <img src="@item.ImageUrl"
+                                 class="card-img-top"
+                                 style="height:250px; object-fit:cover;"
+                                 alt="@item.ProductName">
+
+                        </a>
+
+                        <!-- =========================
+                             NÚT YÊU THÍCH
+                             ========================= -->
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <form class="favorite-form"
+                                  data-product-id="@item.ProductId">
+
+                                @Html.AntiForgeryToken()
+
+                                <button type="button"
+                                        class="favorite-btn @(isFavorite ? "active" : "")"
+                                        title="@(isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích")">
+
+                                    <i class="bi @(isFavorite ? "bi-heart-fill" : "bi-heart")"></i>
+
+                                </button>
+
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="favorite-form">
+
+                                <a asp-area="Identity"
+                                   asp-page="/Account/Login"
+                                   asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                                   class="favorite-btn"
+                                   title="Đăng nhập để thêm yêu thích">
+
+                                    <i class="bi bi-heart"></i>
+
+                                </a>
+
+                            </div>
+                        }
+
+                    </div>
 
 
-                        <img src="@item.ImageUrl"
-                             class="card-img-top"
-                             style="height:250px; object-fit:cover;"
-                             alt="@item.ProductName">
-
-
-                    </a>
-
-
-
+                    <!-- THÔNG TIN -->
                     <div class="card-body text-center">
-
 
                         <h6>
                             @item.ProductName
                         </h6>
 
 
-                        <p class="text-primary fw-bold">
+                        @if (item.DiscountPercent > 0)
+                        {
+                            <div class="mb-2">
 
-                            @item.Price.ToString("N0") đ
+                                <del class="text-muted">
+                                    @item.Price.ToString("N0") đ
+                                </del>
 
-                        </p>
+                                <p class="text-danger fw-bold mb-0">
+                                    @item.DiscountPrice.ToString("N0") đ
+                                </p>
 
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-primary fw-bold">
+                                @item.Price.ToString("N0") đ
+                            </p>
+                        }
 
 
                         <form asp-controller="ShoppingCart"
                               asp-action="AddToCart"
                               method="post">
 
-
                             <input type="hidden"
                                    name="productId"
                                    value="@item.ProductId" />
-
 
                             <input type="hidden"
                                    name="quantity"
                                    value="1" />
 
-
-
                             <button type="submit"
                                     class="btn btn-primary w-100">
-
 
                                 <i class="bi bi-cart-plus"></i>
 
                                 Thêm vào giỏ
 
-
                             </button>
-
 
                         </form>
 
-
                     </div>
 
-
                 </div>
-
 
             </div>
         }
 
     </div>
+
 
     <button class="btn btn-primary slider-btn slider-next"
             onclick="scrollSlider('@sliderId', 1)">
@@ -100,3 +151,248 @@
     </button>
 
 </div>
+
+
+<script>
+
+    // ==========================================
+    // FAVORITE - PRODUCT SLIDER
+    // ==========================================
+
+    document.querySelectorAll(".favorite-form")
+        .forEach(function (form) {
+
+            const button =
+                form.querySelector(".favorite-btn");
+
+            // Nếu là link Login thì không có data-product-id
+            if (!button || !form.dataset.productId) {
+                return;
+            }
+
+            const icon =
+                button.querySelector("i");
+
+            const productId =
+                form.dataset.productId;
+
+            const token =
+                form.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                ).value;
+
+
+            button.addEventListener(
+                "click",
+                async function () {
+
+                    if (button.disabled) {
+                        return;
+                    }
+
+                    button.disabled = true;
+
+                    try {
+
+                        const formData =
+                            new FormData();
+
+                        formData.append(
+                            "productId",
+                            productId
+                        );
+
+                        formData.append(
+                            "__RequestVerificationToken",
+                            token
+                        );
+
+
+                        const response =
+                            await fetch(
+                                "/Favorite/ToggleAjax",
+                                {
+                                    method: "POST",
+                                    body: formData,
+                                    headers: {
+                                        "X-Requested-With":
+                                            "XMLHttpRequest"
+                                    }
+                                }
+                            );
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (data.requireLogin) {
+
+                            window.location.href =
+                                "/Identity/Account/Login?returnUrl="
+                                + encodeURIComponent(
+                                    window.location.pathname +
+                                    window.location.search
+                                );
+
+                            return;
+                        }
+
+
+                        if (!data.success) {
+
+                            throw new Error(
+                                "Không thể cập nhật yêu thích."
+                            );
+
+                        }
+
+
+                        // ==========================
+                        // ĐÃ YÊU THÍCH
+                        // ==========================
+
+                        if (data.isFavorite) {
+
+                            button.classList.add(
+                                "active"
+                            );
+
+                            icon.classList.remove(
+                                "bi-heart"
+                            );
+
+                            icon.classList.add(
+                                "bi-heart-fill"
+                            );
+
+                            button.title =
+                                "Bỏ yêu thích";
+
+                        }
+
+
+                        // ==========================
+                        // BỎ YÊU THÍCH
+                        // ==========================
+
+                        else {
+
+                            button.classList.remove(
+                                "active"
+                            );
+
+                            icon.classList.remove(
+                                "bi-heart-fill"
+                            );
+
+                            icon.classList.add(
+                                "bi-heart"
+                            );
+
+                            button.title =
+                                "Thêm vào yêu thích";
+
+                        }
+
+                    }
+                    catch (error) {
+
+                        console.error(
+                            "Favorite error:",
+                            error
+                        );
+
+                        alert(
+                            "Có lỗi xảy ra khi cập nhật yêu thích."
+                        );
+
+                    }
+                    finally {
+
+                        button.disabled = false;
+
+                    }
+
+                }
+            );
+
+        });
+
+</script>
+
+
+<style>
+
+    /* ========================================
+           PRODUCT IMAGE
+           ======================================== */
+
+    .product-image-wrapper {
+        position: relative;
+    }
+
+
+    /* ========================================
+           FAVORITE
+           ======================================== */
+
+    .favorite-form {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 20;
+        margin: 0;
+    }
+
+
+    .favorite-btn {
+        width: 50px;
+        height: 50px;
+        padding: 0;
+        border-radius: 50%;
+        border: 2px solid #222;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+        transition: all 0.25s ease;
+    }
+
+
+        .favorite-btn i {
+            font-size: 24px;
+            color: #222;
+            transition: all 0.25s ease;
+        }
+
+
+        /* ĐÃ YÊU THÍCH */
+
+        .favorite-btn.active {
+            border-color: #ff416c;
+        }
+
+
+            .favorite-btn.active i {
+                color: #ff416c;
+            }
+
+
+        /* HOVER */
+
+        .favorite-btn:hover {
+            transform: scale(1.08);
+        }
+
+
+        /* CLICK */
+
+        .favorite-btn:active {
+            transform: scale(0.92);
+        }
+
+</style>

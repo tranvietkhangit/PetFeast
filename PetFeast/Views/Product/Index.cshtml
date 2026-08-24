@@ -1,5 +1,10 @@
 ﻿@model IEnumerable<PetFeast.Models.Products.Product>
-
+@{
+    var favoriteProductIds =
+        ViewBag.FavoriteProductIds
+        as HashSet<int>
+        ?? new HashSet<int>();
+}
 <div class="container mt-4">
 
     <div class="product-header">
@@ -98,26 +103,71 @@
 
                     <div class="card-body">
 
-                        <input type="range"
-                               id="priceRange"
-                               name="maxPrice"
-                               min="0"
-                               max="500000"
-                               value="@(ViewBag.MaxPrice ?? 0)"
-                               step="10000"
-                               class="price-slider">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Giá từ</label>
 
-                        <div class="d-flex justify-content-between mt-3">
+                            <div class="input-group">
+                                <input type="number"
+                                       id="minPriceInput"
+                                       name="minPrice"
+                                       class="form-control"
+                                       min="0"
+                                       max="2000000"
+                                       step="1000"
+                                       value="@(ViewBag.MinPrice ?? 0)">
 
-                            <span>
-                                0 đ
-                            </span>
+                                <span class="input-group-text">đ</span>
+                            </div>
+                        </div>
 
-                            <span id="currentPrice">
-                                500.000 đ
-                            </span>
+                        <div class="mb-3">
+                            <label class="form-label">Giá đến</label>
+
+                            <div class="input-group">
+                                <input type="number"
+                                       id="maxPriceInput"
+                                       name="maxPrice"
+                                       class="form-control"
+                                       min="0"
+                                       max="2000000"
+                                       step="1000"
+                                       value="@(ViewBag.MaxPrice ?? 2000000)">
+
+                                <span class="input-group-text">đ</span>
+                            </div>
+                        </div>
+
+
+                        <!-- RANGE SLIDER -->
+                        <div class="price-slider-container">
+
+                            <div class="price-slider-track"></div>
+
+                            <input type="range"
+                                   id="minPriceRange"
+                                   min="0"
+                                   max="2000000"
+                                   step="1000"
+                                   value="@(ViewBag.MinPrice ?? 0)"
+                                   class="price-range">
+
+                            <input type="range"
+                                   id="maxPriceRange"
+                                   min="0"
+                                   max="2000000"
+                                   step="1000"
+                                   value="@(ViewBag.MaxPrice ?? 2000000)"
+                                   class="price-range">
 
                         </div>
+
+                        <div class="d-flex justify-content-between mt-2">
+                            <span id="minPriceLabel">0 đ</span>
+                            <span id="maxPriceLabel">2.000.000 đ</span>
+                        </div>
+
+
 
                         <button type="submit"
                                 class="btn btn-primary w-100 mt-3">
@@ -127,6 +177,8 @@
                     </div>
 
                 </div>
+
+
             </form>
 
         </div>
@@ -154,26 +206,92 @@
 
                         @foreach (var item in Model)
                         {
+                            bool isFavorite = favoriteProductIds.Contains(item.ProductId);
                             <div class="col-md-4 mb-4">
 
-                                <div class="card h-100">
+                                <div class="card h-100 product-card">
 
-                                    <a asp-action="Detail"
-                                       asp-route-id="@item.ProductId">
+    <div class="product-image-wrapper">
 
-                                        <img src="@item.ImageUrl"
-                                             class="card-img-top"
-                                             style="height:250px;object-fit:cover;" />
+        <a asp-action="Detail"
+           asp-route-id="@item.ProductId">
 
-                                    </a>
+            <img src="@item.ImageUrl"
+                 class="product-image"
+                 alt="@item.ProductName" />
 
-                                    <div class="card-body">
+        </a>
+
+        <!-- =========================
+             NÚT YÊU THÍCH
+             ========================= -->
+
+        @if (User.Identity?.IsAuthenticated == true)
+{
+    <form class="favorite-form"
+          data-product-id="@item.ProductId">
+
+        @Html.AntiForgeryToken()
+
+        <button type="button"
+                class="favorite-btn @(isFavorite ? "active" : "")"
+                title="@(isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích")">
+
+            <i class="bi @(isFavorite ? "bi-heart-fill" : "bi-heart")"></i>
+
+        </button>
+
+    </form>
+}
+else
+{
+    <div class="favorite-form">
+
+        <a asp-area="Identity"
+           asp-page="/Account/Login"
+           asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+           class="favorite-btn"
+           title="Đăng nhập để thêm yêu thích">
+
+            <i class="bi bi-heart"></i>
+
+        </a>
+
+    </div>
+}
+        }
+
+    </div>
+
+    <div class="card-body">
 
                                         <h6>@item.ProductName</h6>
 
-                                        <p class="text-danger fw-bold">
+                                    @if (item.DiscountPercent > 0)
+                                    {
+                                        <span class="discount-badge">
+                                            -@item.DiscountPercent%
+                                        </span>
+                                        <div class="mb-2">
+
+                                            <div class="price-box">
+                                                <span class="old-price">
+                                                    @item.Price.ToString("N0") đ
+                                                </span>
+                                                <span class="new-price">
+                                                    @item.DiscountPrice.ToString("N0") đ
+                                                </span>
+                                            </div>
+
+                                        </div>
+
+                                    }
+                                    else
+                                    {
+                                        <p class="text-danger fw-bold mb-0">
                                             @item.Price.ToString("N0") đ
                                         </p>
+                                    }
 
                                     </div>
                                 <div class="card-footer bg-white border-0">
@@ -195,20 +313,79 @@
                                             <i class="bi bi-cart-plus"></i>
                                             Thêm vào giỏ
                                         </button>
-
                                     </form>
-
                                 </div>
-
                                 </div>
-
                             </div>
+                            
                         }
-
                     </div>
                 }
                 
+                @if (ViewBag.TotalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
 
+            <!-- Trang trước -->
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                       href="@Url.Action("Index", new {
+                           keyword = ViewBag.Keyword,
+                           categoryId = Context.Request.Query["categoryId"],
+                           minPrice = ViewBag.MinPrice,
+                           maxPrice = ViewBag.MaxPrice,
+                           sortOrder = Context.Request.Query["sortOrder"],
+                           page = ViewBag.CurrentPage - 1
+                       })">
+                        &laquo;
+                    </a>
+                </li>
+            }
+
+            <!-- Các trang -->
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+
+                    <a class="page-link"
+                       href="@Url.Action("Index", new {
+                           keyword = ViewBag.Keyword,
+                           categoryId = Context.Request.Query["categoryId"],
+                           minPrice = ViewBag.MinPrice,
+                           maxPrice = ViewBag.MaxPrice,
+                           sortOrder = Context.Request.Query["sortOrder"],
+                           page = i
+                       })">
+                        @i
+                    </a>
+
+                </li>
+            }
+
+            <!-- Trang sau -->
+            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                       href="@Url.Action("Index", new {
+                           keyword = ViewBag.Keyword,
+                           categoryId = Context.Request.Query["categoryId"],
+                           minPrice = ViewBag.MinPrice,
+                           maxPrice = ViewBag.MaxPrice,
+                           sortOrder = Context.Request.Query["sortOrder"],
+                           page = ViewBag.CurrentPage + 1
+                       })">
+                        &raquo;
+                    </a>
+                </li>
+            }
+
+        </ul>
+    </nav>
+}
             </div>
 
         </div>
@@ -218,38 +395,481 @@
 </div>
 <script>
 
-    const slider =
-        document.getElementById("priceRange");
+    const minRange = document.getElementById("minPriceRange");
+    const maxRange = document.getElementById("maxPriceRange");
 
-    const currentPrice =
-        document.getElementById("currentPrice");
+    const minInput = document.getElementById("minPriceInput");
+    const maxInput = document.getElementById("maxPriceInput");
 
-    function updateSlider() {
+    const minLabel = document.getElementById("minPriceLabel");
+    const maxLabel = document.getElementById("maxPriceLabel");
 
-        currentPrice.innerHTML =
-            Number(slider.value)
-            .toLocaleString('vi-VN') + " đ";
+    const track = document.querySelector(".price-slider-track");
 
-        let percent =
-            (slider.value - slider.min)
-            / (slider.max - slider.min)
-            * 100;
 
-        slider.style.background =
-    `linear-gradient(
-        to right,
-        #ffc107 0%,
-        #ffc107 ${percent}%,
-        #dbeafe ${percent}%,
-        #dbeafe 100%
-    )`;
+    // =========================
+    // FORMAT GIÁ
+    // =========================
+
+    function formatPrice(value) {
+
+        return Number(value)
+            .toLocaleString("vi-VN") + " đ";
+
     }
 
-    updateSlider();
 
-    slider.addEventListener(
-        "input",
-        updateSlider
-    );
+    // =========================
+    // CẬP NHẬT THANH SLIDER
+    // =========================
+
+    function updateTrack() {
+
+        const minValue = Number(minRange.value);
+        const maxValue = Number(maxRange.value);
+
+        const minPercent =
+            (minValue / 2000000) * 100;
+
+        const maxPercent =
+            (maxValue / 2000000) * 100;
+
+
+        track.style.background =
+            `linear-gradient(
+                to right,
+                #dbeafe 0%,
+                #dbeafe ${minPercent}%,
+                #0d6efd ${minPercent}%,
+                #0d6efd ${maxPercent}%,
+                #dbeafe ${maxPercent}%,
+                #dbeafe 100%
+            )`;
+    }
+
+
+    // =========================
+    // KÉO SLIDER MIN
+    // =========================
+
+    minRange.addEventListener("input", function () {
+
+        let minValue = Number(this.value);
+        let maxValue = Number(maxRange.value);
+
+
+        // Không cho min vượt max
+        if (minValue > maxValue) {
+
+            minValue = maxValue;
+
+            this.value = minValue;
+        }
+
+
+        minInput.value = minValue;
+
+        minLabel.textContent =
+            formatPrice(minValue);
+
+        updateTrack();
+    });
+
+
+    // =========================
+    // KÉO SLIDER MAX
+    // =========================
+
+    maxRange.addEventListener("input", function () {
+
+        let maxValue = Number(this.value);
+        let minValue = Number(minRange.value);
+
+
+        // Không cho max nhỏ hơn min
+        if (maxValue < minValue) {
+
+            maxValue = minValue;
+
+            this.value = maxValue;
+        }
+
+
+        maxInput.value = maxValue;
+
+        maxLabel.textContent =
+            formatPrice(maxValue);
+
+        updateTrack();
+    });
+
+
+    // =========================
+    // NHẬP GIÁ MIN
+    // =========================
+
+    minInput.addEventListener("change", function () {
+
+        let value = Number(this.value);
+
+        if (isNaN(value))
+            value = 0;
+
+        if (value < 0)
+            value = 0;
+
+        if (value > 2000000)
+            value = 2000000;
+
+
+        let maxValue =
+            Number(maxInput.value) || 2000000;
+
+
+        if (value > maxValue)
+            value = maxValue;
+
+
+        this.value = value;
+
+        minRange.value = value;
+
+        minLabel.textContent =
+            formatPrice(value);
+
+        updateTrack();
+    });
+
+
+    // =========================
+    // NHẬP GIÁ MAX
+    // =========================
+
+    maxInput.addEventListener("change", function () {
+
+        let value = Number(this.value);
+
+        if (isNaN(value))
+            value = 2000000;
+
+        if (value < 0)
+            value = 0;
+
+        if (value > 2000000)
+            value = 2000000;
+
+
+        let minValue =
+            Number(minInput.value) || 0;
+
+
+        if (value < minValue)
+            value = minValue;
+
+
+        this.value = value;
+
+        maxRange.value = value;
+
+        maxLabel.textContent =
+            formatPrice(value);
+
+        updateTrack();
+    });
+
+
+    // =========================
+    // KHỞI TẠO
+    // =========================
+
+    minLabel.textContent =
+        formatPrice(minRange.value);
+
+    maxLabel.textContent =
+        formatPrice(maxRange.value);
+
+    updateTrack();
 
 </script>
+<script>
+    // ==========================================
+    // YÊU THÍCH SẢN PHẨM - AJAX
+    // ==========================================
+
+    document.querySelectorAll(".favorite-form")
+        .forEach(function (form) {
+
+            const button =
+                form.querySelector(".favorite-btn");
+
+            const icon =
+                button.querySelector("i");
+
+            const productId =
+                form.dataset.productId;
+
+            const token =
+                form.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                ).value;
+
+            button.addEventListener("click", async function () {
+
+                if (button.disabled) {
+                    return;
+                }
+
+                button.disabled = true;
+
+                try {
+
+                    const formData = new FormData();
+
+                    formData.append(
+                        "productId",
+                        productId
+                    );
+
+                    formData.append(
+                        "__RequestVerificationToken",
+                        token
+                    );
+
+                    const response = await fetch(
+                        "/Favorite/ToggleAjax",
+                        {
+                            method: "POST",
+                            body: formData,
+                            headers: {
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            }
+                        }
+                    );
+
+                    const data = await response.json();
+
+                    if (data.requireLogin) {
+
+                        window.location.href =
+                            "/Identity/Account/Login?returnUrl="
+                            + encodeURIComponent(
+                                window.location.pathname +
+                                window.location.search
+                            );
+
+                        return;
+                    }
+
+                    if (!data.success) {
+                        throw new Error(
+                            "Không thể cập nhật yêu thích."
+                        );
+                    }
+
+                    // ==============================
+                    // ĐÃ YÊU THÍCH
+                    // ==============================
+
+                    if (data.isFavorite) {
+
+                        button.classList.add("active");
+
+                        icon.classList.remove("bi-heart");
+
+                        icon.classList.add("bi-heart-fill");
+
+                        button.title =
+                            "Bỏ yêu thích";
+                    }
+
+                    // ==============================
+                    // BỎ YÊU THÍCH
+                    // ==============================
+
+                    else {
+
+                        button.classList.remove("active");
+
+                        icon.classList.remove(
+                            "bi-heart-fill"
+                        );
+
+                        icon.classList.add("bi-heart");
+
+                        button.title =
+                            "Thêm vào yêu thích";
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Favorite error:",
+                        error
+                    );
+
+                    alert(
+                        "Có lỗi xảy ra khi cập nhật yêu thích."
+                    );
+
+                }
+                finally {
+
+                    button.disabled = false;
+
+                }
+
+            });
+
+        });
+</script>
+<style>
+
+    /* =========================
+           PRODUCT CARD
+           ========================= */
+
+    .product-card {
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+
+    /* =========================
+           PRODUCT IMAGE
+           ========================= */
+
+    .product-image-wrapper {
+        position: relative;
+    }
+
+
+    .product-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        display: block;
+    }
+
+
+    /* =========================
+           FAVORITE FORM
+           ========================= */
+
+    .favorite-form {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 20;
+        margin: 0;
+    }
+
+    .favorite-btn {
+        width: 58px;
+        height: 58px;
+        padding: 0;
+        border-radius: 50%;
+        border: 2px solid #222;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        text-decoration: none;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+        transition: all 0.25s ease;
+    }
+
+        .favorite-btn i {
+            font-size: 28px;
+            color: #222;
+            transition: all 0.25s ease;
+        }
+
+        /* ĐÃ YÊU THÍCH */
+        .favorite-btn.active {
+            border-color: #ff416c;
+        }
+
+            .favorite-btn.active i {
+                color: #ff416c;
+            }
+
+        /* HOVER */
+        .favorite-btn:hover {
+            transform: scale(1.08);
+        }
+
+        /* CLICK */
+        .favorite-btn:active {
+            transform: scale(0.92);
+        }
+
+
+    /* =========================
+           PRODUCT NAME
+           ========================= */
+
+    .product-name {
+        min-height: 42px;
+    }
+
+
+    /* =========================
+           PRICE SLIDER
+           ========================= */
+
+    .price-slider-container {
+        position: relative;
+        height: 30px;
+        margin-top: 10px;
+    }
+
+
+    .price-slider-track {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 5px;
+        border-radius: 5px;
+        transform: translateY(-50%);
+        background: #dbeafe;
+    }
+
+
+    .price-range {
+        position: absolute;
+        width: 100%;
+        pointer-events: none;
+        appearance: none;
+        background: none;
+        top: 50%;
+        transform: translateY(-50%);
+        margin: 0;
+    }
+
+
+        .price-range::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0d6efd;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+
+        .price-range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #0d6efd;
+            cursor: pointer;
+            pointer-events: auto;
+            border: none;
+        }
+
+</style>

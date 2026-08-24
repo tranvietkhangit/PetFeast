@@ -1,0 +1,201 @@
+﻿@model PetFeast.Models.Identity.ApplicationUser
+
+@{
+    ViewData["Title"] = "Tài khoản";
+}
+
+<div class="container py-5">
+
+    <div class="row g-4">
+
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-body text-center p-4">
+
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-primary text-white
+                                    d-flex align-items-center justify-content-center mx-auto"
+                             style="width:90px;height:90px;font-size:36px;">
+
+                            <i class="bi bi-person-fill"></i>
+
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold mb-1">
+                        @(Model.FullName ?? "Khách hàng")
+                    </h5>
+
+                    <small class="text-muted">
+                        @Model.Email
+                    </small>
+
+                </div>
+
+                <div class="list-group list-group-flush">
+
+                    <a asp-controller="Account"
+                       asp-action="Index"
+                       class="list-group-item list-group-item-action active">
+
+                        <i class="bi bi-person me-2"></i>
+                        Thông tin tài khoản
+
+                    </a>
+                    <a asp-controller="Address"
+                       asp-action="Index"
+                       class="list-group-item list-group-item-action">
+
+                        <i class="bi bi-geo-alt me-2"></i>
+                        Địa chỉ của tôi
+
+                    </a>
+                    <a asp-controller="Order"
+                       asp-action="UserOrderList"
+                       class="list-group-item list-group-item-action">
+
+                        <i class="bi bi-box-seam me-2"></i>
+                        Đơn hàng của tôi
+
+                    </a>
+
+                    <a href="#"
+                       class="list-group-item list-group-item-action">
+
+                        <i class="bi bi-coin me-2"></i>
+                        Điểm tích lũy
+
+                        <span class="badge bg-warning text-dark float-end">
+                            @Model.Points
+                        </span>
+
+                    </a>
+
+                    <a asp-controller="Account"
+                       asp-action="ChangePassword"
+                       class="list-group-item list-group-item-action">
+
+                        <i class="bi bi-key me-2"></i>
+                        Đổi mật khẩu
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- CONTENT -->
+        <div class="col-lg-9">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-body p-4 p-md-5">
+
+                    <h4 class="fw-bold text-primary mb-1">
+                        Thông tin tài khoản
+                    </h4>
+
+                    <p class="text-muted mb-4">
+                        Quản lý thông tin cá nhân của bạn
+                    </p>
+
+
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success">
+                            <i class="bi bi-check-circle me-2"></i>
+                            @TempData["Success"]
+                        </div>
+                    }
+
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-circle me-2"></i>
+                            @TempData["Error"]
+                        </div>
+                    }
+
+
+                    <form asp-action="UpdateProfile"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+
+                        <!-- HỌ TÊN -->
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Họ và tên
+                            </label>
+
+                            <input type="text"
+                                   name="fullName"
+                                   value="@Model.FullName"
+                                   class="form-control"
+                                   placeholder="Nhập họ và tên" />
+
+                        </div>
+
+
+                        <!-- EMAIL -->
+                        <div class="mb-3">
+
+                            <label class="form-label fw-semibold">
+                                Email
+                            </label>
+
+                            <input type="email"
+                                   value="@Model.Email"
+                                   class="form-control bg-light"
+                                   readonly />
+
+                            <small class="text-muted">
+                                Email được quản lý bởi tài khoản đăng nhập.
+                            </small>
+
+                        </div>
+
+
+                        <!-- PHONE -->
+                        <div class="mb-4">
+
+                            <label class="form-label fw-semibold">
+                                Số điện thoại
+                            </label>
+
+                            <input type="text"
+                                   name="phoneNumber"
+                                   value="@Model.PhoneNumber"
+                                   class="form-control"
+                                   placeholder="Nhập số điện thoại" />
+
+                        </div>
+
+
+                        <button type="submit"
+                                class="btn btn-primary px-4">
+
+                            <i class="bi bi-save me-2"></i>
+                            Lưu thay đổi
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

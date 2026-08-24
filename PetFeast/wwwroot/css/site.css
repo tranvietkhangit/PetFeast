@@ -614,30 +614,66 @@ h2 {
         color: white;
     }
 
-.price-slider {
-    width: 100%;
-    height: 8px;
-    border-radius: 10px;
-    appearance: none;
-    outline: none;
-    background: linear-gradient( to right, #0d6efd 0%, #0d6efd 0%, #dbeafe 0%, #dbeafe 100% );
+.price-slider-container {
+    position: relative;
+    height: 30px;
+    margin-top: 15px;
 }
 
-    .price-slider::-webkit-slider-thumb {
+.price-slider-track {
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    border-radius: 5px;
+    background: #dbeafe;
+}
+
+.price-range {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 30px;
+    appearance: none;
+    background: transparent;
+    pointer-events: none;
+    margin: 0;
+}
+
+    .price-range::-webkit-slider-runnable-track {
+        height: 6px;
+        background: transparent;
+    }
+
+    .price-range::-webkit-slider-thumb {
         appearance: none;
         width: 18px;
         height: 18px;
-        background: #0d6efd;
+        margin-top: -6px;
         border-radius: 50%;
+        background: #0d6efd;
+        border: 2px solid white;
+        box-shadow: 0 0 0 1px #0d6efd;
         cursor: pointer;
+        pointer-events: auto;
     }
 
-    .price-slider::-moz-range-thumb {
+    .price-range::-moz-range-track {
+        height: 6px;
+        background: transparent;
+    }
+
+    .price-range::-moz-range-thumb {
         width: 18px;
         height: 18px;
-        background: #0d6efd;
         border-radius: 50%;
+        background: #0d6efd;
+        border: 2px solid white;
+        box-shadow: 0 0 0 1px #0d6efd;
         cursor: pointer;
+        pointer-events: auto;
     }
 
 .card img {

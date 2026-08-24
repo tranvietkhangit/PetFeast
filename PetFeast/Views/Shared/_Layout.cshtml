@@ -1,10 +1,4 @@
-﻿@inject IHttpContextAccessor HttpContextAccessor
-
-@{
-    var cartCount =
-        HttpContextAccessor?.HttpContext?.Session
-        .GetInt32("CartCount") ?? 0;
-}
+﻿
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -71,6 +65,7 @@
 
                             <button type="submit"
                                     class="btn btn-primary">
+                                <i class="bi bi-search"></i>
                                 Tìm kiếm
                             </button>
 
@@ -97,7 +92,9 @@
 
                                 <i class="bi bi-cart3"></i>
 
-                                <span>(@cartCount)</span>
+                                <span>
+                                    (@await Component.InvokeAsync("CartCount"))
+                                </span>
 
                             </a>
 
@@ -127,7 +124,7 @@
                     <a class="nav-link"
                        asp-controller="Home"
                        asp-action="Index">
-
+                        <i class="bi bi-house"></i>
                         Trang chủ
 
                     </a>
@@ -141,7 +138,7 @@
                        href="#"
                        role="button"
                        data-bs-toggle="dropdown">
-
+                        <i class="bi bi-box-seam"></i>
                         Sản phẩm
 
                     </a>
@@ -201,7 +198,7 @@
                     <a class="nav-link"
                        asp-controller="Home"
                        asp-action="Discount">
-
+                        <i class="bi bi-tag"></i>
                         Khuyến mãi
 
                     </a>
@@ -212,7 +209,7 @@
                     <a class="nav-link"
                        asp-controller="Home"
                        asp-action="AboutUs">
-
+                        <i class="bi bi-info-circle"></i>
                         Về chúng tôi
 
                     </a>
@@ -224,7 +221,7 @@
                     <a class="nav-link"
                        asp-controller="Home"
                        asp-action="Contact">
-
+                        <i class="bi bi-telephone"></i>
                         Liên hệ
 
                     </a>

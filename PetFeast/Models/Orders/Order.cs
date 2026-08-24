@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using PetFeast.Models.Identity;
+using PetFeast.Models.Points;
+using System.ComponentModel.DataAnnotations;
 
 namespace PetFeast.Models.Orders
 {
@@ -18,11 +20,16 @@ namespace PetFeast.Models.Orders
         public string? Note { get; set; }
         public decimal ShippingFee { get; set; }
         public decimal TotalAmount { get; set; }
+        public int UsedPoints { get; set; } = 0;
 
+        public decimal PointDiscount { get; set; } = 0;
         public DateTime OrderDate { get; set; } = DateTime.Now;
 
         public List<OrderDetail>? OrderDetails { get; set; }
         public string? UserId { get; set; }
         public string Status { get; set; } = "Chờ xác nhận";
+        public ApplicationUser? User { get; set; }
+
+        public List<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
     }
 }
