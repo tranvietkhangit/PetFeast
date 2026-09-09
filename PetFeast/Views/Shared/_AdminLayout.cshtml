@@ -67,7 +67,14 @@
 
 				</a>
 			</li>
-
+			<li>
+				<a asp-controller="Admin"
+				   asp-action="VoucherList"
+				   class="nav-link">
+					<i class="bi bi-ticket-perforated me-2"></i>
+					Quản lý Voucher
+				</a>
+			</li>
 			<li>
 
 				<form asp-area="Identity"
@@ -104,6 +111,8 @@
 		</div>
 
 	</div>
+
+	@await RenderSectionAsync("Scripts", required: false)
 
 </body>
 </html>

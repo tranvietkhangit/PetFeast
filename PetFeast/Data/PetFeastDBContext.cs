@@ -6,6 +6,7 @@ using PetFeast.Models.Orders;
 using PetFeast.Models.Points;
 using PetFeast.Models.Products;
 using PetFeast.Models.ShoppingCart;
+using PetFeast.Models.Voucher;
 using System.Reflection.Emit;
 namespace PetFeast.Data
 {
@@ -49,10 +50,24 @@ namespace PetFeast.Data
             builder.Entity<Order>()
     .Property(o => o.PointDiscount)
     .HasPrecision(18, 2);
+            builder.Entity<UserVoucher>()
+    .HasOne(x => x.User)
+    .WithMany(x => x.UserVouchers)
+    .HasForeignKey(x => x.UserId)
+    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserVoucher>()
+                .HasOne(x => x.Voucher)
+                .WithMany(x => x.UserVouchers)
+                .HasForeignKey(x => x.VoucherId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
         public DbSet<PointTransaction> PointTransactions { get; set; }
         public DbSet<Cart> Carts { get; set; }
         public DbSet<CartItem> CartItems { get; set; }
         public DbSet<UserAddress> UserAddresses { get; set; }
+        public DbSet<Voucher> Vouchers { get; set; }
+
+        public DbSet<UserVoucher> UserVouchers { get; set; }
     }
 }

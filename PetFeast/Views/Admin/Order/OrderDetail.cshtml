@@ -5,6 +5,25 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
+<div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+
+    <div>
+        <h4 class="fw-bold mb-0">
+            Chi tiết đơn hàng #@Model.OrderId
+        </h4>
+        <small class="text-muted">
+            Thông tin chi tiết đơn hàng
+        </small>
+    </div>
+
+    <a asp-controller="Admin"
+       asp-action="OrderList"
+       class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>
+        Quay lại đơn hàng
+    </a>
+
+</div>
 
 <div class="row mt-4">
 

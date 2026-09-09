@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetFeast.Data;
 
@@ -11,9 +12,11 @@ using PetFeast.Data;
 namespace PetFeast.Migrations
 {
     [DbContext(typeof(PetFeastDBContext))]
-    partial class PetFeastDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260827012806_AddPaymentMethod")]
+    partial class AddPaymentMethod
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -349,12 +352,6 @@ namespace PetFeast.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int?>("UserVoucherId")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("VoucherDiscount")
-                        .HasColumnType("decimal(18,2)");
-
                     b.HasKey("OrderId");
 
                     b.HasIndex("UserId");
@@ -558,82 +555,6 @@ namespace PetFeast.Migrations
                     b.ToTable("CartItems");
                 });
 
-            modelBuilder.Entity("PetFeast.Models.Voucher.UserVoucher", b =>
-                {
-                    b.Property<int>("UserVoucherId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UserVoucherId"));
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("ReceivedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("UsedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("VoucherCode")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("VoucherId")
-                        .HasColumnType("int");
-
-                    b.HasKey("UserVoucherId");
-
-                    b.HasIndex("UserId");
-
-                    b.HasIndex("VoucherId");
-
-                    b.ToTable("UserVouchers");
-                });
-
-            modelBuilder.Entity("PetFeast.Models.Voucher.Voucher", b =>
-                {
-                    b.Property<int>("VoucherId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VoucherId"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<DateTime>("ExpiryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("MinimumOrderAmount")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("RequiredPoints")
-                        .HasColumnType("int");
-
-                    b.HasKey("VoucherId");
-
-                    b.ToTable("Vouchers");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -801,32 +722,11 @@ namespace PetFeast.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("PetFeast.Models.Voucher.UserVoucher", b =>
-                {
-                    b.HasOne("PetFeast.Models.Identity.ApplicationUser", "User")
-                        .WithMany("UserVouchers")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PetFeast.Models.Voucher.Voucher", "Voucher")
-                        .WithMany("UserVouchers")
-                        .HasForeignKey("VoucherId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("User");
-
-                    b.Navigation("Voucher");
-                });
-
             modelBuilder.Entity("PetFeast.Models.Identity.ApplicationUser", b =>
                 {
                     b.Navigation("PointTransactions");
 
                     b.Navigation("UserAddresses");
-
-                    b.Navigation("UserVouchers");
                 });
 
             modelBuilder.Entity("PetFeast.Models.Orders.Order", b =>
@@ -844,11 +744,6 @@ namespace PetFeast.Migrations
             modelBuilder.Entity("PetFeast.Models.ShoppingCart.Cart", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("PetFeast.Models.Voucher.Voucher", b =>
-                {
-                    b.Navigation("UserVouchers");
                 });
 #pragma warning restore 612, 618
         }

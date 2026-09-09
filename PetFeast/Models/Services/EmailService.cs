@@ -7,21 +7,32 @@ namespace PetFeast.Models.Services
     {
         private readonly IConfiguration _configuration;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(
+            IConfiguration configuration)
         {
             _configuration = configuration;
         }
 
-        public async Task SendResetPasswordEmailAsync(
-            string email,
-            string resetLink)
-        {
-            var smtpHost = _configuration["EmailSettings:SmtpHost"];
-            var smtpPort = int.Parse(
-                _configuration["EmailSettings:SmtpPort"] ?? "587");
+        // ==========================================
+        // GỬI OTP ĐẶT LẠI MẬT KHẨU
+        // ==========================================
 
-            var smtpEmail = _configuration["EmailSettings:Email"];
-            var smtpPassword = _configuration["EmailSettings:Password"];
+        public async Task SendResetOtpEmailAsync(
+    string email,
+    string otp)
+        {
+            var smtpHost =
+                _configuration["EmailSettings:SmtpHost"];
+
+            var smtpPort =
+                int.Parse(
+                    _configuration["EmailSettings:SmtpPort"] ?? "587");
+
+            var smtpEmail =
+                _configuration["EmailSettings:Email"];
+
+            var smtpPassword =
+                _configuration["EmailSettings:Password"];
 
             using var message = new MailMessage();
 
@@ -31,14 +42,15 @@ namespace PetFeast.Models.Services
 
             message.To.Add(email);
 
-            message.Subject = "PetFeast - Đặt lại mật khẩu";
+            message.Subject =
+                "PetFeast - Mã OTP đặt lại mật khẩu";
 
             message.IsBodyHtml = true;
 
             message.Body = $@"
 <!DOCTYPE html>
 <html>
-<body style='font-family: Arial, sans-serif;'>
+<body style='font-family:Arial,sans-serif;'>
 
     <h2 style='color:#0d6efd;'>
         PetFeast
@@ -47,35 +59,42 @@ namespace PetFeast.Models.Services
     <p>Xin chào,</p>
 
     <p>
-        Chúng tôi nhận được yêu cầu đặt lại mật khẩu
-        cho tài khoản PetFeast của bạn.
+        Bạn vừa yêu cầu đặt lại mật khẩu
+        cho tài khoản PetFeast.
     </p>
 
     <p>
-        Nhấn vào nút bên dưới để đặt lại mật khẩu:
+        Mã OTP của bạn là:
+    </p>
+
+    <div style='
+        font-size:32px;
+        font-weight:bold;
+        letter-spacing:8px;
+        color:#0d6efd;
+        margin:20px 0;
+    '>
+        {otp}
+    </div>
+
+    <p>
+        Mã OTP có hiệu lực trong
+        <strong>5 phút</strong>.
     </p>
 
     <p>
-        <a href='{resetLink}'
-           style='
-               display:inline-block;
-               padding:12px 20px;
-               background:#0d6efd;
-               color:white;
-               text-decoration:none;
-               border-radius:6px;
-           '>
-            Đặt lại mật khẩu
-        </a>
+        Không chia sẻ mã OTP này cho bất kỳ ai.
     </p>
 
     <p>
         Nếu bạn không yêu cầu đặt lại mật khẩu,
-        bạn có thể bỏ qua email này.
+        hãy bỏ qua email này.
     </p>
 
+    <hr>
+
     <p>
-        Trân trọng,<br/>
+        Trân trọng,<br>
         <strong>PetFeast</strong>
     </p>
 
@@ -88,9 +107,10 @@ namespace PetFeast.Models.Services
 
             smtp.EnableSsl = true;
 
-            smtp.Credentials = new NetworkCredential(
-                smtpEmail,
-                smtpPassword);
+            smtp.Credentials =
+                new NetworkCredential(
+                    smtpEmail,
+                    smtpPassword);
 
             await smtp.SendMailAsync(message);
         }

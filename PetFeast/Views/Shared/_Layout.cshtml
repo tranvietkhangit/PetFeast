@@ -88,12 +88,12 @@
 
                             <a asp-controller="ShoppingCart"
                                asp-action="Index"
-                               class="btn btn-primary cart-icon">
+                               class="cart-header">
 
                                 <i class="bi bi-cart3"></i>
 
-                                <span>
-                                    (@await Component.InvokeAsync("CartCount"))
+                                <span id="cartCount" class="cart-badge">
+                                    @await Component.InvokeAsync("CartCount")
                                 </span>
 
                             </a>
@@ -215,6 +215,19 @@
                     </a>
 
                 </li>
+                <!-- Voucher -->
+                <li class="nav-item">
+
+                    <a asp-controller="Voucher"
+                       asp-action="Index"
+                       class="nav-link">
+
+                        <i class="bi bi-ticket-perforated"></i>
+                        Voucher
+
+                    </a>
+
+                </li>
                 <!-- Liên hệ -->
                 <li class="nav-item">
 
@@ -227,6 +240,8 @@
                     </a>
 
                 </li>
+                
+
 
             </ul>
 
@@ -269,22 +284,22 @@
                 </div>
 
 
-                <!-- Freeship -->
+                <!-- Liên hệ -->
                 <div class="col-md-4 service-item">
 
                     <div class="service-icon">
 
-                        <i class="bi bi-box-seam"></i>
+                        <i class="bi bi-headset me-1"></i>
 
                     </div>
 
 
                     <h5>
-                        Freeship toàn quốc
+                        Tư vấn trực tuyến
                     </h5>
 
                     <p>
-                        Cho đơn hàng từ 199.000đ
+                        Hỗ trợ 24/7
                     </p>
 
                 </div>
@@ -555,3 +570,69 @@
 
 </body>
 </html>
+<style>
+    .logo-img {
+        width: 150px;
+        height: auto;
+        object-fit: contain;
+    }
+    /* =========================================
+       HEADER CART
+    ========================================= */
+
+    .cart-header {
+        position: relative;
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef5ff;
+        color: #0d6efd !important;
+        border: 1px solid #d7e7ff;
+        border-radius: 12px;
+        text-decoration: none !important;
+        transition: all 0.25s ease;
+    }
+
+        .cart-header > i {
+            font-size: 26px;
+            line-height: 1;
+        }
+
+        /* Hover */
+        .cart-header:hover {
+            background: #0d6efd;
+            color: #fff !important;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.20);
+        }
+
+    /* Số lượng */
+    .cart-badge {
+        position: absolute;
+        top: -7px;
+        right: -7px;
+        min-width: 21px;
+        height: 21px;
+        padding: 0 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #dc3545;
+        color: #fff;
+        border: 2px solid #fff;
+        border-radius: 50%;
+        font-size: 10px;
+        font-weight: 700;
+        line-height: 1;
+    }
+
+    .cart-header {
+        transition: transform 0.15s ease;
+    }
+
+        .cart-header:active {
+            transform: scale(0.92);
+        }
+</style>

@@ -51,15 +51,19 @@ namespace PetFeast.Controllers
         // ==============================
 
         [HttpGet]
-        public IActionResult Create()
+        public IActionResult Create(bool fromCheckout = false)
         {
+            ViewBag.FromCheckout = fromCheckout;
+
             return View(new UserAddress());
         }
 
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(UserAddress address)
+        public async Task<IActionResult> Create(
+    UserAddress address,
+    bool fromCheckout = false)
         {
             var user = await _userManager.GetUserAsync(User);
 
@@ -67,20 +71,21 @@ namespace PetFeast.Controllers
                 return Challenge();
 
             if (!ModelState.IsValid)
+            {
+                ViewBag.FromCheckout = fromCheckout;
                 return View(address);
+            }
 
             address.UserId = user.Id;
 
             var hasAddress = await _context.UserAddresses
                 .AnyAsync(x => x.UserId == user.Id);
 
-            // Địa chỉ đầu tiên luôn là mặc định
             if (!hasAddress)
             {
                 address.IsDefault = true;
             }
 
-            // Nếu chọn làm mặc định
             if (address.IsDefault)
             {
                 var oldDefaults = await _context.UserAddresses
@@ -99,8 +104,14 @@ namespace PetFeast.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] =
-                "Thêm địa chỉ thành công.";
+            TempData["Success"] = "Thêm địa chỉ thành công.";
+
+            if (fromCheckout)
+            {
+                return RedirectToAction(
+                    "CheckOut",
+                    "Order");
+            }
 
             return RedirectToAction(nameof(Index));
         }

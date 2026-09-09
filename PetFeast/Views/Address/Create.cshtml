@@ -30,6 +30,10 @@
 
                 @Html.AntiForgeryToken()
 
+                <input type="hidden"
+                       name="fromCheckout"
+                       value="@((ViewBag.FromCheckout ?? false).ToString().ToLower())" />
+
                 <div asp-validation-summary="ModelOnly"
                      class="text-danger mb-3">
                 </div>
@@ -156,6 +160,7 @@
 
                     <a asp-controller="Address"
                        asp-action="Index"
+                       asp-route-fromCheckout="@(ViewBag.FromCheckout ?? false)"
                        class="btn btn-light border">
                         Hủy
                     </a>

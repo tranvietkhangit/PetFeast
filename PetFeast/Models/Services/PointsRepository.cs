@@ -41,20 +41,28 @@ namespace PetFeast.Models.Services
             if (user == null)
                 return 0;
 
-            // Mỗi đơn hàng hoàn thành = 1 điểm
-            int points = 1;
+            // ==========================================
+            // 1 SẢN PHẨM = 1 ĐIỂM
+            // ==========================================
 
-            // Cộng điểm cho User
+            int points = order.OrderDetails?
+                .Sum(x => x.Quantity) ?? 0;
+
+            if (points <= 0)
+                return 0;
+
+            // Cộng điểm
             user.Points += points;
 
-            // Tạo lịch sử giao dịch điểm
+            // Lưu lịch sử
             var transaction = new PointTransaction
             {
                 UserId = user.Id,
                 Points = points,
                 Type = "Earn",
                 OrderId = order.OrderId,
-                Description = $"Tích {points} điểm từ đơn hàng #{order.OrderId}",
+                Description =
+                    $"Tích {points} điểm từ đơn hàng #{order.OrderId}",
                 CreatedAt = DateTime.Now
             };
 

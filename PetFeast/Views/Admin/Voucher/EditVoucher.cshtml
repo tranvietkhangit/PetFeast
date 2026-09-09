@@ -1,0 +1,226 @@
+﻿@model PetFeast.Models.Voucher.Voucher
+
+@{
+    ViewData["Title"] = "Chỉnh sửa Voucher";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold">
+                <i class="bi bi-pencil-square me-2"></i>
+                Chỉnh sửa Voucher
+            </h2>
+
+            <p class="text-muted mb-0">
+                Cập nhật thông tin voucher
+            </p>
+        </div>
+
+        <a asp-controller="Admin"
+           asp-action="VoucherList"
+           class="btn btn-secondary">
+
+            <i class="bi bi-arrow-left me-1"></i>
+            Quay lại
+
+        </a>
+
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-body p-4">
+
+            <form asp-controller="Admin"
+                  asp-action="EditVoucher"
+                  asp-route-id="@Model.VoucherId"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       asp-for="VoucherId" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3"></div>
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+
+                        <label asp-for="Name"
+                               class="form-label fw-semibold">
+                            Tên Voucher
+                        </label>
+
+                        <input asp-for="Name"
+                               class="form-control" />
+
+                        <span asp-validation-for="Name"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="Code"
+                               class="form-label fw-semibold">
+                            Mã Voucher
+                        </label>
+
+                        <input asp-for="Code"
+                               class="form-control text-uppercase" />
+
+                        <span asp-validation-for="Code"
+                              class="text-danger"></span>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="DiscountAmount"
+                               class="form-label fw-semibold">
+                            Số tiền giảm
+                        </label>
+
+                        <div class="input-group">
+
+                            <input asp-for="DiscountAmount"
+                                   type="number"
+                                   min="0"
+                                   class="form-control" />
+
+                            <span class="input-group-text">
+                                đ
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="RequiredPoints"
+                               class="form-label fw-semibold">
+                            Điểm cần để đổi
+                        </label>
+
+                        <div class="input-group">
+
+                            <input asp-for="RequiredPoints"
+                                   type="number"
+                                   min="0"
+                                   class="form-control" />
+
+                            <span class="input-group-text">
+                                điểm
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="MinimumOrderAmount"
+                               class="form-label fw-semibold">
+                            Đơn hàng tối thiểu
+                        </label>
+
+                        <div class="input-group">
+
+                            <input asp-for="MinimumOrderAmount"
+                                   type="number"
+                                   min="0"
+                                   class="form-control" />
+
+                            <span class="input-group-text">
+                                đ
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="Quantity"
+                               class="form-label fw-semibold">
+                            Số lượng Voucher
+                        </label>
+
+                        <input asp-for="Quantity"
+                               type="number"
+                               min="0"
+                               class="form-control" />
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <label asp-for="ExpiryDate"
+                               class="form-label fw-semibold">
+                            Ngày hết hạn
+                        </label>
+
+                        <input asp-for="ExpiryDate"
+                               type="date"
+                               class="form-control" />
+
+                    </div>
+
+                    <div class="col-md-6 d-flex align-items-end">
+
+                        <div class="form-check mb-2">
+
+                            <input asp-for="IsActive"
+                                   class="form-check-input" />
+
+                            <label asp-for="IsActive"
+                                   class="form-check-label">
+                                Voucher đang hoạt động
+                            </label>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <hr class="my-4" />
+
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a asp-controller="Admin"
+                       asp-action="VoucherList"
+                       class="btn btn-secondary">
+                        Hủy
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        <i class="bi bi-save me-1"></i>
+                        Lưu thay đổi
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

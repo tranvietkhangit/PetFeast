@@ -3,11 +3,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetFeast.Data;
+using PetFeast.Models.Identity;
 using PetFeast.Models.Interfaces;
 using PetFeast.Models.Orders;
-using System.Security.Claims;
 using PetFeast.Models.Points;
-using PetFeast.Models.Identity;
+using PetFeast.Models.Voucher;
+using System.Security.Claims;
 namespace PetFeast.Controllers
 {
     public class OrderController : Controller
@@ -76,6 +77,22 @@ namespace PetFeast.Controllers
             // Địa chỉ mặc định
             ViewBag.DefaultAddress = defaultAddress;
 
+            // ==========================
+            // LẤY VOUCHER CỦA USER
+            // ==========================
+
+            var userVouchers = await _context.UserVouchers
+                .Include(x => x.Voucher)
+                .Where(x =>
+                    x.UserId == user.Id &&
+                    !x.IsUsed &&
+                    x.Voucher.IsActive &&
+                    x.Voucher.ExpiryDate >= DateTime.Now)
+                .OrderByDescending(x => x.ReceivedDate)
+                .ToListAsync();
+
+            ViewBag.UserVouchers = userVouchers;
+
             return View(cart);
         }
         // LƯU ĐƠN HÀNG
@@ -84,8 +101,13 @@ namespace PetFeast.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CheckOut(
     Order order,
-    int usedPoints = 0)
+    int usedPoints = 0,
+    int? userVoucherId = null)
         {
+            // =========================================================
+            // 1. LẤY CÁC SẢN PHẨM ĐƯỢC CHỌN TRONG GIỎ
+            // =========================================================
+
             var cart = _cartRepo.GetCart()
                 .Where(x => x.IsSelected)
                 .ToList();
@@ -97,7 +119,10 @@ namespace PetFeast.Controllers
                     "ShoppingCart");
             }
 
-            // Lấy user hiện tại
+            // =========================================================
+            // 2. LẤY USER HIỆN TẠI
+            // =========================================================
+
             var user = await _userManager.GetUserAsync(User);
 
             if (user == null)
@@ -105,9 +130,9 @@ namespace PetFeast.Controllers
                 return Unauthorized();
             }
 
-            // ==========================
-            // LẤY ĐỊA CHỈ MẶC ĐỊNH
-            // ==========================
+            // =========================================================
+            // 3. LẤY ĐỊA CHỈ MẶC ĐỊNH
+            // =========================================================
 
             var defaultAddress = await _context.UserAddresses
                 .FirstOrDefaultAsync(x =>
@@ -125,10 +150,9 @@ namespace PetFeast.Controllers
                     "Address");
             }
 
-
-            // ==========================
-            // THÔNG TIN KHÁCH HÀNG
-            // ==========================
+            // =========================================================
+            // 4. THÔNG TIN KHÁCH HÀNG
+            // =========================================================
 
             if (order.DeliveryMethod == "Ship")
             {
@@ -155,18 +179,16 @@ namespace PetFeast.Controllers
                     "PetFeast - Đà Lạt, Lâm Đồng";
             }
 
+            // =========================================================
+            // 5. KIỂM TRA ĐIỂM
+            // 1 ĐIỂM = 100Đ
+            // =========================================================
 
-            // ==========================
-            // ĐIỂM
-            // ==========================
-
-            // Không cho sử dụng điểm âm
             if (usedPoints < 0)
             {
                 usedPoints = 0;
             }
 
-            // Không cho sử dụng quá số điểm đang có
             if (usedPoints > user.Points)
             {
                 TempData["Error"] =
@@ -175,176 +197,377 @@ namespace PetFeast.Controllers
                 return RedirectToAction(nameof(CheckOut));
             }
 
-
-            // ==========================
-            // TỔNG TIỀN SẢN PHẨM
-            // ==========================
+            // =========================================================
+            // 6. TÍNH TỔNG TIỀN SẢN PHẨM
+            // =========================================================
 
             var productTotal =
                 cart.Sum(x => x.TotalPrice);
 
-
-            // ==========================
-            // PHÍ SHIP
-            // ==========================
+            // =========================================================
+            // 7. PHÍ VẬN CHUYỂN
+            // Ship = 20.000đ
+            // Pickup = 0đ
+            // =========================================================
 
             if (order.DeliveryMethod == "Ship")
             {
-                if (productTotal >= 199000)
-                {
-                    order.ShippingFee = 0;
-                }
-                else
-                {
-                    order.ShippingFee = 20000;
-                }
+                order.ShippingFee = 20000;
             }
             else
             {
                 order.ShippingFee = 0;
             }
 
+            // =========================================================
+            // 8. TỔNG TRƯỚC GIẢM GIÁ
+            // =========================================================
 
-            // ==========================
-            // TỔNG TRƯỚC KHI DÙNG ĐIỂM
-            // ==========================
-
-            var totalBeforePoints =
+            var totalBeforeDiscount =
                 productTotal + order.ShippingFee;
 
-
-            // ==========================
-            // 1 ĐIỂM = 1.000Đ
-            // ==========================
+            // =========================================================
+            // 9. GIẢM GIÁ BẰNG ĐIỂM
+            // 1 POINT = 100Đ
+            // =========================================================
 
             decimal pointDiscount =
-                usedPoints * 1000m;
+                usedPoints * 100m;
 
-
-            // Không cho giảm quá tổng tiền
-            if (pointDiscount > totalBeforePoints)
+            // Không cho điểm giảm vượt quá tổng tiền
+            if (pointDiscount > totalBeforeDiscount)
             {
-                pointDiscount = totalBeforePoints;
+                pointDiscount = totalBeforeDiscount;
 
                 usedPoints =
-                    (int)(pointDiscount / 1000m);
+                    (int)(pointDiscount / 100m);
             }
 
+            // =========================================================
+            // 10. KIỂM TRA VOUCHER
+            // =========================================================
 
-            // ==========================
-            // LƯU ĐIỂM VÀO ORDER
-            // ==========================
+            UserVoucher? userVoucher = null;
 
-            order.UsedPoints = usedPoints;
+            decimal voucherDiscount = 0;
+
+            if (userVoucherId.HasValue)
+            {
+                userVoucher = await _context.UserVouchers
+                    .Include(x => x.Voucher)
+                    .FirstOrDefaultAsync(x =>
+                        x.UserVoucherId == userVoucherId.Value &&
+                        x.UserId == user.Id);
+
+                // Voucher không tồn tại
+                if (userVoucher == null)
+                {
+                    TempData["Error"] =
+                        "Voucher không hợp lệ.";
+
+                    return RedirectToAction(nameof(CheckOut));
+                }
+
+                // Voucher đã sử dụng
+                if (userVoucher.IsUsed)
+                {
+                    TempData["Error"] =
+                        "Voucher này đã được sử dụng.";
+
+                    return RedirectToAction(nameof(CheckOut));
+                }
+
+                // Voucher không hoạt động
+                if (!userVoucher.Voucher.IsActive)
+                {
+                    TempData["Error"] =
+                        "Voucher hiện không khả dụng.";
+
+                    return RedirectToAction(nameof(CheckOut));
+                }
+
+                // Voucher hết hạn
+                if (userVoucher.Voucher.ExpiryDate < DateTime.Now)
+                {
+                    TempData["Error"] =
+                        "Voucher này đã hết hạn.";
+
+                    return RedirectToAction(nameof(CheckOut));
+                }
+
+                // Kiểm tra giá trị đơn hàng tối thiểu
+                if (productTotal <
+                    userVoucher.Voucher.MinimumOrderAmount)
+                {
+                    TempData["Error"] =
+                        $"Đơn hàng phải từ " +
+                        $"{userVoucher.Voucher.MinimumOrderAmount:N0}đ " +
+                        $"mới sử dụng được voucher này.";
+
+                    return RedirectToAction(nameof(CheckOut));
+                }
+
+                // Lấy số tiền giảm
+                voucherDiscount =
+                    userVoucher.Voucher.DiscountAmount;
+
+                // Không cho voucher giảm vượt quá
+                // số tiền còn lại sau khi trừ điểm
+                var remainingAfterPoints =
+                    totalBeforeDiscount - pointDiscount;
+
+                if (voucherDiscount > remainingAfterPoints)
+                {
+                    voucherDiscount =
+                        remainingAfterPoints;
+                }
+            }
+
+            // =========================================================
+            // 11. GÁN THÔNG TIN GIẢM GIÁ VÀO ORDER
+            // =========================================================
+
+            order.UsedPoints =
+                usedPoints;
 
             order.PointDiscount =
                 pointDiscount;
 
+            order.UserVoucherId =
+                userVoucher?.UserVoucherId;
 
-            // ==========================
-            // TỔNG THANH TOÁN
-            // ==========================
+            order.VoucherDiscount =
+                voucherDiscount;
+
+            // =========================================================
+            // 12. TÍNH TỔNG THANH TOÁN
+            // =========================================================
 
             order.TotalAmount =
-                totalBeforePoints - pointDiscount;
+                totalBeforeDiscount
+                - pointDiscount
+                - voucherDiscount;
 
-
-            // ==========================
-            // ORDER DETAIL
-            // ==========================
-
-            order.OrderDetails =
-                new List<OrderDetail>();
-
-            foreach (var item in cart)
+            if (order.TotalAmount < 0)
             {
-                var product =
-                    _productRepo.GetById(item.ProductId);
-
-                if (product == null)
-                {
-                    return BadRequest();
-                }
-
-                if (product.Quantity < item.Quantity)
-                {
-                    TempData["Error"] =
-                        $"Sản phẩm {product.ProductName} chỉ còn {product.Quantity} sản phẩm.";
-
-                    return RedirectToAction(
-                        "Index",
-                        "ShoppingCart");
-                }
-
-                product.Quantity -= item.Quantity;
-
-                order.OrderDetails.Add(
-                    new OrderDetail
-                    {
-                        ProductId = item.ProductId,
-                        Quantity = item.Quantity,
-                        Price = item.Price
-                    });
+                order.TotalAmount = 0;
             }
 
+            // =========================================================
+            // 13. BẮT ĐẦU DATABASE TRANSACTION
+            // =========================================================
 
-            // ==========================
-            // USER ID
-            // ==========================
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
 
-            order.UserId =
-                user.Id;
-
-
-            // ==========================
-            // LƯU ORDER
-            // ==========================
-
-            _orderRepo.Add(order);
-
-            _orderRepo.Save();
-
-
-            // ==========================
-            // TRỪ ĐIỂM
-            // ==========================
-
-            if (usedPoints > 0)
+            try
             {
-                user.Points -= usedPoints;
+                // =====================================================
+                // 14. TẠO ORDER DETAIL + ATOMIC TRỪ KHO
+                // =====================================================
 
-                var pointTransaction =
-                    new PointTransaction
+                order.OrderDetails =
+                    new List<OrderDetail>();
+
+                foreach (var item in cart)
+                {
+                    // Lấy sản phẩm mới nhất từ database
+                    var product = await _context.Products
+                        .FirstOrDefaultAsync(p =>
+                            p.ProductId == item.ProductId);
+
+                    if (product == null)
                     {
-                        UserId = user.Id,
-                        Points = -usedPoints,
-                        Type = "Spend",
-                        OrderId = order.OrderId,
-                        Description =
-                            $"Sử dụng {usedPoints} điểm cho đơn hàng #{order.OrderId}",
-                        CreatedAt = DateTime.Now
-                    };
+                        await transaction.RollbackAsync();
 
-                _context.PointTransactions.Add(
-                    pointTransaction);
+                        TempData["Error"] =
+                            "Một sản phẩm trong giỏ hàng " +
+                            "không còn tồn tại.";
+
+                        return RedirectToAction(
+                            "Index",
+                            "ShoppingCart");
+                    }
+
+                    // =================================================
+                    // ATOMIC UPDATE
+                    //
+                    // Chỉ trừ kho nếu database vẫn còn đủ hàng.
+                    //
+                    // Ví dụ:
+                    // Kho = 10
+                    // User A mua 10 -> thành công
+                    // User B mua 10 -> rowsAffected = 0
+                    // =================================================
+
+                    var rowsAffected =
+                        await _context.Database
+                            .ExecuteSqlInterpolatedAsync($@"
+                        UPDATE Products
+                        SET Quantity = Quantity - {item.Quantity}
+                        WHERE ProductId = {item.ProductId}
+                          AND Quantity >= {item.Quantity}
+                    ");
+
+                    // Không trừ được kho
+                    if (rowsAffected == 0)
+                    {
+                        await transaction.RollbackAsync();
+
+                        TempData["Error"] =
+                            $"Sản phẩm {product.ProductName} " +
+                            $"không còn đủ số lượng. " +
+                            $"Vui lòng kiểm tra lại giỏ hàng.";
+
+                        return RedirectToAction(
+                            "Index",
+                            "ShoppingCart");
+                    }
+
+                    // =================================================
+                    // TẠO ORDER DETAIL
+                    // =================================================
+
+                    order.OrderDetails.Add(
+                        new OrderDetail
+                        {
+                            ProductId = item.ProductId,
+                            Quantity = item.Quantity,
+                            Price = item.Price
+                        });
+                }
+
+                // =====================================================
+                // 15. GÁN USER CHO ORDER
+                // =====================================================
+
+                order.UserId =
+                    user.Id;
+
+                // =====================================================
+                // 16. THÊM ORDER VÀO DATABASE
+                // =====================================================
+
+                _context.Orders.Add(order);
+
+                // =====================================================
+                // 17. SAVE LẦN 1
+                //
+                // Mục đích:
+                // SQL Server sinh OrderId
+                // =====================================================
 
                 await _context.SaveChangesAsync();
+
+                // Lúc này:
+                // order.OrderId đã có giá trị thật
+
+                // =====================================================
+                // 18. TRỪ ĐIỂM
+                // =====================================================
+
+                if (usedPoints > 0)
+                {
+                    user.Points -= usedPoints;
+
+                    var pointTransaction =
+                        new PointTransaction
+                        {
+                            UserId = user.Id,
+
+                            Points = -usedPoints,
+
+                            Type = "Spend",
+
+                            OrderId =
+                                order.OrderId,
+
+                            Description =
+                                $"Sử dụng {usedPoints} điểm " +
+                                $"cho đơn hàng #{order.OrderId}",
+
+                            CreatedAt =
+                                DateTime.Now
+                        };
+
+                    _context.PointTransactions.Add(
+                        pointTransaction);
+                }
+
+                // =====================================================
+                // 19. ĐÁNH DẤU VOUCHER ĐÃ SỬ DỤNG
+                // =====================================================
+
+                if (userVoucher != null)
+                {
+                    userVoucher.IsUsed = true;
+
+                    userVoucher.UsedDate =
+                        DateTime.Now;
+                }
+
+                // =====================================================
+                // 20. SAVE LẦN 2
+                // =====================================================
+
+                await _context.SaveChangesAsync();
+
+                // =====================================================
+                // 21. COMMIT
+                // =====================================================
+
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                // Nếu bất kỳ bước nào lỗi:
+                // - Trừ kho
+                // - Tạo Order
+                // - Trừ điểm
+                // - Voucher
+                //
+                // => rollback toàn bộ
+
+                await transaction.RollbackAsync();
+
+                throw;
             }
 
-
-            // ==========================
-            // XÓA GIỎ HÀNG
-            // ==========================
+            // =========================================================
+            // 22. XÓA GIỎ HÀNG
+            // =========================================================
 
             _cartRepo.ClearCart();
 
+            // =========================================================
+            // 23. CHUYỂN SANG TRANG HOÀN TẤT
+            // =========================================================
+
             return RedirectToAction(
-                nameof(CheckOutComplete));
+                nameof(CheckOutComplete),
+                new
+                {
+                    orderId = order.OrderId
+                });
         }
         [Authorize]
-        public IActionResult CheckOutComplete()
+        public async Task<IActionResult> CheckOutComplete(int? orderId)
         {
-            return View();
+            if (orderId == null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(x => x.OrderId == orderId && x.UserId == userId);
+
+            if (order == null)
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            return View(order);
         }
         [Authorize]
         public async Task<IActionResult> UserOrderList()
@@ -369,31 +592,87 @@ namespace PetFeast.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
             var order = await _context.Orders
-                .FirstOrDefaultAsync(x =>
-                    x.OrderId == id &&
-                    x.UserId == userId);
+                .Include(o => o.UserVoucher)
+                .FirstOrDefaultAsync(o =>
+                    o.OrderId == id &&
+                    o.UserId == userId);
 
             if (order == null)
             {
-                return NotFound();
-            }
-
-            // Chỉ được hủy khi đơn chưa được Admin xác nhận
-            if (order.Status != "Chờ xác nhận")
-            {
-                TempData["Error"] =
-                    "Đơn hàng đã được xử lý nên không thể hủy.";
-
+                TempData["Error"] = "Không tìm thấy đơn hàng.";
                 return RedirectToAction(nameof(UserOrderList));
             }
+
+            // Chỉ cho phép hủy những đơn chưa hoàn thành / chưa hủy
+            if (order.Status == "Hoàn thành")
+            {
+                TempData["Error"] = "Đơn hàng đã hoàn thành nên không thể hủy.";
+                return RedirectToAction(nameof(UserOrderList));
+            }
+
+            if (order.Status == "Đã hủy")
+            {
+                TempData["Error"] = "Đơn hàng này đã được hủy trước đó.";
+                return RedirectToAction(nameof(UserOrderList));
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                TempData["Error"] = "Không tìm thấy tài khoản.";
+                return RedirectToAction(nameof(UserOrderList));
+            }
+
+            // ==========================================
+            // 1. HOÀN ĐIỂM
+            // ==========================================
+
+            if (order.UsedPoints > 0)
+            {
+                user.Points += order.UsedPoints;
+
+                var refundPointTransaction = new PointTransaction
+                {
+                    UserId = userId,
+                    Points = order.UsedPoints,
+                    Type = "Refund",
+                    Description = $"Hoàn {order.UsedPoints} điểm do hủy đơn hàng #{order.OrderId}",
+                    OrderId = order.OrderId,
+                    CreatedAt = DateTime.Now
+                };
+
+                _context.PointTransactions.Add(refundPointTransaction);
+            }
+
+            // ==========================================
+            // 2. HOÀN VOUCHER
+            // ==========================================
+
+            if (order.UserVoucherId.HasValue)
+            {
+                var userVoucher = order.UserVoucher;
+
+                if (userVoucher != null)
+                {
+                    userVoucher.IsUsed = false;
+                    userVoucher.UsedDate = null;
+                }
+            }
+
+            // ==========================================
+            // 3. ĐỔI TRẠNG THÁI ĐƠN
+            // ==========================================
 
             order.Status = "Đã hủy";
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] =
-                $"Đã hủy đơn hàng #{order.OrderId} thành công.";
+            TempData["Success"] = "Hủy đơn hàng thành công. Điểm và voucher đã được hoàn lại.";
 
             return RedirectToAction(nameof(UserOrderList));
         }

@@ -5,8 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using PetFeast.Data;
 using PetFeast.Models.Identity;
 using PetFeast.Models.Interfaces;
+using PetFeast.Models.Points;
 using PetFeast.Models.Products;
 using PetFeast.Models.Services;
+using PetFeast.Models.Voucher;
 namespace PetFeast.Controllers
 {
     [Authorize(Roles = "Admin")]
@@ -461,16 +463,81 @@ namespace PetFeast.Controllers
 
             return RedirectToAction(nameof(OrderList));
         }
-        public IActionResult CancelOrder(int id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelOrder(int id)
         {
-            var order = _context.Orders.Find(id);
+            var order = await _context.Orders
+                .Include(o => o.UserVoucher)
+                .FirstOrDefaultAsync(o => o.OrderId == id);
 
-            if (order != null)
+            if (order == null)
             {
-                order.Status = "Đã hủy";
-
-                _context.SaveChanges();
+                TempData["Error"] = "Không tìm thấy đơn hàng.";
+                return RedirectToAction(nameof(OrderList));
             }
+
+            // Không cho hủy đơn đã hoàn thành
+            if (order.Status == "Hoàn thành")
+            {
+                TempData["Error"] = "Đơn hàng đã hoàn thành nên không thể hủy.";
+                return RedirectToAction(nameof(OrderList));
+            }
+
+            // Không cho hủy lại đơn đã hủy
+            if (order.Status == "Đã hủy")
+            {
+                TempData["Error"] = "Đơn hàng này đã được hủy trước đó.";
+                return RedirectToAction(nameof(OrderList));
+            }
+
+            // ==========================================
+            // 1. HOÀN ĐIỂM ĐÃ SỬ DỤNG
+            // ==========================================
+
+            if (!string.IsNullOrEmpty(order.UserId) && order.UsedPoints > 0)
+            {
+                var user = await _userManager.FindByIdAsync(order.UserId);
+
+                if (user != null)
+                {
+                    user.Points += order.UsedPoints;
+
+                    // Lưu lịch sử hoàn điểm
+                    var refundTransaction = new PointTransaction
+                    {
+                        UserId = user.Id,
+                        Points = order.UsedPoints,
+                        Type = "Refund",
+                        Description = $"Hoàn {order.UsedPoints} điểm do hủy đơn hàng #{order.OrderId}",
+                        OrderId = order.OrderId,
+                        CreatedAt = DateTime.Now
+                    };
+
+                    _context.PointTransactions.Add(refundTransaction);
+                }
+            }
+
+            // ==========================================
+            // 2. HOÀN VOUCHER
+            // ==========================================
+
+            if (order.UserVoucherId.HasValue && order.UserVoucher != null)
+            {
+                order.UserVoucher.IsUsed = false;
+                order.UserVoucher.UsedDate = null;
+            }
+
+            // ==========================================
+            // 3. HỦY ĐƠN
+            // ==========================================
+
+            order.Status = "Đã hủy";
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                $"Đã hủy đơn hàng #{order.OrderId}. Điểm và voucher đã được hoàn lại.";
 
             return RedirectToAction(nameof(OrderList));
         }
@@ -486,6 +553,220 @@ namespace PetFeast.Controllers
 
             return View("Product/ProductList", products);
 
+        }
+        // =========================
+        // VOUCHER
+        // =========================
+
+        // DANH SÁCH VOUCHER
+        public async Task<IActionResult> VoucherList()
+        {
+            var vouchers = await _context.Vouchers
+                .Include(v => v.UserVouchers)
+                .OrderByDescending(v => v.VoucherId)
+                .ToListAsync();
+
+            return View("Voucher/VoucherList", vouchers);
+        }
+
+
+        // =========================
+        // THÊM VOUCHER - GET
+        // =========================
+        [HttpGet]
+        public IActionResult CreateVoucher()
+        {
+            return View("Voucher/CreateVoucher");
+        }
+
+
+        // =========================
+        // THÊM VOUCHER - POST
+        // =========================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateVoucher(Voucher voucher)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View("Voucher/CreateVoucher", voucher);
+            }
+
+            // Kiểm tra mã voucher đã tồn tại
+            bool exists = await _context.Vouchers
+                .AnyAsync(v => v.Code == voucher.Code);
+
+            if (exists)
+            {
+                ModelState.AddModelError(
+                    "Code",
+                    "Mã voucher này đã tồn tại.");
+
+                return View("Voucher/CreateVoucher", voucher);
+            }
+
+            _context.Vouchers.Add(voucher);
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Thêm voucher thành công.";
+
+            return RedirectToAction(nameof(VoucherList));
+        }
+
+
+        // =========================
+        // SỬA VOUCHER - GET
+        // =========================
+        [HttpGet]
+        public async Task<IActionResult> EditVoucher(int id)
+        {
+            var voucher = await _context.Vouchers
+                .FirstOrDefaultAsync(v => v.VoucherId == id);
+
+            if (voucher == null)
+                return NotFound();
+
+            return View("Voucher/EditVoucher", voucher);
+        }
+
+
+        // =========================
+        // SỬA VOUCHER - POST
+        // =========================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditVoucher(
+            int id,
+            Voucher voucher)
+        {
+            if (id != voucher.VoucherId)
+                return NotFound();
+
+            if (!ModelState.IsValid)
+            {
+                return View("Voucher/EditVoucher", voucher);
+            }
+
+            // Kiểm tra mã voucher trùng với voucher khác
+            bool exists = await _context.Vouchers
+                .AnyAsync(v =>
+                    v.Code == voucher.Code &&
+                    v.VoucherId != id);
+
+            if (exists)
+            {
+                ModelState.AddModelError(
+                    "Code",
+                    "Mã voucher này đã tồn tại.");
+
+                return View("Voucher/EditVoucher", voucher);
+            }
+
+            var existingVoucher = await _context.Vouchers
+                .FirstOrDefaultAsync(v => v.VoucherId == id);
+
+            if (existingVoucher == null)
+                return NotFound();
+
+            existingVoucher.Name =
+                voucher.Name;
+
+            existingVoucher.Code =
+                voucher.Code;
+
+            existingVoucher.DiscountAmount =
+                voucher.DiscountAmount;
+
+            existingVoucher.RequiredPoints =
+                voucher.RequiredPoints;
+
+            existingVoucher.MinimumOrderAmount =
+                voucher.MinimumOrderAmount;
+
+            existingVoucher.Quantity =
+                voucher.Quantity;
+
+            existingVoucher.ExpiryDate =
+                voucher.ExpiryDate;
+
+            existingVoucher.IsActive =
+                voucher.IsActive;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Cập nhật voucher thành công.";
+
+            return RedirectToAction(nameof(VoucherList));
+        }
+
+
+        // =========================
+        // XÓA VOUCHER
+        // =========================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteVoucher(int id)
+        {
+            var voucher = await _context.Vouchers
+                .Include(v => v.UserVouchers)
+                .FirstOrDefaultAsync(v => v.VoucherId == id);
+
+            if (voucher == null)
+            {
+                TempData["Error"] =
+                    "Voucher không tồn tại.";
+
+                return RedirectToAction(nameof(VoucherList));
+            }
+
+            // Nếu đã có người nhận voucher
+            // thì không cho xóa
+            if (voucher.UserVouchers.Any())
+            {
+                TempData["Error"] =
+                    "Voucher đã được người dùng nhận nên không thể xóa. Hãy tắt voucher thay vì xóa.";
+
+                return RedirectToAction(nameof(VoucherList));
+            }
+
+            _context.Vouchers.Remove(voucher);
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Xóa voucher thành công.";
+
+            return RedirectToAction(nameof(VoucherList));
+        }
+
+
+        // =========================
+        // BẬT / TẮT VOUCHER
+        // =========================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ToggleVoucher(int id)
+        {
+            var voucher = await _context.Vouchers
+                .FirstOrDefaultAsync(v => v.VoucherId == id);
+
+            if (voucher == null)
+                return NotFound();
+
+            voucher.IsActive =
+                !voucher.IsActive;
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                voucher.IsActive
+                    ? "Đã bật voucher."
+                    : "Đã tắt voucher.";
+
+            return RedirectToAction(nameof(VoucherList));
         }
     }
 }

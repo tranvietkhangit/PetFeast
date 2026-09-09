@@ -73,11 +73,19 @@
                             Mật khẩu
                         </label>
 
+                        <div class="input-group">
+                            <input asp-for="Input.Password"
+                                   class="form-control"
+                                   placeholder="Nhập mật khẩu"
+                                   id="passwordInput" />
 
-                        <input asp-for="Input.Password"
-                               class="form-control"
-                               placeholder="Nhập mật khẩu" />
-
+                            <button type="button"
+                                    class="btn btn-outline-secondary"
+                                    id="togglePassword"
+                                    tabindex="-1">
+                                <i class="bi bi-eye" id="passwordIcon"></i>
+                            </button>
+                        </div>
 
                         <span asp-validation-for="Input.Password"
                               class="text-danger">
@@ -94,11 +102,19 @@
                             Nhập lại mật khẩu
                         </label>
 
+                        <div class="input-group">
+                            <input asp-for="Input.ConfirmPassword"
+                                   class="form-control"
+                                   placeholder="Nhập lại mật khẩu"
+                                   id="confirmPasswordInput" />
 
-                        <input asp-for="Input.ConfirmPassword"
-                               class="form-control"
-                               placeholder="Nhập lại mật khẩu" />
-
+                            <button type="button"
+                                    class="btn btn-outline-secondary"
+                                    id="toggleConfirmPassword"
+                                    tabindex="-1">
+                                <i class="bi bi-eye" id="confirmPasswordIcon"></i>
+                            </button>
+                        </div>
 
                         <span asp-validation-for="Input.ConfirmPassword"
                               class="text-danger">
@@ -149,7 +165,57 @@
 </div>
 
 
-
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Mật khẩu
+        const passwordInput = document.getElementById("passwordInput");
+        const togglePassword = document.getElementById("togglePassword");
+        const passwordIcon = document.getElementById("passwordIcon");
+
+        togglePassword.addEventListener("click", function () {
+
+            if (passwordInput.type === "password") {
+
+                passwordInput.type = "text";
+
+                passwordIcon.classList.remove("bi-eye");
+                passwordIcon.classList.add("bi-eye-slash");
+
+            } else {
+
+                passwordInput.type = "password";
+
+                passwordIcon.classList.remove("bi-eye-slash");
+                passwordIcon.classList.add("bi-eye");
+
+            }
+        });
+
+
+        // Nhập lại mật khẩu
+        const confirmPasswordInput = document.getElementById("confirmPasswordInput");
+        const toggleConfirmPassword = document.getElementById("toggleConfirmPassword");
+        const confirmPasswordIcon = document.getElementById("confirmPasswordIcon");
+
+        toggleConfirmPassword.addEventListener("click", function () {
+
+            if (confirmPasswordInput.type === "password") {
+
+                confirmPasswordInput.type = "text";
+
+                confirmPasswordIcon.classList.remove("bi-eye");
+                confirmPasswordIcon.classList.add("bi-eye-slash");
+
+            } else {
+
+                confirmPasswordInput.type = "password";
+
+                confirmPasswordIcon.classList.remove("bi-eye-slash");
+                confirmPasswordIcon.classList.add("bi-eye");
+
+            }
+        });
+    </script>
 }

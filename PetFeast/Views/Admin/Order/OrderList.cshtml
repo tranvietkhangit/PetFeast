@@ -109,14 +109,22 @@
                             </a>
 
 
-                            <a asp-action="CancelOrder"
-                               asp-route-id="@item.OrderId"
-                               class="btn btn-outline-danger btn-sm"
-                               title="Hủy">
+                            <form asp-controller="Admin"
+                                  asp-action="CancelOrder"
+                                  asp-route-id="@item.OrderId"
+                                  method="post"
+                                  style="display:inline;">
 
-                                <i class="bi bi-x-circle"></i>
+                                @Html.AntiForgeryToken()
 
-                            </a>
+                                <button type="submit"
+                                        class="btn btn-sm btn-danger"
+                                        title="Hủy đơn"
+                                        onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+
+                            </form>
 
 
                         </td>

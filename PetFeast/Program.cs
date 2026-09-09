@@ -1,30 +1,47 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using PetFeast.Data;
 using PetFeast.Models;
 using PetFeast.Models.Interfaces;
 using PetFeast.Models.Services;
 using PetFeast.Models.Identity;
-using Microsoft.AspNetCore.Identity;var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var builder = WebApplication.CreateBuilder(args);
+
+// MVC + Razor
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<EmailService>();
-builder.Services.AddDbContext<PetFeastDBContext>(
-options => {options.UseSqlServer(builder.Configuration.GetConnectionString("PetFeastDBContextConnection"));});
 
+// HttpContext
+builder.Services.AddHttpContextAccessor();
+
+// Database
+builder.Services.AddDbContext<PetFeastDBContext>(options =>
+{
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString(
+            "PetFeastDBContextConnection"));
+});
+
+// Email
+builder.Services.AddScoped<EmailService>();
+
+// Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
 })
-.AddEntityFrameworkStores<PetFeastDBContext>();
+.AddEntityFrameworkStores<PetFeastDBContext>()
+.AddDefaultTokenProviders();
+
+
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Identity/Account/Login";
     options.AccessDeniedPath = "/Identity/Account/AccessDenied";
 });
 
+// Repositories
 builder.Services.AddScoped<CategoryIRepository, CategoryRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
@@ -32,19 +49,21 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<PointsRepository>();
 
+// Session
 builder.Services.AddDistributedMemoryCache();
 
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -53,15 +72,18 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication();
-
-app.UseAuthorization();
 app.UseSession();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
 app.MapRazorPages();
 
+// Tạo Admin mặc định
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -72,7 +94,6 @@ using (var scope = app.Services.CreateScope())
     var userManager =
         services.GetRequiredService<UserManager<ApplicationUser>>();
 
-    // T?o role Admin n?u ch?a t?n t?i
     if (!await roleManager.RoleExistsAsync("Admin"))
     {
         await roleManager.CreateAsync(
@@ -102,4 +123,5 @@ using (var scope = app.Services.CreateScope())
         }
     }
 }
+
 app.Run();

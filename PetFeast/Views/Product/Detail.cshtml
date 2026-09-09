@@ -12,16 +12,24 @@
             </div>
         </div>
         <!-- INFO -->
+
         <div class="col-lg-6">
+
+            @{
+                bool isFavorite = ViewBag.IsFavorite ?? false;
+
+                int currentCartQuantity =
+                ViewBag.CurrentCartQuantity ?? 0;
+
+                int maxAddQuantity =
+                ViewBag.MaxAddQuantity ?? Model.Quantity;
+            }
+
             <div class="product-title-row">
 
                 <h1 class="fw-bold text-primary">
                     @Model.ProductName
                 </h1>
-
-                @{
-                    bool isFavorite = ViewBag.IsFavorite ?? false;
-                }
 
                 @if (User.Identity?.IsAuthenticated == true)
                 {
@@ -97,35 +105,87 @@
                     @Model.Description
                 </p>
             </div>
-            <form asp-controller="ShoppingCart"
-                  asp-action="AddToCart"
-                  method="post">
+            <form id="addToCartForm">
                 <input type="hidden"
+                       id="productId"
                        name="productId"
                        value="@Model.ProductId" />
-                <div class="d-flex align-items-center mb-4">
-                    <label class="fw-bold me-3">
-                        Số lượng:
-                    </label>
-                    <input type="number"
-                           name="quantity"
-                           value="1"
-                           min="1"
-                           max="@Model.Quantity"
-                           class="form-control quantity-box">
+
+                <div class="mb-4">
+
+                    <div class="d-flex align-items-center">
+
+                        <label class="fw-bold me-3">
+                            Số lượng:
+                        </label>
+
+                        <input type="number"
+                               id="quantity"
+                               name="quantity"
+                               value="1"
+                               min="1"
+                               max="@maxAddQuantity"
+                               class="form-control quantity-box"
+                               @(maxAddQuantity <= 0 ? "disabled" : "")>
+
+                    </div>
+
+                    @if (currentCartQuantity > 0)
+                    {
+                        <small class="text-muted d-block mt-2">
+                            Bạn đang có
+                            <strong>@currentCartQuantity</strong>
+                            sản phẩm này trong giỏ hàng.
+                        </small>
+                    }
+
+                    @if (maxAddQuantity > 0)
+                    {
+                        <small class="text-muted d-block">
+                            Có thể thêm tối đa
+                            <strong>@maxAddQuantity</strong>
+                            sản phẩm.
+                        </small>
+                    }
+                    else
+                    {
+                        <small class="text-danger d-block mt-2">
+                            Sản phẩm đã đạt số lượng tối đa trong giỏ hàng.
+                        </small>
+                    }
+
                 </div>
-                @if (Model.Quantity > 0)
+
+                @if (maxAddQuantity > 0)
                 {
-                    <button class="btn btn-primary btn-lg w-100 fw-bold add-cart-btn">
+                    <button type="submit"
+                            id="addToCartButton"
+                            class="btn btn-primary btn-lg w-100 fw-bold add-cart-btn">
+
                         <i class="bi bi-cart-plus"></i>
-                        THÊM VÀO GIỎ HÀNG
+
+                        <span>THÊM VÀO GIỎ HÀNG</span>
+
+                    </button>
+                }
+                else if (Model.Quantity <= 0)
+                {
+                    <button type="button"
+                            class="btn btn-secondary btn-lg w-100 fw-bold add-cart-btn"
+                            disabled>
+
+                        HẾT HÀNG
+
                     </button>
                 }
                 else
                 {
-                    <button class="btn btn-secondary btn-lg w-100 fw-bold add-cart-btn"
+                    <button type="button"
+                            class="btn btn-secondary btn-lg w-100 fw-bold add-cart-btn"
                             disabled>
-                        HẾT HÀNG
+
+                        ĐÃ ĐẠT SỐ LƯỢNG TỐI ĐA
+
                     </button>
                 }
             </form>
@@ -198,6 +258,253 @@
         }
     </div>
 </div>
+<script>
+    // ==========================================
+    // ADD TO CART - PRODUCT DETAIL
+    // ==========================================
+
+    const addToCartForm =
+        document.getElementById("addToCartForm");
+
+    const addToCartButton =
+        document.getElementById("addToCartButton");
+
+    if (addToCartForm && addToCartButton) {
+
+        addToCartForm.addEventListener(
+            "submit",
+            async function (event) {
+
+                event.preventDefault();
+
+                // Không cho bấm liên tục
+                if (addToCartButton.disabled) {
+                    return;
+                }
+
+                const productId =
+                    document.getElementById("productId").value;
+
+                const quantityInput =
+                    document.getElementById("quantity");
+
+                let quantity =
+                    parseInt(quantityInput.value) || 1;
+
+                const maxQuantity =
+                    parseInt(quantityInput.max);
+
+
+                // ==========================
+                // KIỂM TRA SỐ LƯỢNG
+                // ==========================
+
+                if (quantity < 1) {
+
+                    quantity = 1;
+                    quantityInput.value = 1;
+
+                }
+
+                if (quantity > maxQuantity) {
+
+                    quantity = maxQuantity;
+                    quantityInput.value = maxQuantity;
+
+                }
+
+
+                const originalHTML =
+                    addToCartButton.innerHTML;
+
+                addToCartButton.disabled =
+                    true;
+
+
+                // ==========================
+                // ĐANG THÊM
+                // ==========================
+
+                addToCartButton.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    Đang thêm...
+                `;
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/ShoppingCart/AddToCartAjax",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/x-www-form-urlencoded; charset=UTF-8",
+
+                                    "X-Requested-With":
+                                        "XMLHttpRequest"
+                                },
+
+                                body:
+                                    `productId=${encodeURIComponent(productId)}` +
+                                    `&quantity=${encodeURIComponent(quantity)}`
+                            }
+                        );
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            "HTTP error " + response.status
+                        );
+
+                    }
+
+
+                    const data =
+                        await response.json();
+
+
+                    // ==========================
+                    // CHƯA ĐĂNG NHẬP
+                    // ==========================
+
+                    if (data.requireLogin) {
+
+                        const currentUrl =
+                            window.location.pathname +
+                            window.location.search;
+
+                        window.location.href =
+                            "/Identity/Account/Login?returnUrl=" +
+                            encodeURIComponent(currentUrl);
+
+                        return;
+                    }
+
+
+                    // ==========================
+                    // THÀNH CÔNG
+                    // ==========================
+
+                    if (data.success) {
+
+                        // --------------------------
+                        // CẬP NHẬT CART COUNT
+                        // --------------------------
+
+                        const cartCount =
+                            document.getElementById("cartCount");
+
+                        if (cartCount) {
+
+                            cartCount.textContent =
+                                data.cartCount;
+
+                            cartCount.classList.add(
+                                "cart-count-bump"
+                            );
+
+                            setTimeout(function () {
+
+                                cartCount.classList.remove(
+                                    "cart-count-bump"
+                                );
+
+                            }, 400);
+
+                        }
+
+
+                        // --------------------------
+                        // ĐỔI NÚT
+                        // --------------------------
+
+                        addToCartButton.classList.remove(
+                            "btn-primary"
+                        );
+
+                        addToCartButton.classList.add(
+                            "btn-success",
+                            "cart-added"
+                        );
+
+                        addToCartButton.innerHTML = `
+                            <i class="bi bi-check-circle-fill me-1"></i>
+                            <span>ĐÃ THÊM VÀO GIỎ</span>
+                        `;
+
+
+                        // --------------------------
+                        // TRẢ LẠI NÚT
+                        // --------------------------
+
+                        setTimeout(function () {
+
+                            addToCartButton.classList.remove(
+                                "btn-success",
+                                "cart-added"
+                            );
+
+                            addToCartButton.classList.add(
+                                "btn-primary"
+                            );
+
+                            addToCartButton.innerHTML =
+                                originalHTML;
+
+                            addToCartButton.disabled =
+                                false;
+
+                        }, 1500);
+
+                    }
+
+
+                    // ==========================
+                    // LỖI
+                    // ==========================
+
+                    else {
+
+                        alert(
+                            data.message ||
+                            "Không thể thêm sản phẩm vào giỏ hàng."
+                        );
+
+                        addToCartButton.innerHTML =
+                            originalHTML;
+
+                        addToCartButton.disabled =
+                            false;
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Add to cart error:",
+                        error
+                    );
+
+                    alert(
+                        "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng."
+                    );
+
+                    addToCartButton.innerHTML =
+                        originalHTML;
+
+                    addToCartButton.disabled =
+                        false;
+                }
+
+            }
+        );
+
+    }
+</script>
 <script>
     // ==========================================
     // FAVORITE - PRODUCT DETAIL
@@ -370,7 +677,69 @@
     }
 </script>
 <style>
+    /* ==========================================
+           ADD TO CART
+           ========================================== */
 
+    .add-cart-btn {
+        transition: all 0.25s ease;
+    }
+
+        .add-cart-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .add-cart-btn:active {
+            transform: scale(0.96);
+        }
+
+
+    /* ==========================================
+           ĐÃ THÊM
+           ========================================== */
+
+    .cart-added {
+        animation: cartAddedAnimation 0.4s ease;
+    }
+
+    @@keyframes cartAddedAnimation {
+
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.06);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
+
+
+    /* ==========================================
+           CART COUNT
+           ========================================== */
+
+    .cart-count-bump {
+        animation: cartCountBump 0.4s ease;
+    }
+
+    @@keyframes cartCountBump {
+
+        0% {
+            transform: scale(1);
+        }
+
+        50% {
+            transform: scale(1.4);
+        }
+
+        100% {
+            transform: scale(1);
+        }
+    }
     /* ========================================
                TÊN SẢN PHẨM + NÚT YÊU THÍCH
                ======================================== */

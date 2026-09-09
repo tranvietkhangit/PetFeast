@@ -369,3 +369,171 @@
         setInterval(fetchDashboardRealtime, 8000);
     });
 </script>
+<style>
+    .dashboard-scope {
+        padding: 0;
+    }
+
+    /* =========================
+       STAT CARDS
+    ========================= */
+
+    .stat-card-gradient {
+        min-height: 105px;
+        padding: 18px 20px;
+        border-radius: 14px;
+        color: white;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .grad-navy {
+        background: linear-gradient(135deg, #0f3c68, #075985);
+    }
+
+    .grad-cyan {
+        background: linear-gradient(135deg, #0284c7, #0ea5e9);
+    }
+
+    .grad-emerald {
+        background: linear-gradient(135deg, #059669, #10b981);
+    }
+
+    .grad-indigo {
+        background: linear-gradient(135deg, #4338ca, #6366f1);
+    }
+
+    .stat-card-title {
+        font-size: 14px;
+        font-weight: 600;
+        opacity: .9;
+    }
+
+    .stat-card-num {
+        margin-top: 8px;
+        font-size: 25px;
+        font-weight: 700;
+    }
+
+    .stat-icon-glass {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: rgba(255,255,255,.18);
+        font-size: 18px;
+    }
+
+
+    /* =========================
+       DASHBOARD PANEL
+    ========================= */
+
+    .dashboard-panel-card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px;
+        border: 1px solid #e5e7eb;
+        box-shadow: 0 3px 12px rgba(0,0,0,.04);
+    }
+
+    .panel-header-title {
+        margin: 0;
+        font-weight: 700;
+        color: #0f3c68;
+    }
+
+    .legend-box {
+        display: flex;
+        gap: 15px;
+        font-size: 12px;
+        color: #64748b;
+    }
+
+    .sq-cyan,
+    .sq-navy {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        margin-right: 4px;
+        border-radius: 2px;
+    }
+
+    .sq-cyan {
+        background: #0ea5e9;
+    }
+
+    .sq-navy {
+        background: #0f3c68;
+    }
+
+
+    /* =========================
+       DONUT
+    ========================= */
+
+    .donut-holder {
+        width: 220px;
+        height: 220px;
+        position: relative;
+        margin: 15px auto;
+    }
+
+        .donut-holder canvas {
+            width: 220px !important;
+            height: 220px !important;
+        }
+
+    .donut-center-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+
+        .donut-center-text h2 {
+            margin: 0;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+
+    /* =========================
+       TOP PRODUCTS
+    ========================= */
+
+    .product-list-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 7px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+    }
+
+    .price-text {
+        font-weight: 600;
+        white-space: nowrap;
+        margin-left: 10px;
+    }
+
+    .btn-main-cyan-block {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        text-align: center;
+        border-radius: 8px;
+        text-decoration: none;
+        background: #0ea5e9;
+        color: white;
+        font-weight: 600;
+    }
+
+        .btn-main-cyan-block:hover {
+            background: #0284c7;
+            color: white;
+        }
+</style>

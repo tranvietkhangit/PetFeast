@@ -5,6 +5,17 @@
         as HashSet<int>
         ?? new HashSet<int>();
 }
+@{
+    decimal maxProductPrice = ViewBag.MaxProductPrice ?? 0;
+
+    decimal currentMinPrice = ViewBag.MinPrice ?? 0;
+    decimal currentMaxPrice = ViewBag.MaxPrice ?? maxProductPrice;
+
+    if (currentMaxPrice > maxProductPrice)
+    {
+        currentMaxPrice = maxProductPrice;
+    }
+}
 <div class="container mt-4">
 
     <div class="product-header">
@@ -30,37 +41,43 @@
         </div>
         <form method="get" class="sort-form">
 
-            <input type="hidden"
-                   name="keyword"
-                   value="@Context.Request.Query["keyword"]" />
+    <input type="hidden"
+           name="keyword"
+           value="@Context.Request.Query["keyword"]" />
 
-            <input type="hidden"
-                   name="categoryId"
-                   value="@Context.Request.Query["categoryId"]" />
+    <input type="hidden"
+           name="categoryId"
+           value="@Context.Request.Query["categoryId"]" />
 
-            <input type="hidden"
-                   name="maxPrice"
-                   value="@Context.Request.Query["maxPrice"]" />
+    <input type="hidden"
+           name="minPrice"
+           value="@Context.Request.Query["minPrice"]" />
 
-            <select name="sortOrder"
-                    class="form-select sort-select"
-                    onchange="this.form.submit()">
+    <input type="hidden"
+           name="maxPrice"
+           value="@Context.Request.Query["maxPrice"]" />
 
-                <option value="">
-                    Sắp xếp
-                </option>
+    <select name="sortOrder"
+            class="form-select sort-select"
+            onchange="this.form.submit()">
 
-                <option value="price_asc">
-                    Giá thấp → cao
-                </option>
+        <option value="">
+            Sắp xếp
+        </option>
 
-                <option value="price_desc">
-                    Giá cao → thấp
-                </option>
+        <option value="price_asc"
+                selected="@(Context.Request.Query["sortOrder"] == "price_asc")">
+            Giá thấp → cao
+        </option>
 
-            </select>
+        <option value="price_desc"
+                selected="@(Context.Request.Query["sortOrder"] == "price_desc")">
+            Giá cao → thấp
+        </option>
 
-        </form>
+    </select>
+
+</form>
         </div>
 
     <div class="row">
@@ -97,86 +114,123 @@
 
                 <div class="card mt-3">
 
-                    <div class="card-header bg-primary text-white">
-                        KHOẢNG GIÁ
-                    </div>
+    <div class="card-header bg-primary text-white">
+        KHOẢNG GIÁ
+    </div>
 
-                    <div class="card-body">
+    <div class="card-body">
 
-                        
-                        <div class="mb-3">
-                            <label class="form-label">Giá từ</label>
+        <!-- GIÁ TỪ -->
+        <div class="mb-3">
 
-                            <div class="input-group">
-                                <input type="number"
-                                       id="minPriceInput"
-                                       name="minPrice"
-                                       class="form-control"
-                                       min="0"
-                                       max="2000000"
-                                       step="1000"
-                                       value="@(ViewBag.MinPrice ?? 0)">
+            <label class="form-label">
+                Giá từ
+            </label>
 
-                                <span class="input-group-text">đ</span>
-                            </div>
-                        </div>
+            <div class="input-group">
 
-                        <div class="mb-3">
-                            <label class="form-label">Giá đến</label>
+                <input type="number"
+                       id="minPriceInput"
+                       name="minPrice"
+                       class="form-control"
+                       min="0"
+                       max="@maxProductPrice"
+                       step="1000"
+                       value="@currentMinPrice">
 
-                            <div class="input-group">
-                                <input type="number"
-                                       id="maxPriceInput"
-                                       name="maxPrice"
-                                       class="form-control"
-                                       min="0"
-                                       max="2000000"
-                                       step="1000"
-                                       value="@(ViewBag.MaxPrice ?? 2000000)">
+                <span class="input-group-text">
+                    đ
+                </span>
 
-                                <span class="input-group-text">đ</span>
-                            </div>
-                        </div>
+            </div>
+
+        </div>
 
 
-                        <!-- RANGE SLIDER -->
-                        <div class="price-slider-container">
+        <!-- GIÁ ĐẾN -->
+        <div class="mb-3">
 
-                            <div class="price-slider-track"></div>
+            <label class="form-label">
+                Giá đến
+            </label>
 
-                            <input type="range"
-                                   id="minPriceRange"
-                                   min="0"
-                                   max="2000000"
-                                   step="1000"
-                                   value="@(ViewBag.MinPrice ?? 0)"
-                                   class="price-range">
+            <div class="input-group">
 
-                            <input type="range"
-                                   id="maxPriceRange"
-                                   min="0"
-                                   max="2000000"
-                                   step="1000"
-                                   value="@(ViewBag.MaxPrice ?? 2000000)"
-                                   class="price-range">
+                <input type="number"
+                       id="maxPriceInput"
+                       name="maxPrice"
+                       class="form-control"
+                       min="0"
+                       max="@maxProductPrice"
+                       step="1000"
+                       value="@currentMaxPrice.ToString("0")">
 
-                        </div>
+                <span class="input-group-text">
+                    đ
+                </span>
 
-                        <div class="d-flex justify-content-between mt-2">
-                            <span id="minPriceLabel">0 đ</span>
-                            <span id="maxPriceLabel">2.000.000 đ</span>
-                        </div>
+            </div>
+
+        </div>
 
 
+        <!-- RANGE SLIDER -->
+        <div class="price-slider-container">
 
-                        <button type="submit"
-                                class="btn btn-primary w-100 mt-3">
-                            Lọc
-                        </button>
+            <div class="price-slider-track"></div>
 
-                    </div>
+            <input type="range"
+                   id="minPriceRange"
+                   min="0"
+                   max="@maxProductPrice"
+                   step="1000"
+                   value="@currentMinPrice"
+                   class="price-range">
 
-                </div>
+            <input type="range"
+                   id="maxPriceRange"
+                   min="0"
+                   max="@maxProductPrice"
+                   step="1000"
+                   value="@currentMaxPrice"
+                   class="price-range">
+
+        </div>
+
+
+        <!-- LABEL -->
+        <div class="d-flex justify-content-between mt-2">
+
+            <span id="minPriceLabel">
+                @currentMinPrice.ToString("N0") đ
+            </span>
+
+            <span id="maxPriceLabel">
+                @maxProductPrice.ToString("N0") đ
+            </span>
+
+        </div>
+
+
+        <!-- BUTTON -->
+        <button type="submit"
+                class="btn btn-primary w-100 mt-3">
+                <i class="bi bi-funnel-fill me-1"></i>
+            Lọc sản phẩm
+        </button>
+        <a asp-controller="Product"
+   asp-action="Index"
+   class="btn btn-outline-secondary w-100 mt-2">
+
+    <i class="bi bi-arrow-counterclockwise me-1"></i>
+
+    Xóa bộ lọc
+
+</a>
+
+    </div>
+
+</div>
 
 
             </form>
@@ -204,133 +258,151 @@
                 {
                     <div class="row">
 
-                        @foreach (var item in Model)
-                        {
-                            bool isFavorite = favoriteProductIds.Contains(item.ProductId);
-                            <div class="col-md-4 mb-4">
-
-                                <div class="card h-100 product-card">
-
-    <div class="product-image-wrapper">
-
-        <a asp-action="Detail"
-           asp-route-id="@item.ProductId">
-
-            <img src="@item.ImageUrl"
-                 class="product-image"
-                 alt="@item.ProductName" />
-
-        </a>
-
-        <!-- =========================
-             NÚT YÊU THÍCH
-             ========================= -->
-
-        @if (User.Identity?.IsAuthenticated == true)
+                       @foreach (var item in Model)
 {
-    <form class="favorite-form"
-          data-product-id="@item.ProductId">
+    bool isFavorite = favoriteProductIds.Contains(item.ProductId);
 
-        @Html.AntiForgeryToken()
+    <div class="col-md-4 mb-4">
 
-        <button type="button"
-                class="favorite-btn @(isFavorite ? "active" : "")"
-                title="@(isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích")">
+        <div class="card h-100 product-card">
 
-            <i class="bi @(isFavorite ? "bi-heart-fill" : "bi-heart")"></i>
+            <!-- =========================
+                 PRODUCT IMAGE
+                 ========================= -->
 
-        </button>
+            <div class="product-image-wrapper">
 
-    </form>
-}
-else
-{
-    <div class="favorite-form">
+                <a asp-action="Detail"
+                   asp-route-id="@item.ProductId">
 
-        <a asp-area="Identity"
-           asp-page="/Account/Login"
-           asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
-           class="favorite-btn"
-           title="Đăng nhập để thêm yêu thích">
+                    <img src="@item.ImageUrl"
+                         class="product-image"
+                         alt="@item.ProductName" />
 
-            <i class="bi bi-heart"></i>
+                </a>
 
-        </a>
+
+                <!-- =========================
+                     NÚT YÊU THÍCH
+                     ========================= -->
+
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form class="favorite-form"
+                          data-product-id="@item.ProductId">
+
+                        @Html.AntiForgeryToken()
+
+                        <button type="button"
+                                class="favorite-btn @(isFavorite ? "active" : "")"
+                                title="@(isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích")">
+
+                            <i class="bi @(isFavorite ? "bi-heart-fill" : "bi-heart")"></i>
+
+                        </button>
+
+                    </form>
+                }
+                else
+                {
+                    <div class="favorite-form">
+
+                        <a asp-area="Identity"
+                           asp-page="/Account/Login"
+                           asp-route-returnUrl="@Context.Request.Path@Context.Request.QueryString"
+                           class="favorite-btn"
+                           title="Đăng nhập để thêm yêu thích">
+
+                            <i class="bi bi-heart"></i>
+
+                        </a>
+
+                    </div>
+                }
+
+            </div>
+
+
+            <!-- =========================
+                 PRODUCT INFORMATION
+                 ========================= -->
+
+            <div class="card-body">
+
+                <h6>
+                    @item.ProductName
+                </h6>
+
+
+                @if (item.DiscountPercent > 0)
+                {
+                    <span class="discount-badge">
+                        -@item.DiscountPercent%
+                    </span>
+
+                    <div class="mb-2">
+
+                        <div class="price-box">
+
+                            <span class="old-price">
+                                @item.Price.ToString("N0") đ
+                            </span>
+
+                            <span class="new-price">
+                                @item.DiscountPrice.ToString("N0") đ
+                            </span>
+
+                        </div>
+
+                    </div>
+                }
+                else
+                {
+                    <p class="text-danger fw-bold mb-0">
+                        @item.Price.ToString("N0") đ
+                    </p>
+                }
+
+            </div>
+
+
+            <!-- =========================
+                 ADD TO CART
+                 ========================= -->
+
+            <div class="card-footer bg-white border-0">
+
+                <button type="button"
+                        class="btn btn-primary w-100 add-to-cart-btn"
+                        data-product-id="@item.ProductId">
+
+                    <i class="bi bi-cart-plus"></i>
+
+                    <span>Thêm vào giỏ hàng</span>
+
+                </button>
+
+            </div>
+
+        </div>
 
     </div>
 }
-        }
-
-    </div>
-
-    <div class="card-body">
-
-                                        <h6>@item.ProductName</h6>
-
-                                    @if (item.DiscountPercent > 0)
-                                    {
-                                        <span class="discount-badge">
-                                            -@item.DiscountPercent%
-                                        </span>
-                                        <div class="mb-2">
-
-                                            <div class="price-box">
-                                                <span class="old-price">
-                                                    @item.Price.ToString("N0") đ
-                                                </span>
-                                                <span class="new-price">
-                                                    @item.DiscountPrice.ToString("N0") đ
-                                                </span>
-                                            </div>
-
-                                        </div>
-
-                                    }
-                                    else
-                                    {
-                                        <p class="text-danger fw-bold mb-0">
-                                            @item.Price.ToString("N0") đ
-                                        </p>
-                                    }
-
-                                    </div>
-                                <div class="card-footer bg-white border-0">
-
-                                    <form asp-controller="ShoppingCart"
-                                          asp-action="AddToCart"
-                                          method="post">
-
-                                        <input type="hidden"
-                                               name="productId"
-                                               value="@item.ProductId" />
-
-                                        <input type="hidden"
-                                               name="quantity"
-                                               value="1" />
-
-                                        <button type="submit"
-                                                class="btn btn-primary w-100">
-                                            <i class="bi bi-cart-plus"></i>
-                                            Thêm vào giỏ
-                                        </button>
-                                    </form>
-                                </div>
-                                </div>
-                            </div>
-                            
-                        }
+                        
                     </div>
                 }
                 
                 @if (ViewBag.TotalPages > 1)
 {
-    <nav class="mt-4">
+    <nav class="mt-4 mb-5">
+
         <ul class="pagination justify-content-center">
 
-            <!-- Trang trước -->
+            <!-- TRANG TRƯỚC -->
             @if (ViewBag.CurrentPage > 1)
             {
                 <li class="page-item">
+
                     <a class="page-link"
                        href="@Url.Action("Index", new {
                            keyword = ViewBag.Keyword,
@@ -340,12 +412,16 @@ else
                            sortOrder = Context.Request.Query["sortOrder"],
                            page = ViewBag.CurrentPage - 1
                        })">
-                        &laquo;
+
+                        <i class="bi bi-chevron-left"></i>
+
                     </a>
+
                 </li>
             }
 
-            <!-- Các trang -->
+
+            <!-- CÁC TRANG -->
             @for (int i = 1; i <= ViewBag.TotalPages; i++)
             {
                 <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
@@ -359,16 +435,20 @@ else
                            sortOrder = Context.Request.Query["sortOrder"],
                            page = i
                        })">
+
                         @i
+
                     </a>
 
                 </li>
             }
 
-            <!-- Trang sau -->
+
+            <!-- TRANG SAU -->
             @if (ViewBag.CurrentPage < ViewBag.TotalPages)
             {
                 <li class="page-item">
+
                     <a class="page-link"
                        href="@Url.Action("Index", new {
                            keyword = ViewBag.Keyword,
@@ -378,12 +458,16 @@ else
                            sortOrder = Context.Request.Query["sortOrder"],
                            page = ViewBag.CurrentPage + 1
                        })">
-                        &raquo;
+
+                        <i class="bi bi-chevron-right"></i>
+
                     </a>
+
                 </li>
             }
 
         </ul>
+
     </nav>
 }
             </div>
@@ -395,200 +479,266 @@ else
 </div>
 <script>
 
-    const minRange = document.getElementById("minPriceRange");
-    const maxRange = document.getElementById("maxPriceRange");
+    document.addEventListener("DOMContentLoaded", function () {
 
-    const minInput = document.getElementById("minPriceInput");
-    const maxInput = document.getElementById("maxPriceInput");
+        const minRange =
+            document.getElementById("minPriceRange");
 
-    const minLabel = document.getElementById("minPriceLabel");
-    const maxLabel = document.getElementById("maxPriceLabel");
+        const maxRange =
+            document.getElementById("maxPriceRange");
 
-    const track = document.querySelector(".price-slider-track");
+        const minInput =
+            document.getElementById("minPriceInput");
 
+        const maxInput =
+            document.getElementById("maxPriceInput");
 
-    // =========================
-    // FORMAT GIÁ
-    // =========================
+        const minLabel =
+            document.getElementById("minPriceLabel");
 
-    function formatPrice(value) {
+        const maxLabel =
+            document.getElementById("maxPriceLabel");
 
-        return Number(value)
-            .toLocaleString("vi-VN") + " đ";
-
-    }
-
-
-    // =========================
-    // CẬP NHẬT THANH SLIDER
-    // =========================
-
-    function updateTrack() {
-
-        const minValue = Number(minRange.value);
-        const maxValue = Number(maxRange.value);
-
-        const minPercent =
-            (minValue / 2000000) * 100;
-
-        const maxPercent =
-            (maxValue / 2000000) * 100;
+        const track =
+            document.querySelector(".price-slider-track");
 
 
-        track.style.background =
-            `linear-gradient(
-                to right,
-                #dbeafe 0%,
-                #dbeafe ${minPercent}%,
-                #0d6efd ${minPercent}%,
-                #0d6efd ${maxPercent}%,
-                #dbeafe ${maxPercent}%,
-                #dbeafe 100%
-            )`;
-    }
+        // Không có bộ lọc thì dừng
+        if (!minRange || !maxRange ||
+            !minInput || !maxInput ||
+            !minLabel || !maxLabel || !track) {
 
-
-    // =========================
-    // KÉO SLIDER MIN
-    // =========================
-
-    minRange.addEventListener("input", function () {
-
-        let minValue = Number(this.value);
-        let maxValue = Number(maxRange.value);
-
-
-        // Không cho min vượt max
-        if (minValue > maxValue) {
-
-            minValue = maxValue;
-
-            this.value = minValue;
+            return;
         }
 
 
-        minInput.value = minValue;
+        // =====================================
+        // GIÁ TỐI ĐA LẤY TRỰC TIẾP TỪ HTML
+        // =====================================
 
-        minLabel.textContent =
-            formatPrice(minValue);
-
-        updateTrack();
-    });
-
-
-    // =========================
-    // KÉO SLIDER MAX
-    // =========================
-
-    maxRange.addEventListener("input", function () {
-
-        let maxValue = Number(this.value);
-        let minValue = Number(minRange.value);
+        const maxProductPrice =
+            Number(maxRange.max);
 
 
-        // Không cho max nhỏ hơn min
-        if (maxValue < minValue) {
+        // =====================================
+        // FORMAT GIÁ
+        // =====================================
 
-            maxValue = minValue;
+        function formatPrice(value) {
 
-            this.value = maxValue;
+            return Number(value)
+                .toLocaleString("vi-VN") + " đ";
+
         }
 
 
-        maxInput.value = maxValue;
+        // =====================================
+        // CẬP NHẬT THANH SLIDER
+        // =====================================
 
-        maxLabel.textContent =
-            formatPrice(maxValue);
+        function updateTrack() {
 
-        updateTrack();
-    });
+            const minValue =
+                Number(minRange.value);
 
-
-    // =========================
-    // NHẬP GIÁ MIN
-    // =========================
-
-    minInput.addEventListener("change", function () {
-
-        let value = Number(this.value);
-
-        if (isNaN(value))
-            value = 0;
-
-        if (value < 0)
-            value = 0;
-
-        if (value > 2000000)
-            value = 2000000;
+            const maxValue =
+                Number(maxRange.value);
 
 
-        let maxValue =
-            Number(maxInput.value) || 2000000;
+            const minPercent =
+                maxProductPrice > 0
+                    ? (minValue / maxProductPrice) * 100
+                    : 0;
 
 
-        if (value > maxValue)
-            value = maxValue;
+            const maxPercent =
+                maxProductPrice > 0
+                    ? (maxValue / maxProductPrice) * 100
+                    : 100;
 
 
-        this.value = value;
+            track.style.background =
+                `linear-gradient(
+                    to right,
+                    #dbeafe 0%,
+                    #dbeafe ${minPercent}%,
+                    #0d6efd ${minPercent}%,
+                    #0d6efd ${maxPercent}%,
+                    #dbeafe ${maxPercent}%,
+                    #dbeafe 100%
+                )`;
+        }
 
-        minRange.value = value;
+
+        // =====================================
+        // SLIDER MIN
+        // =====================================
+
+        minRange.addEventListener("input", function () {
+
+            let minValue =
+                Number(this.value);
+
+            let maxValue =
+                Number(maxRange.value);
+
+
+            if (minValue > maxValue) {
+
+                minValue = maxValue;
+
+                this.value = minValue;
+            }
+
+
+            minInput.value =
+                minValue;
+
+            minLabel.textContent =
+                formatPrice(minValue);
+
+            updateTrack();
+        });
+
+
+        // =====================================
+        // SLIDER MAX
+        // =====================================
+
+        maxRange.addEventListener("input", function () {
+
+            let maxValue =
+                Number(this.value);
+
+            let minValue =
+                Number(minRange.value);
+
+
+            if (maxValue < minValue) {
+
+                maxValue = minValue;
+
+                this.value = maxValue;
+            }
+
+
+            maxInput.value =
+                maxValue;
+
+            maxLabel.textContent =
+                formatPrice(maxValue);
+
+            updateTrack();
+        });
+
+
+        // =====================================
+        // NHẬP GIÁ MIN
+        // =====================================
+
+        minInput.addEventListener("change", function () {
+
+            let value =
+                Number(this.value);
+
+
+            if (isNaN(value))
+                value = 0;
+
+
+            if (value < 0)
+                value = 0;
+
+
+            if (value > maxProductPrice)
+                value = maxProductPrice;
+
+
+            let maxValue =
+                Number(maxInput.value);
+
+
+            if (isNaN(maxValue))
+                maxValue = maxProductPrice;
+
+
+            if (value > maxValue)
+                value = maxValue;
+
+
+            this.value =
+                value;
+
+            minRange.value =
+                value;
+
+            minLabel.textContent =
+                formatPrice(value);
+
+            updateTrack();
+        });
+
+
+        // =====================================
+        // NHẬP GIÁ MAX
+        // =====================================
+
+        maxInput.addEventListener("change", function () {
+
+            let value =
+                Number(this.value);
+
+
+            if (isNaN(value))
+                value = maxProductPrice;
+
+
+            if (value < 0)
+                value = 0;
+
+
+            if (value > maxProductPrice)
+                value = maxProductPrice;
+
+
+            let minValue =
+                Number(minInput.value);
+
+
+            if (isNaN(minValue))
+                minValue = 0;
+
+
+            if (value < minValue)
+                value = minValue;
+
+
+            this.value =
+                value;
+
+            maxRange.value =
+                value;
+
+            maxLabel.textContent =
+                formatPrice(value);
+
+            updateTrack();
+        });
+
+
+        // =====================================
+        // KHỞI TẠO
+        // =====================================
 
         minLabel.textContent =
-            formatPrice(value);
-
-        updateTrack();
-    });
-
-
-    // =========================
-    // NHẬP GIÁ MAX
-    // =========================
-
-    maxInput.addEventListener("change", function () {
-
-        let value = Number(this.value);
-
-        if (isNaN(value))
-            value = 2000000;
-
-        if (value < 0)
-            value = 0;
-
-        if (value > 2000000)
-            value = 2000000;
-
-
-        let minValue =
-            Number(minInput.value) || 0;
-
-
-        if (value < minValue)
-            value = minValue;
-
-
-        this.value = value;
-
-        maxRange.value = value;
+            formatPrice(minRange.value);
 
         maxLabel.textContent =
-            formatPrice(value);
+            formatPrice(maxRange.value);
 
         updateTrack();
+
     });
-
-
-    // =========================
-    // KHỞI TẠO
-    // =========================
-
-    minLabel.textContent =
-        formatPrice(minRange.value);
-
-    maxLabel.textContent =
-        formatPrice(maxRange.value);
-
-    updateTrack();
 
 </script>
 <script>
@@ -872,4 +1022,295 @@ else
             border: none;
         }
 
+</style>
+<script>
+    document.querySelectorAll(".add-to-cart-btn")
+        .forEach(function (button) {
+
+            button.addEventListener("click", async function () {
+
+                if (button.disabled) {
+                    return;
+                }
+
+                const productId =
+                    button.dataset.productId;
+
+                const originalHTML =
+                    button.innerHTML;
+
+                button.disabled = true;
+
+                // ==========================
+                // ĐANG THÊM
+                // ==========================
+
+                button.innerHTML = `
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Đang thêm...
+                `;
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/ShoppingCart/AddToCartAjax",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/x-www-form-urlencoded; charset=UTF-8",
+
+                                    "X-Requested-With":
+                                        "XMLHttpRequest"
+                                },
+
+                                body:
+                                    `productId=${encodeURIComponent(productId)}&quantity=1`
+                            }
+                        );
+
+
+                    // ==========================
+                    // SERVER ERROR
+                    // ==========================
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            "HTTP error " + response.status
+                        );
+
+                    }
+
+
+                    const data =
+                        await response.json();
+
+
+                    // ==========================
+                    // CHƯA ĐĂNG NHẬP
+                    // ==========================
+
+                    if (data.requireLogin) {
+
+                        const currentUrl =
+                            window.location.pathname +
+                            window.location.search;
+
+                        window.location.href =
+                            "/Identity/Account/Login?returnUrl=" +
+                            encodeURIComponent(currentUrl);
+
+                        return;
+                    }
+
+
+                    // ==========================
+                    // THÀNH CÔNG
+                    // ==========================
+
+                    if (data.success) {
+
+                        const cartCount =
+                            document.getElementById("cartCount");
+
+
+                        // Cập nhật số lượng giỏ hàng
+                        if (cartCount) {
+
+                            cartCount.textContent =
+                                data.cartCount;
+
+                            cartCount.classList.add(
+                                "cart-count-bump"
+                            );
+
+                            setTimeout(function () {
+
+                                cartCount.classList.remove(
+                                    "cart-count-bump"
+                                );
+
+                            }, 400);
+
+                        }
+
+
+                        // Đổi nút thành "Đã thêm"
+                        button.classList.remove(
+                            "btn-primary"
+                        );
+
+                        button.classList.add(
+                            "btn-success",
+                            "cart-added"
+                        );
+
+                        button.innerHTML = `
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Đã thêm</span>
+                        `;
+
+
+                        // Trả lại trạng thái ban đầu
+                        setTimeout(function () {
+
+                            button.classList.remove(
+                                "btn-success",
+                                "cart-added"
+                            );
+
+                            button.classList.add(
+                                "btn-primary"
+                            );
+
+                            button.innerHTML =
+                                originalHTML;
+
+                            button.disabled = false;
+
+                        }, 1500);
+
+                    }
+
+
+                    // ==========================
+                    // LỖI THÊM GIỎ HÀNG
+                    // ==========================
+
+                    else {
+
+                        alert(
+                            data.message ||
+                            "Không thể thêm sản phẩm vào giỏ hàng."
+                        );
+
+                        button.innerHTML =
+                            originalHTML;
+
+                        button.disabled = false;
+
+                    }
+
+                }
+                catch (error) {
+
+                    console.error(
+                        "Add to cart error:",
+                        error
+                    );
+
+                    alert(
+                        "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng."
+                    );
+
+                    button.innerHTML =
+                        originalHTML;
+
+                    button.disabled = false;
+
+                }
+
+            });
+
+        });
+</script>
+<style>
+
+    .add-to-cart-btn {
+        transition: all 0.25s ease;
+    }
+
+    .add-to-cart-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .add-to-cart-btn:active {
+        transform: scale(0.96);
+    }
+
+
+    /* =========================
+       ĐÃ THÊM
+       ========================= */
+
+    .cart-added {
+        animation: cartAddedAnimation 0.4s ease;
+    }
+
+    @@keyframes cartAddedAnimation {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+
+    /* =========================
+       CART COUNT
+       ========================= */
+
+    .cart-count-bump {
+        animation: cartCountBump 0.4s ease;
+    }
+
+    @@keyframes cartCountBump {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.4);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+/* =========================
+   PAGINATION
+   ========================= */
+
+.pagination {
+    gap: 6px;
+}
+
+.pagination .page-link {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 8px !important;
+
+    border: 1px solid #dee2e6;
+
+    color: #0d6efd;
+
+    font-weight: 600;
+
+    transition: all 0.2s ease;
+}
+
+.pagination .page-link:hover {
+    background: #eef5ff;
+    border-color: #0d6efd;
+}
+
+.pagination .page-item.active .page-link {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+}
 </style>

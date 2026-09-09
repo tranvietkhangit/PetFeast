@@ -1,17 +1,362 @@
-﻿<div class="container">
- <br><br><br><br>
- <div class="text-center">
- <img src="https://cdn-icons-png.flaticon.com/512/148/148767.png"
-class="img-fluid"
- style="width: 200px; height: 200px; margin-left: auto; margin-right: auto" alt="...">
- <br>
- <h1><strong>Đơn hàng của bạn đã được ghi nhận</strong></h1>
- <br>
- <p>Cảm ơn bạn đã thanh toán!</p>
- <a class="btn btn-primary w-20 " asp-controller="Home" asp-action="Index">
-Quay lại trang chủ
- </a>
-<br/>
-<br/>
- </div>
+﻿@model PetFeast.Models.Orders.Order
+
+@{
+    ViewData["Title"] = "Đặt hàng thành công";
+
+    // ==========================
+    // CẤU HÌNH VIETQR
+    // ==========================
+
+    var bankId = "MB";
+    var accountNo = "0344356136";
+    var accountName = "VO DUONG DUY ANH";
+
+    var memo =
+        $"PETFEAST DH{Model.OrderId}".ToUpper();
+
+    var totalAmount =
+        (int)Model.TotalAmount;
+
+    var qrUrl =
+        $"https://img.vietqr.io/image/" +
+        $"{bankId}-{accountNo}-compact2.png" +
+        $"?amount={totalAmount}" +
+        $"&addInfo={Uri.EscapeDataString(memo)}" +
+        $"&accountName={Uri.EscapeDataString(accountName)}";
+}
+
+<div class="container my-5">
+
+    <div class="card border-0 shadow-sm p-4 p-md-5 mx-auto"
+         style="max-width: 650px; border-radius: 16px;">
+
+        <!-- ========================== -->
+        <!-- THÔNG BÁO -->
+        <!-- ========================== -->
+
+        <div class="text-center">
+
+            <div class="mb-3 text-success">
+                <i class="bi bi-check-circle-fill display-3"></i>
+            </div>
+
+            <h3 class="fw-bold text-dark mb-2">
+                Đơn hàng #@Model.OrderId đã được ghi nhận!
+            </h3>
+
+            <p class="text-muted mb-4">
+                Cảm ơn bạn đã mua sắm tại
+                <strong>PetFeast</strong>.
+            </p>
+
+        </div>
+
+
+        <!-- ========================== -->
+        <!-- CHI TIẾT ĐƠN HÀNG -->
+        <!-- ========================== -->
+
+        <div class="border rounded-4 p-4 mb-4">
+
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-receipt me-2 text-primary"></i>
+                Chi tiết thanh toán
+            </h5>
+
+            <!-- Tiền hàng -->
+            <div class="d-flex justify-content-between py-2">
+                <span class="text-muted">
+                    Tổng tiền hàng
+                </span>
+
+                <span class="fw-semibold">
+                    @((Model.TotalAmount
+                                        + Model.PointDiscount
+                                        + Model.VoucherDiscount
+                                        - Model.ShippingFee).ToString("N0")) đ
+                </span>
+            </div>
+
+
+            <!-- Phí vận chuyển -->
+            <div class="d-flex justify-content-between py-2">
+                <span class="text-muted">
+                    Phí vận chuyển
+                </span>
+
+                <span class="fw-semibold">
+                    @Model.ShippingFee.ToString("N0") đ
+                </span>
+            </div>
+
+
+            <!-- Giảm điểm -->
+            @if (Model.PointDiscount > 0)
+            {
+                <div class="d-flex justify-content-between py-2 text-success">
+
+                    <span>
+                        <i class="bi bi-coin me-1"></i>
+                        Giảm từ điểm
+                        (@Model.UsedPoints điểm)
+                    </span>
+
+                    <span class="fw-semibold">
+                        -@Model.PointDiscount.ToString("N0") đ
+                    </span>
+
+                </div>
+            }
+
+
+            <!-- Giảm voucher -->
+            @if (Model.VoucherDiscount > 0)
+            {
+                <div class="d-flex justify-content-between py-2 text-success">
+
+                    <span>
+                        <i class="bi bi-ticket-perforated me-1"></i>
+                        Giảm từ Voucher
+                    </span>
+
+                    <span class="fw-semibold">
+                        -@Model.VoucherDiscount.ToString("N0") đ
+                    </span>
+
+                </div>
+            }
+
+
+            <hr />
+
+
+            <!-- Tổng thanh toán -->
+            <div class="d-flex justify-content-between align-items-center">
+
+                <strong class="fs-5">
+                    Tổng thanh toán
+                </strong>
+
+                <strong class="text-danger fs-4">
+                    @Model.TotalAmount.ToString("N0") đ
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================== -->
+        <!-- THÔNG TIN VOUCHER -->
+        <!-- ========================== -->
+        @if (Model.VoucherDiscount > 0)
+        {
+            <div class="alert alert-success rounded-3 mb-4">
+
+                <div>
+                    <i class="bi bi-ticket-perforated-fill me-2"></i>
+
+                    <strong>
+                        Voucher đã được áp dụng
+                    </strong>
+                </div>
+
+                <div class="small mt-1">
+                    Bạn đã được giảm
+                    <strong>
+                        @Model.VoucherDiscount.ToString("N0") đ
+                    </strong>
+                    từ voucher.
+                </div>
+
+            </div>
+        }
+
+
+        <!-- ========================== -->
+        <!-- THANH TOÁN -->
+        <!-- ========================== -->
+        @if (Model.PaymentMethod == "BankTransfer")
+        {
+            <!-- ========================== -->
+            <!-- VIETQR -->
+            <!-- ========================== -->
+
+            <div class="border rounded-4 p-4 mb-4 bg-light shadow-sm">
+
+                <h5 class="fw-bold text-primary mb-2">
+                    <i class="bi bi-qr-code-scan me-2"></i>
+                    Quét mã QR để chuyển khoản
+                </h5>
+
+                <p class="text-muted small mb-3">
+                    Mở App Ngân hàng bất kỳ
+                    (MB, VCB, MoMo...)
+                    và quét mã để thanh toán.
+                </p>
+
+
+                <!-- QR -->
+                <div class="d-flex justify-content-center mb-3">
+
+                    <img src="@qrUrl"
+                         alt="Mã QR Chuyển khoản"
+                         class="img-fluid rounded-3 border p-2 bg-white shadow-sm"
+                         style="
+                                 width:250px;
+                                 height:250px;
+                                 object-fit:contain;
+                             " />
+
+                </div>
+
+
+                <!-- ========================== -->
+                <!-- THÔNG TIN CHUYỂN KHOẢN -->
+                <!-- ========================== -->
+
+                <div class="text-start bg-white p-3 rounded-3 border small text-dark">
+
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+
+                        <span class="text-muted">
+                            Ngân hàng:
+                        </span>
+
+                        <span class="fw-bold">
+                            MBBank (Quân Đội)
+                        </span>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+
+                        <span class="text-muted">
+                            Số tài khoản:
+                        </span>
+
+                        <span class="fw-bold text-primary fs-6">
+                            @accountNo
+                        </span>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+
+                        <span class="text-muted">
+                            Chủ tài khoản:
+                        </span>
+
+                        <span class="fw-bold">
+                            @accountName
+                        </span>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+
+                        <span class="text-muted">
+                            Số tiền:
+                        </span>
+
+                        <span class="fw-bold text-danger fs-6">
+                            @Model.TotalAmount.ToString("N0") đ
+                        </span>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between py-2">
+
+                        <span class="text-muted">
+                            Nội dung CK:
+                        </span>
+
+                        <span class="fw-bold text-danger fs-6">
+                            @memo
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ========================== -->
+                <!-- THÔNG BÁO -->
+                <!-- ========================== -->
+
+                <div class="alert alert-info mt-3 mb-0 small text-start">
+
+                    <i class="bi bi-info-circle-fill me-1"></i>
+
+                    Shop sẽ kiểm tra biến động số dư
+                    và chuyển trạng thái đơn hàng
+                    ngay khi nhận được thanh toán.
+
+                </div>
+
+            </div>
+        }
+        else
+        {
+            <!-- ========================== -->
+            <!-- COD -->
+            <!-- ========================== -->
+
+            <div class="alert alert-success p-3 mb-4 rounded-3 text-start small">
+
+                <i class="bi bi-truck me-1"></i>
+
+                <strong>
+                    Phương thức:
+                </strong>
+
+                Thanh toán khi nhận hàng (COD).
+
+                Bạn sẽ thanh toán
+
+                <strong>
+                    @Model.TotalAmount.ToString("N0") đ
+                </strong>
+
+                trực tiếp cho shipper khi nhận gói hàng.
+
+            </div>
+        }
+
+
+        <!-- ========================== -->
+        <!-- BUTTON -->
+        <!-- ========================== -->
+
+        <div class="d-flex justify-content-center gap-3">
+
+            <a asp-action="UserOrderList"
+               asp-controller="Order"
+               class="btn btn-outline-primary fw-bold px-3 py-2">
+
+                <i class="bi bi-card-checklist me-1"></i>
+
+                Xem lịch sử đơn hàng
+
+            </a>
+
+
+            <a asp-action="Index"
+               asp-controller="Home"
+               class="btn btn-warning fw-bold px-4 py-2">
+
+                <i class="bi bi-house-door me-1"></i>
+
+                Về trang chủ
+
+            </a>
+
+        </div>
+
+    </div>
+
 </div>

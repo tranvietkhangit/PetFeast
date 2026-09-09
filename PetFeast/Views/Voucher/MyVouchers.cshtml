@@ -1,0 +1,151 @@
+﻿@model IEnumerable<PetFeast.Models.Voucher.UserVoucher>
+
+@{
+    ViewData["Title"] = "Voucher của tôi";
+}
+
+<div class="container mt-5 mb-5">
+
+    <div class="text-center mb-5">
+
+        <h2 class="fw-bold">
+            <i class="bi bi-ticket"></i>
+            Voucher của tôi
+        </h2>
+
+        <p class="text-muted">
+            Những voucher bạn đã đổi bằng điểm
+        </p>
+
+    </div>
+
+
+    @if (Model.Any())
+    {
+        <div class="row g-4">
+
+            @foreach (var item in Model)
+            {
+                var expired =
+                item.Voucher.ExpiryDate < DateTime.Now;
+
+                <div class="col-md-6 col-lg-4">
+
+                    <div class="card h-100 shadow-sm border-0">
+
+                        <div class="card-body">
+
+                            <div class="text-center">
+
+                                <i class="bi bi-ticket-perforated-fill"
+                                   style="font-size: 50px; color: #0d6efd;">
+                                </i>
+
+                                <h5 class="fw-bold mt-3">
+                                    @item.Voucher.Name
+                                </h5>
+
+                                <h3 class="text-primary fw-bold">
+                                    @item.Voucher.DiscountAmount.ToString("N0")đ
+                                </h3>
+
+                            </div>
+
+                            <hr />
+
+                            <p>
+                                <strong>Mã voucher:</strong>
+                            </p>
+
+                            <div class="input-group mb-3">
+
+                                <input type="text"
+                                       class="form-control"
+                                       value="@item.VoucherCode"
+                                       readonly />
+
+                                <button class="btn btn-outline-secondary"
+                                        type="button"
+                                        onclick="copyVoucher('@item.VoucherCode')">
+
+                                    <i class="bi bi-copy"></i>
+
+                                </button>
+
+                            </div>
+
+                            <p>
+                                <i class="bi bi-calendar"></i>
+                                HSD:
+                                @item.Voucher.ExpiryDate.ToString("dd/MM/yyyy")
+                            </p>
+
+
+                            @if (item.IsUsed)
+                            {
+                                <span class="badge bg-secondary w-100 p-2">
+                                    Đã sử dụng
+                                </span>
+                            }
+                            else if (expired)
+                            {
+                                <span class="badge bg-danger w-100 p-2">
+                                    Đã hết hạn
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success w-100 p-2">
+                                    Chưa sử dụng
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+
+            <i class="bi bi-ticket-perforated"
+               style="font-size: 60px;">
+            </i>
+
+            <h5 class="mt-3">
+                Bạn chưa có voucher nào.
+            </h5>
+
+            <a asp-action="Index"
+               class="btn btn-primary mt-3">
+
+                Đổi voucher ngay
+
+            </a>
+
+        </div>
+    }
+
+</div>
+
+
+@section Scripts {
+
+    <script>
+
+        function copyVoucher(code) {
+
+            navigator.clipboard.writeText(code);
+
+            alert("Đã sao chép mã voucher!");
+
+        }
+
+    </script>
+
+}

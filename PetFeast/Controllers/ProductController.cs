@@ -14,22 +14,32 @@ namespace PetFeast.Controllers
         private readonly IProductRepository _productRepo;
         private readonly CategoryIRepository _categoryRepo;
         private readonly PetFeastDBContext _context;
+        private readonly IShoppingCartRepository _cartRepo;
 
         public ProductController(
-            IProductRepository productRepo,
-            CategoryIRepository categoryRepo,
-            PetFeastDBContext context)
+    IProductRepository productRepo,
+    CategoryIRepository categoryRepo,
+    PetFeastDBContext context,
+    IShoppingCartRepository cartRepo)
         {
             _productRepo = productRepo;
             _categoryRepo = categoryRepo;
             _context = context;
+            _cartRepo = cartRepo;
         }
 
         public IActionResult Index( string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortOrder, int page = 1)
         {
             const int pageSize = 9;
-
             var products = _productRepo.GetAll();
+
+            // Lấy giá bán cao nhất để làm giới hạn bộ lọc
+            decimal maxProductPrice = products.Any()
+                ? products.Max(p =>
+                    p.DiscountPercent > 0
+                        ? p.Price * (1m - p.DiscountPercent / 100m)
+                        : p.Price)
+                : 0;
             // =========================
             // LẤY SẢN PHẨM YÊU THÍCH
             // =========================
@@ -65,29 +75,49 @@ namespace PetFeast.Controllers
                     p.CategoryId == categoryId.Value);
             }
 
-            // Giá tối thiểu
+            // =========================
+            // LỌC THEO GIÁ SAU GIẢM
+            // =========================
+
             if (minPrice.HasValue && minPrice > 0)
             {
                 products = products.Where(p =>
-                    p.Price >= minPrice.Value);
+                    (p.DiscountPercent > 0
+                        ? p.Price * (1m - p.DiscountPercent / 100m)
+                        : p.Price) >= minPrice.Value);
             }
 
-            // Giá tối đa
             if (maxPrice.HasValue && maxPrice > 0)
             {
                 products = products.Where(p =>
-                    p.Price <= maxPrice.Value);
+                    (p.DiscountPercent > 0
+                        ? p.Price * (1m - p.DiscountPercent / 100m)
+                        : p.Price) <= maxPrice.Value);
             }
 
-            // Sắp xếp
+
+            // =========================
+            // SẮP XẾP THEO GIÁ SAU GIẢM
+            // =========================
+
             switch (sortOrder)
             {
                 case "price_asc":
-                    products = products.OrderBy(p => p.Price);
+
+                    products = products.OrderBy(p =>
+                        p.DiscountPercent > 0
+                            ? p.Price * (1m - p.DiscountPercent / 100m)
+                            : p.Price);
+
                     break;
 
                 case "price_desc":
-                    products = products.OrderByDescending(p => p.Price);
+
+                    products = products.OrderByDescending(p =>
+                        p.DiscountPercent > 0
+                            ? p.Price * (1m - p.DiscountPercent / 100m)
+                            : p.Price);
+
                     break;
             }
 
@@ -117,6 +147,7 @@ namespace PetFeast.Controllers
 
             ViewBag.MinPrice = minPrice;
             ViewBag.MaxPrice = maxPrice;
+            ViewBag.MaxProductPrice = maxProductPrice;
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = totalPages;
             ViewBag.FavoriteProductIds = favoriteProductIds;
@@ -126,17 +157,20 @@ namespace PetFeast.Controllers
         public IActionResult Detail(int id)
         {
             var product = _productRepo.GetById(id);
+
             if (product == null)
             {
                 return NotFound();
             }
+
             // =========================
             // KIỂM TRA SẢN PHẨM YÊU THÍCH
             // =========================
 
             bool isFavorite = false;
 
-            if (User.Identity != null && User.Identity.IsAuthenticated)
+            if (User.Identity != null &&
+                User.Identity.IsAuthenticated)
             {
                 string? userId =
                     User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -149,23 +183,58 @@ namespace PetFeast.Controllers
                 }
             }
 
+            // =========================
+            // LẤY SỐ LƯỢNG ĐÃ CÓ TRONG GIỎ
+            // =========================
+
+            int currentCartQuantity = 0;
+
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                var cart = _cartRepo.GetCart();
+
+                var cartItem = cart.FirstOrDefault(
+                    x => x.ProductId == id);
+
+                if (cartItem != null)
+                {
+                    currentCartQuantity = cartItem.Quantity;
+                }
+            }
+
+            // =========================
+            // TÍNH SỐ LƯỢNG CÓ THỂ THÊM
+            // =========================
+
+            int maxAddQuantity =
+                product.Quantity - currentCartQuantity;
+
+            if (maxAddQuantity < 0)
+            {
+                maxAddQuantity = 0;
+            }
+
             ViewBag.IsFavorite = isFavorite;
-            ViewBag.RelatedProducts = _productRepo.GetAll().Where(x => x.CategoryId == product.CategoryId && x.ProductId != product.ProductId)
-        .Take(4)
-        .ToList();
+
+            ViewBag.CurrentCartQuantity =
+                currentCartQuantity;
+
+            ViewBag.MaxAddQuantity =
+                maxAddQuantity;
+
+            // =========================
+            // SẢN PHẨM LIÊN QUAN
+            // =========================
+
+            ViewBag.RelatedProducts =
+                _productRepo.GetAll()
+                    .Where(x =>
+                        x.CategoryId == product.CategoryId &&
+                        x.ProductId != product.ProductId)
+                    .Take(4)
+                    .ToList();
 
             return View(product);
-        }
-
-        public IActionResult Create()
-        {
-            ViewBag.Categories =
-                new SelectList(
-                    _categoryRepo.GetAll(),
-                    "CategoryId",
-                    "CategoryName");
-
-            return View();
         }
 
         [HttpPost]

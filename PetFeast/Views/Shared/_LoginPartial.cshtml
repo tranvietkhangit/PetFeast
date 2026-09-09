@@ -20,7 +20,9 @@
 
         @if (SignInManager.IsSignedIn(User))
         {
-            <span>@user?.UserName</span>
+            <span>
+                Xin chào, @(user?.FullName ?? user?.UserName ?? "bạn")
+            </span>
         }
 
     </a>
@@ -68,6 +70,16 @@
                    class="dropdown-item">
                     <i class="bi bi-heart"></i>
                     Sản phẩm yêu thích
+                </a>
+            </li>
+            <li>
+                <a asp-controller="Voucher"
+                   asp-action="MyVouchers"
+                   class="dropdown-item">
+
+                    <i class="bi bi-ticket"></i>
+                    Voucher của tôi
+
                 </a>
             </li>
 

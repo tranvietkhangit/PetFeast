@@ -1,0 +1,225 @@
+﻿@model IEnumerable<PetFeast.Models.Voucher.Voucher>
+
+@{
+    ViewData["Title"] = "Quản lý Voucher";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-ticket-perforated me-2"></i>
+                Quản lý Voucher
+            </h2>
+            <p class="text-muted mb-0">
+                Quản lý các voucher đổi bằng điểm
+            </p>
+        </div>
+
+        <a asp-controller="Admin"
+           asp-action="CreateVoucher"
+           class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i>
+            Thêm Voucher
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle me-2"></i>
+            @TempData["Success"]
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            @TempData["Error"]
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover align-middle">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>#</th>
+                            <th>Tên Voucher</th>
+                            <th>Mã</th>
+                            <th>Giảm</th>
+                            <th>Điểm cần</th>
+                            <th>Đơn tối thiểu</th>
+                            <th>Số lượng</th>
+                            <th>Hạn sử dụng</th>
+                            <th>Trạng thái</th>
+                            <th class="text-center">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="10"
+                                    class="text-center text-muted py-4">
+                                    Chưa có voucher nào.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var voucher in Model)
+                            {
+                                bool expired = voucher.ExpiryDate < DateTime.Now;
+
+                                <tr>
+
+                                    <td>
+                                        @voucher.VoucherId
+                                    </td>
+
+                                    <td>
+                                        <strong>
+                                            @voucher.Name
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        <span class="badge bg-dark">
+                                            @voucher.Code
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <strong class="text-danger">
+                                            @voucher.DiscountAmount.ToString("N0") đ
+                                        </strong>
+                                    </td>
+
+                                    <td>
+                                        <i class="bi bi-coin text-warning"></i>
+                                        @voucher.RequiredPoints
+                                    </td>
+
+                                    <td>
+                                        @voucher.MinimumOrderAmount.ToString("N0") đ
+                                    </td>
+
+                                    <td>
+                                        @voucher.Quantity
+                                    </td>
+
+                                    <td>
+                                        @voucher.ExpiryDate.ToString("dd/MM/yyyy")
+                                    </td>
+
+                                    <td>
+
+                                        @if (expired)
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Đã hết hạn
+                                            </span>
+                                        }
+                                        else if (voucher.IsActive)
+                                        {
+                                            <span class="badge bg-success">
+                                                Đang hoạt động
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">
+                                                Đã tắt
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    <td class="text-center">
+
+                                        <div class="d-flex justify-content-center gap-1">
+
+                                            <!-- Sửa -->
+                                            <a asp-controller="Admin"
+                                               asp-action="EditVoucher"
+                                               asp-route-id="@voucher.VoucherId"
+                                               class="btn btn-sm btn-warning"
+                                               title="Chỉnh sửa">
+
+                                                <i class="bi bi-pencil"></i>
+
+                                            </a>
+
+                                            <!-- Bật / tắt -->
+                                            <form asp-controller="Admin"
+                                                  asp-action="ToggleVoucher"
+                                                  asp-route-id="@voucher.VoucherId"
+                                                  method="post"
+                                                  class="d-inline">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="btn btn-sm @(voucher.IsActive ? "btn-secondary" : "btn-success")"
+                                                        title="@(voucher.IsActive ? "Tắt voucher" : "Bật voucher")">
+
+                                                    <i class="bi @(voucher.IsActive ? "bi-toggle-on" : "bi-toggle-off")"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                            <!-- Xóa -->
+                                            <form asp-controller="Admin"
+                                                  asp-action="DeleteVoucher"
+                                                  asp-route-id="@voucher.VoucherId"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Bạn có chắc muốn xóa voucher này không?');">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-danger"
+                                                        title="Xóa">
+
+                                                    <i class="bi bi-trash"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+    </div>
+
+</div>

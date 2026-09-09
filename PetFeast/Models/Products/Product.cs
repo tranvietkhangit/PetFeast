@@ -34,7 +34,7 @@ namespace PetFeast.Models.Products
         {
             get
             {
-                return Price - (Price * DiscountPercent / 100);
+                return Price - (Price * DiscountPercent / 100m);
             }
         }
         [NotMapped]

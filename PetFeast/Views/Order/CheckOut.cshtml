@@ -1,10 +1,15 @@
 ﻿@using PetFeast.Models.Identity
+@using PetFeast.Models.Voucher
 
 @model List<PetFeast.Models.ShoppingCart.ShoppingCartItem>
 
 @{
     var defaultAddress =
         ViewBag.DefaultAddress as UserAddress;
+
+    var userVouchers =
+        ViewBag.UserVouchers as List<UserVoucher>
+        ?? new List<UserVoucher>();
 }
 
 <div class="container mt-4">
@@ -26,12 +31,9 @@
 
                         <a asp-controller="Address"
                            asp-action="Index"
-                           asp-route-returnUrl="@Url.Action("CheckOut", "Order")"
-                           class="btn btn-outline-primary btn-sm">
-
-                            <i class="bi bi-pencil me-1"></i>
+                           asp-route-fromCheckout="true"
+                           class="btn btn-outline-primary">
                             Thay đổi
-
                         </a>
 
                     </div>
@@ -184,21 +186,53 @@
                         </tbody>
                     </table>
                 </div>
-                <!-- Thanh toán -->
+                <!-- PHƯƠNG THỨC THANH TOÁN -->
                 <div class="card border-0 shadow-sm p-4 mb-4">
+
                     <h4 class="fw-bold mb-4">
+                        <i class="bi bi-credit-card me-2 text-primary"></i>
                         Phương thức thanh toán
                     </h4>
-                    <div class="form-check">
+
+                    <!-- COD -->
+                    <div class="form-check mb-3">
+
                         <input class="form-check-input"
                                type="radio"
                                name="PaymentMethod"
+                               id="paymentCOD"
                                value="COD"
                                checked>
-                        <label class="form-check-label">
+
+                        <label class="form-check-label fw-semibold"
+                               for="paymentCOD">
+
+                            <i class="bi bi-truck me-2"></i>
                             Thanh toán khi nhận hàng (COD)
+
                         </label>
+
                     </div>
+
+                    <!-- BANK TRANSFER -->
+                    <div class="form-check">
+
+                        <input class="form-check-input"
+                               type="radio"
+                               name="PaymentMethod"
+                               id="paymentBank"
+                               value="BankTransfer">
+
+                        <label class="form-check-label fw-semibold"
+                               for="paymentBank">
+
+                            <i class="bi bi-qr-code me-2"></i>
+                            Chuyển khoản qua mã QR
+
+                        </label>
+
+                    </div>
+
                 </div>
             </div>
             <!-- BÊN PHẢI -->
@@ -304,7 +338,85 @@
                         }
 
                     </div>
+                    <!-- ========================== -->
+                    <!-- VOUCHER -->
+                    <!-- ========================== -->
 
+                    <div class="border rounded p-3 mb-3">
+
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+
+                            <span class="fw-semibold">
+                                <i class="bi bi-ticket-perforated me-1"></i>
+                                Voucher
+                            </span>
+
+                            <a asp-controller="Voucher"
+                               asp-action="MyVouchers"
+                               class="small text-primary text-decoration-none">
+                                Voucher của tôi
+                            </a>
+
+                        </div>
+
+                        @if (userVouchers.Any())
+                        {
+                            <select id="userVoucher"
+                                    name="userVoucherId"
+                                    class="form-select">
+
+                                <option value="">
+                                    -- Không sử dụng Voucher --
+                                </option>
+
+                                @foreach (var item in userVouchers)
+                                {
+                                    <option value="@item.UserVoucherId"
+                                            data-discount="@item.Voucher.DiscountAmount"
+                                            data-minimum="@item.Voucher.MinimumOrderAmount">
+
+                                        @item.Voucher.Name
+                                        - Giảm @item.Voucher.DiscountAmount.ToString("N0")đ
+                                        (Đơn từ
+                                        @item.Voucher.MinimumOrderAmount.ToString("N0")đ)
+
+                                    </option>
+                                }
+
+                            </select>
+
+                            <small class="text-muted d-block mt-2">
+                                Chọn voucher bạn muốn sử dụng cho đơn hàng.
+                            </small>
+
+                            <div class="d-flex justify-content-between mt-3 text-success">
+
+                                <span>
+                                    Giảm từ Voucher
+                                </span>
+
+                                <strong id="voucherDiscount">
+                                    -0 đ
+                                </strong>
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-muted small">
+
+                                Bạn chưa có voucher.
+
+                                <a asp-controller="Voucher"
+                                   asp-action="Index"
+                                   class="text-primary">
+                                    Đổi voucher bằng điểm
+                                </a>
+
+                            </div>
+                        }
+
+                    </div>
                     <hr />
 
                     <!-- Tổng thanh toán -->
@@ -316,8 +428,7 @@
 
                         <strong class="text-danger fs-4"
                                 id="totalPayment">
-                            @((Model.Sum(x => x.TotalPrice) + 20000)
-                                                        .ToString("N0")) đ
+                            @((Model.Sum(x => x.TotalPrice) + 20000).ToString("N0")) đ
                         </strong>
 
                     </div>
@@ -333,6 +444,26 @@
     </form>
 </div>
 <script>
+
+    // ==========================
+    // VIETQR
+    // ==========================
+
+    const BANK_ID = "MB";
+    const ACCOUNT_NO = "0344356136";
+    const ACCOUNT_NAME = "VO DUONG DUY ANH";
+
+
+    // ==========================
+    // TỔNG TIỀN SẢN PHẨM
+    // ==========================
+
+    const productTotal =
+        @Model.Sum(x => x.TotalPrice);
+
+    const userPoints =
+        @ViewBag.UserPoints;
+
 
     // ==========================
     // DELIVERY
@@ -353,12 +484,14 @@
             "storeInfo"
         );
 
-       function toggleDelivery()
+
+    function toggleDelivery()
     {
         const selected =
             document.querySelector(
                 'input[name="DeliveryMethod"]:checked'
             ).value;
+
 
         if (selected === "Ship")
         {
@@ -371,8 +504,10 @@
             storeInfo.classList.remove("d-none");
         }
 
+
         updateTotal();
     }
+
 
     deliveryMethods.forEach(x =>
     {
@@ -383,53 +518,44 @@
     });
 
 
-   
     // ==========================
-    // POINT + TOTAL
+    // TÍNH TOÁN TỔNG TIỀN
     // ==========================
-
-    const productTotal =
-        @Model.Sum(x => x.TotalPrice);
-
-    const userPoints =
-        @ViewBag.UserPoints;
-
 
     function updateTotal()
     {
+
+        // ==========================
+        // PHÍ SHIP
+        // ==========================
+
         const delivery =
             document.querySelector(
                 'input[name="DeliveryMethod"]:checked'
             ).value;
 
-        // --------------------------
-        // Phí vận chuyển
-        // --------------------------
 
         let shipping = 0;
 
+
         if (delivery === "Ship")
         {
-            if (productTotal >= 199000)
-            {
-                shipping = 0;
-            }
-            else
-            {
-                shipping = 20000;
-            }
+            shipping = 20000;
         }
 
-        // --------------------------
-        // Điểm sử dụng
-        // --------------------------
+
+        // ==========================
+        // ĐIỂM
+        // ==========================
 
         const usedPointsInput =
             document.getElementById(
                 "usedPoints"
             );
 
+
         let usedPoints = 0;
+
 
         if (usedPointsInput)
         {
@@ -438,65 +564,155 @@
                     usedPointsInput.value
                 ) || 0;
 
-            // Không cho âm
+
+            // Không âm
             if (usedPoints < 0)
             {
                 usedPoints = 0;
                 usedPointsInput.value = 0;
             }
 
-            // Không vượt quá điểm hiện có
+
+            // Không vượt quá điểm đang có
             if (usedPoints > userPoints)
             {
                 usedPoints = userPoints;
+
                 usedPointsInput.value =
                     userPoints;
             }
         }
 
-        // --------------------------
-        // Tiền giảm
-        // --------------------------
+
+        // ==========================
+        // GIẢM TỪ ĐIỂM
+        // 1 ĐIỂM = 100Đ
+        // ==========================
 
         let pointDiscount =
             usedPoints * 100;
 
-        // Tổng trước khi dùng điểm
-        const totalBeforePoints =
+
+        const totalBeforeDiscount =
             productTotal + shipping;
 
-        // Không cho giảm quá tổng tiền
-        if (pointDiscount > totalBeforePoints)
+
+        // Không cho điểm giảm quá tổng
+        if (pointDiscount > totalBeforeDiscount)
         {
-            pointDiscount =
+
+            usedPoints =
                 Math.floor(
-                    totalBeforePoints / 100
+                    totalBeforeDiscount / 100
                 );
+
 
             if (usedPointsInput)
             {
-                usedPoints =
-                    pointDiscount;
-
                 usedPointsInput.value =
                     usedPoints;
             }
+
 
             pointDiscount =
                 usedPoints * 100;
         }
 
-        // --------------------------
-        // Tổng cuối cùng
-        // --------------------------
 
-        const totalPayment =
-            totalBeforePoints -
+        // ==========================
+        // VOUCHER
+        // ==========================
+
+        const voucherSelect =
+            document.getElementById(
+                "userVoucher"
+            );
+
+
+        let voucherDiscount = 0;
+
+
+        if (
+            voucherSelect &&
+            voucherSelect.value
+        )
+        {
+
+            const selectedOption =
+                voucherSelect.options[
+                    voucherSelect.selectedIndex
+                ];
+
+
+            const discount =
+                parseFloat(
+                    selectedOption.dataset.discount
+                ) || 0;
+
+
+            const minimum =
+                parseFloat(
+                    selectedOption.dataset.minimum
+                ) || 0;
+
+
+            // Kiểm tra đơn tối thiểu
+            if (productTotal >= minimum)
+            {
+
+                voucherDiscount =
+                    discount;
+
+            }
+            else
+            {
+
+                voucherDiscount = 0;
+
+            }
+
+        }
+
+
+        // ==========================
+        // KHÔNG CHO GIẢM QUÁ TIỀN
+        // ==========================
+
+        const remainingAfterPoints =
+            totalBeforeDiscount -
             pointDiscount;
 
-        // --------------------------
-        // Hiển thị
-        // --------------------------
+
+        if (voucherDiscount >
+            remainingAfterPoints)
+        {
+            voucherDiscount =
+                Math.max(
+                    0,
+                    remainingAfterPoints
+                );
+        }
+
+
+        // ==========================
+        // TỔNG CUỐI
+        // ==========================
+
+        let totalPayment =
+            totalBeforeDiscount -
+            pointDiscount -
+            voucherDiscount;
+
+
+        if (totalPayment < 0)
+        {
+            totalPayment = 0;
+        }
+
+
+        // ==========================
+        // HIỂN THỊ PHÍ SHIP
+        // ==========================
 
         document.getElementById(
             "shippingFee"
@@ -504,10 +720,16 @@
             shipping.toLocaleString("vi-VN")
             + " đ";
 
+
+        // ==========================
+        // HIỂN THỊ GIẢM ĐIỂM
+        // ==========================
+
         const pointDiscountElement =
             document.getElementById(
                 "pointDiscount"
             );
+
 
         if (pointDiscountElement)
         {
@@ -517,6 +739,30 @@
                 + " đ";
         }
 
+
+        // ==========================
+        // HIỂN THỊ GIẢM VOUCHER
+        // ==========================
+
+        const voucherDiscountElement =
+            document.getElementById(
+                "voucherDiscount"
+            );
+
+
+        if (voucherDiscountElement)
+        {
+            voucherDiscountElement.innerText =
+                "-" +
+                voucherDiscount.toLocaleString("vi-VN")
+                + " đ";
+        }
+
+
+        // ==========================
+        // HIỂN THỊ TỔNG
+        // ==========================
+
         document.getElementById(
             "totalPayment"
         ).innerText =
@@ -525,11 +771,15 @@
     }
 
 
-    // Khi nhập điểm
+    // ==========================
+    // NHẬP ĐIỂM
+    // ==========================
+
     const usedPointsInput =
         document.getElementById(
             "usedPoints"
         );
+
 
     if (usedPointsInput)
     {
@@ -549,15 +799,41 @@
             "useAllPoints"
         );
 
+
     if (useAllPoints)
     {
         useAllPoints.addEventListener(
             "click",
             function ()
             {
-                usedPointsInput.value =
-                    userPoints;
+                if (usedPointsInput)
+                {
+                    usedPointsInput.value =
+                        userPoints;
 
+                    updateTotal();
+                }
+            }
+        );
+    }
+
+
+    // ==========================
+    // CHỌN VOUCHER
+    // ==========================
+
+    const voucherSelect =
+        document.getElementById(
+            "userVoucher"
+        );
+
+
+    if (voucherSelect)
+    {
+        voucherSelect.addEventListener(
+            "change",
+            function ()
+            {
                 updateTotal();
             }
         );
@@ -565,7 +841,7 @@
 
 
     // ==========================
-    // INITIAL
+    // KHỞI TẠO
     // ==========================
 
     toggleDelivery();

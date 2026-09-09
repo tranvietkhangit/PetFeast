@@ -1,5 +1,8 @@
 ﻿@model IEnumerable<PetFeast.Models.Identity.UserAddress>
 
+@{
+    bool fromCheckout = ViewBag.FromCheckout ?? false;
+}
 <div class="container mt-5">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,6 +19,7 @@
 
         <a asp-controller="Address"
            asp-action="Create"
+           asp-route-fromCheckout="@fromCheckout"
            class="btn btn-primary">
 
             <i class="bi bi-plus-lg me-1"></i>
@@ -65,7 +69,9 @@
                 Thêm địa chỉ để thuận tiện khi đặt hàng.
             </p>
 
-            <a asp-action="Create"
+            <a asp-controller="Address"
+               asp-action="Create"
+               asp-route-fromCheckout="@fromCheckout"
                class="btn btn-primary">
 
                 Thêm địa chỉ đầu tiên
@@ -200,18 +206,20 @@
 
 
     <!-- QUAY LẠI CHECKOUT -->
+    @if (fromCheckout)
+    {
+        <div class="mt-4 mb-5">
 
-    <div class="mt-4 mb-5">
+            <a asp-controller="Order"
+               asp-action="CheckOut"
+               class="btn btn-light border">
 
-        <a asp-controller="Order"
-           asp-action="CheckOut"
-           class="btn btn-light border">
+                <i class="bi bi-arrow-left me-1"></i>
+                Quay lại thanh toán
 
-            <i class="bi bi-arrow-left me-1"></i>
-            Quay lại thanh toán
+            </a>
 
-        </a>
-
-    </div>
+        </div>
+    }
 
 </div>

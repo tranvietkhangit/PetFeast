@@ -64,6 +64,7 @@
                     {
                         <tr>
 
+                            <!-- CHECKBOX -->
                             <td class="text-center">
                                 <input type="checkbox"
                                        class="product-checkbox"
@@ -72,6 +73,7 @@
                                        @(item.IsSelected ? "checked" : "") />
                             </td>
 
+                            <!-- HÌNH ẢNH -->
                             <td class="text-center">
                                 <img src="@item.ImageUrl"
                                      width="70"
@@ -80,70 +82,68 @@
                                      class="rounded" />
                             </td>
 
+                            <!-- TÊN -->
                             <td>
                                 @item.ProductName
                             </td>
 
+                            <!-- GIÁ BÁN -->
                             <td>
                                 @item.Price.ToString("N0") đ
                             </td>
 
+                            <!-- SỐ LƯỢNG -->
                             <td class="text-center">
                                 <div class="d-flex justify-content-center align-items-center">
-                                    <!-- Giảm -->
-                                    <form asp-controller="ShoppingCart"
-                                          asp-action="DecreaseQuantity"
-                                          method="post">
 
-                                        <input type="hidden"
-                                               name="productId"
-                                               value="@item.ProductId" />
+                                    <!-- GIẢM -->
+                                    <button type="button"
+                                            class="btn btn-outline-secondary btn-sm quantity-btn decrease-btn"
+                                            data-id="@item.ProductId">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
 
-                                        <button class="btn btn-outline-secondary btn-sm">
-
-                                            <i class="bi bi-dash"></i>
-
-                                        </button>
-                                    </form>
-                                    <span class="mx-3 fw-bold">
+                                    <!-- SỐ LƯỢNG -->
+                                    <span class="mx-3 fw-bold quantity-value"
+                                          data-id="@item.ProductId">
                                         @item.Quantity
                                     </span>
-                                    <!-- Tăng -->
-                                    <form asp-controller="ShoppingCart"
-                                          asp-action="IncreaseQuantity"
-                                          method="post">
 
-                                        <input type="hidden"
-                                               name="productId"
-                                               value="@item.ProductId" />
-
-                                        <button class="btn btn-outline-primary btn-sm">
-
-                                            <i class="bi bi-plus"></i>
-                                        </button>
-
-                                    </form>
+                                    <!-- TĂNG -->
+                                    <button type="button"
+                                            class="btn btn-outline-primary btn-sm quantity-btn increase-btn"
+                                            data-id="@item.ProductId">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
 
                                 </div>
-
                             </td>
 
+                            <!-- TỔNG TIỀN -->
                             <td>
-                                @item.TotalPrice.ToString("N0") đ
+                                <span class="item-total"
+                                      data-id="@item.ProductId">
+                                    @item.TotalPrice.ToString("N0")
+                                </span> đ
                             </td>
+
+                            <!-- XÓA -->
                             <td class="text-center">
                                 <form asp-controller="ShoppingCart"
                                       asp-action="RemoveFromCart"
                                       method="post">
+
                                     <input type="hidden"
                                            name="productId"
                                            value="@item.ProductId" />
+
                                     <button class="btn btn-danger btn-sm">
                                         <i class="bi bi-trash"></i>
                                     </button>
-                                </form>
 
+                                </form>
                             </td>
+
                         </tr>
                     }
                 </tbody>
@@ -181,31 +181,44 @@
         document.querySelectorAll(".product-checkbox");
     const total =
         document.getElementById("totalPrice");
-    function updateTotal()
-    {
+        function updateTotal() {
+
+        if (!total) return;
+
         let sum = 0;
+
         document
-        .querySelectorAll(".product-checkbox:checked")
-        .forEach(cb => {
-            sum += Number(cb.dataset.price);
-        });
+            .querySelectorAll(".product-checkbox:checked")
+            .forEach(cb => {
+                sum += Number(cb.dataset.price);
+            });
+
         total.innerText =
-            sum.toLocaleString('vi-VN') + " đ";
+            sum.toLocaleString("vi-VN") + " đ";
     }
     // Chọn tất cả
-    selectAll.addEventListener("change", function()
-    {
-        checkboxes.forEach(cb => {cb.checked =this.checked;});
-        updateTotal();
-    });
+        if (selectAll) {
+        selectAll.addEventListener("change", function () {
+
+            checkboxes.forEach(cb => {
+                cb.checked = this.checked;
+            });
+
+            updateTotal();
+        });
+    }
     // Checkbox từng sản phẩm
-    checkboxes.forEach(cb => {
-        cb.addEventListener("change", function()
-        {
+        checkboxes.forEach(cb => {
+        cb.addEventListener("change", function () {
+
             let allChecked =
                 document.querySelectorAll(".product-checkbox:checked")
-                .length === checkboxes.length;
-            selectAll.checked = allChecked;
+                    .length === checkboxes.length;
+
+            if (selectAll) {
+                selectAll.checked = allChecked;
+            }
+
             updateTotal();
         });
     });
@@ -228,5 +241,147 @@
                  &isSelected=${this.checked}`
             });
         });
+    });
+</script>
+<script>
+    document.querySelectorAll(".quantity-btn").forEach(button => {
+
+        button.addEventListener("click", async function () {
+
+            const productId = this.dataset.id;
+
+            const isIncrease =
+                this.classList.contains("increase-btn");
+
+            const url = isIncrease
+                ? "/ShoppingCart/IncreaseQuantity"
+                : "/ShoppingCart/DecreaseQuantity";
+
+            // Lấy 2 nút của sản phẩm hiện tại
+            const increaseButton =
+                document.querySelector(
+                    `.increase-btn[data-id="${productId}"]`
+                );
+
+            const decreaseButton =
+                document.querySelector(
+                    `.decrease-btn[data-id="${productId}"]`
+                );
+
+            // Không cho bấm liên tục khi đang xử lý
+            increaseButton.disabled = true;
+            decreaseButton.disabled = true;
+
+            try {
+
+                const response = await fetch(url, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/x-www-form-urlencoded; charset=UTF-8",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body:
+                        `productId=${encodeURIComponent(productId)}`
+                });
+
+                if (!response.ok) {
+                    throw new Error("HTTP " + response.status);
+                }
+
+                const data = await response.json();
+
+                // =========================
+                // XỬ LÝ LỖI
+                // =========================
+
+                if (!data.success) {
+
+                    alert(data.message);
+
+                    if (data.quantity !== undefined) {
+
+                        const quantityElement =
+                            document.querySelector(
+                                `.quantity-value[data-id="${productId}"]`
+                            );
+
+                        if (quantityElement) {
+                            quantityElement.textContent = data.quantity;
+                        }
+                    }
+
+                    return;
+                }
+
+                // =========================
+                // CẬP NHẬT SỐ LƯỢNG
+                // =========================
+
+                const quantityElement =
+                    document.querySelector(
+                        `.quantity-value[data-id="${productId}"]`
+                    );
+
+                if (quantityElement) {
+                    quantityElement.textContent = data.quantity;
+                }
+
+
+                // =========================
+                // CẬP NHẬT THÀNH TIỀN
+                // =========================
+
+                const itemTotal =
+                    document.querySelector(
+                        `.item-total[data-id="${productId}"]`
+                    );
+
+                if (itemTotal) {
+
+                    itemTotal.textContent =
+                        Number(data.totalPrice)
+                            .toLocaleString("vi-VN");
+                }
+
+
+                // =========================
+                // CẬP NHẬT DATA-PRICE
+                // =========================
+
+                const checkbox =
+                    document.querySelector(
+                        `.product-checkbox[data-id="${productId}"]`
+                    );
+
+                if (checkbox) {
+                    checkbox.dataset.price = data.totalPrice;
+                }
+
+
+                // =========================
+                // CẬP NHẬT TỔNG GIỎ HÀNG
+                // =========================
+
+                updateTotal();
+
+            }
+            catch (error) {
+
+                console.error("Quantity error:", error);
+
+                alert("Có lỗi xảy ra. Vui lòng thử lại.");
+
+            }
+            finally {
+
+                // Cho phép bấm lại
+                increaseButton.disabled = false;
+                decreaseButton.disabled = false;
+
+            }
+
+        });
+
     });
 </script>
