@@ -5,27 +5,27 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="container-fluid">
+<div class="admin-page">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="admin-page-header">
 
         <div>
-            <h2 class="fw-bold">
+            <h2 class="admin-order-title">
                 <i class="bi bi-pencil-square me-2"></i>
                 Chỉnh sửa Voucher
             </h2>
 
-            <p class="text-muted mb-0">
+            <p class="admin-order-subtitle">
                 Cập nhật thông tin voucher
             </p>
         </div>
 
         <a asp-controller="Admin"
            asp-action="VoucherList"
-           class="btn btn-secondary">
+           class="admin-btn-secondary">
 
-            <i class="bi bi-arrow-left me-1"></i>
-            Quay lại
+            <i class="bi bi-arrow-left"></i>
+            Quay lại Voucher
 
         </a>
 

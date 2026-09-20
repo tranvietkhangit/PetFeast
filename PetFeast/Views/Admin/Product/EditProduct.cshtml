@@ -4,116 +4,188 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card shadow mt-4">
+<div class="admin-page">
 
-    <div class="card-header bg-warning">
+    <div class="admin-page-header">
+        <div>
+            <h2 class="admin-page-title">Sửa sản phẩm</h2>
+            <p class="admin-page-subtitle">
+                Cập nhật thông tin sản phẩm
+            </p>
+        </div>
 
-        <h4>Sửa sản phẩm</h4>
-
+        <a asp-action="ProductList"
+           class="admin-btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Quay lại
+        </a>
     </div>
 
-    <div class="card-body">
+    <div class="admin-card">
 
-        <form asp-action="EditProduct"
-              method="post"
-              enctype="multipart/form-data">
+        <div class="admin-card-header">
+            <i class="bi bi-pencil-square text-primary"></i>
+            <h4>Thông tin sản phẩm</h4>
+        </div>
 
-            <input hidden asp-for="ProductId">
+        <div class="admin-card-body">
 
-            <input hidden asp-for="ImageUrl">
+            <form asp-action="EditProduct"
+                  method="post"
+                  enctype="multipart/form-data"
+                  class="admin-form">
 
-            <div class="mb-3">
+                <input type="hidden"
+                       asp-for="ProductId" />
 
-                <label>Tên sản phẩm</label>
+                <input type="hidden"
+                       asp-for="ImageUrl" />
 
-                <input asp-for="ProductName"
-                       class="form-control">
+                <div asp-validation-summary="All"
+                     class="text-danger mb-3">
+                </div>
 
-            </div>
+                <div class="row">
 
-            <div class="mb-3">
+                    <div class="col-md-8">
 
-                <label>Giá</label>
+                        <div class="mb-3">
+                            <label asp-for="ProductName"
+                                   class="admin-form-label">
+                                Tên sản phẩm
+                            </label>
 
-                <input asp-for="Price"
-                       class="form-control">
+                            <input asp-for="ProductName"
+                                   class="form-control"
+                                   required />
+                        </div>
 
-            </div>
-            <div class="mb-3">
+                    </div>
 
-                <label>Giảm giá (%)</label>
+                    <div class="col-md-4">
 
-                <input asp-for="DiscountPercent"
-                       class="form-control"
-                       min="0"
-                       max="100">
+                        <div class="mb-3">
+                            <label asp-for="CategoryId"
+                                   class="admin-form-label">
+                                Danh mục
+                            </label>
 
-            </div>
+                            <select asp-for="CategoryId"
+                                    class="form-select"
+                                    asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "CategoryName"))">
+                            </select>
+                        </div>
 
-            <div class="mb-3">
+                    </div>
 
-                <label>Số lượng</label>
+                </div>
 
-                <input asp-for="Quantity"
-                       class="form-control">
+                <div class="row">
 
-            </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="Price"
+                                   class="admin-form-label">
+                                Giá
+                            </label>
 
-            <div class="mb-3">
+                            <input asp-for="Price"
+                                   class="form-control"
+                                   type="number"
+                                   min="0"
+                                   required />
+                        </div>
+                    </div>
 
-                <label>Danh mục</label>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="DiscountPercent"
+                                   class="admin-form-label">
+                                Giảm giá (%)
+                            </label>
 
-                <select asp-for="CategoryId"
-                        class="form-select"
-                        asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "CategoryName"))">
-                </select>
+                            <input asp-for="DiscountPercent"
+                                   class="form-control"
+                                   type="number"
+                                   min="0"
+                                   max="100" />
+                        </div>
+                    </div>
 
-            </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="Quantity"
+                                   class="admin-form-label">
+                                Số lượng
+                            </label>
 
-            <div class="mb-3">
+                            <input asp-for="Quantity"
+                                   class="form-control"
+                                   type="number"
+                                   min="0"
+                                   required />
+                        </div>
+                    </div>
 
-                <label>Mô tả</label>
+                </div>
 
-                <textarea asp-for="Description"
-                          class="form-control"></textarea>
+                <div class="mb-3">
+                    <label asp-for="Description"
+                           class="admin-form-label">
+                        Mô tả
+                    </label>
 
-            </div>
+                    <textarea asp-for="Description"
+                              class="form-control"></textarea>
+                </div>
 
-            <div class="mb-3">
+                <div class="mb-3">
 
-                <label>Ảnh hiện tại</label>
+                    <label class="admin-form-label">
+                        Ảnh hiện tại
+                    </label>
 
-                <br>
+                    <div>
+                        <img src="@Model.ImageUrl"
+                             class="admin-image-preview"
+                             alt="@Model.ProductName" />
+                    </div>
 
-                <img src="@Model.ImageUrl"
-                     width="150"
-                     class="rounded border">
+                </div>
 
-            </div>
+                <div class="mb-3">
 
-            <div class="mb-3">
+                    <label asp-for="ImageFile"
+                           class="admin-form-label">
+                        Ảnh mới
+                    </label>
 
-                <label>Ảnh mới</label>
+                    <input asp-for="ImageFile"
+                           class="form-control"
+                           type="file"
+                           accept="image/*" />
 
-                <input asp-for="ImageFile"
-                       class="form-control">
+                </div>
 
-            </div>
+                <div class="admin-form-actions">
 
-            <button class="btn btn-warning">
+                    <button type="submit"
+                            class="admin-btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Cập nhật
+                    </button>
 
-                Cập nhật
+                    <a asp-action="ProductList"
+                       class="admin-btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                        Hủy
+                    </a>
 
-            </button>
+                </div>
 
-            <a asp-action="ProductList"
-               class="btn btn-secondary">
+            </form>
 
-                Hủy
-
-            </a>
-
-        </form>
+        </div>
 
     </div>
 

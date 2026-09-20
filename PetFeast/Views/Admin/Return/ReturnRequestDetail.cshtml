@@ -608,148 +608,74 @@
 
                 <div class="card-body">
 
+                    @{
+                        var statusOrder = new Dictionary<string, int>
+                                        {
+                                        { "Chờ xử lý", 1 },
+                                        { "Đã duyệt", 2 },
+                                        { "Đang chờ nhận hàng", 3 },
+                                        { "Đã nhận hàng", 4 },
+                                        { "Đang kiểm tra", 5 },
+                                        { "Đã hoàn tiền", 6 }
+                                        };
+
+                        int currentStep = statusOrder.ContainsKey(Model.Status)
+                        ? statusOrder[Model.Status]
+                        : 0;
+                    }
+
                     <div class="timeline">
 
-                        <div class="timeline-item
-                             @(Model.Status == "Chờ xử lý" ? "active" : "")">
+                        @{
+                            var steps = new[]
+                            {
+                                                new { Order = 1, Name = "Chờ xử lý", Description = "Khách hàng gửi yêu cầu" },
+                                                new { Order = 2, Name = "Đã duyệt", Description = "PetFeast chấp nhận yêu cầu" },
+                                                new { Order = 3, Name = "Đang chờ nhận hàng", Description = "Chờ khách gửi sản phẩm" },
+                                                new { Order = 4, Name = "Đã nhận hàng", Description = "PetFeast đã nhận sản phẩm" },
+                                                new { Order = 5, Name = "Đang kiểm tra", Description = "Kiểm tra tình trạng sản phẩm" },
+                                                new { Order = 6, Name = "Đã hoàn tiền", Description = "Hoàn tất yêu cầu" }
+                                                };
+                        }
 
-                            <div class="timeline-dot"></div>
+                        @foreach (var step in steps)
+                        {
+                            bool isActive = step.Order <= currentStep;
 
-                            <div>
-                                <div class="fw-semibold">
-                                    Chờ xử lý
+                            <div class="timeline-item @(isActive ? "active" : "")">
+
+                                <div class="timeline-dot"></div>
+
+                                <div>
+                                    <div class="fw-semibold">
+                                        @step.Name
+                                    </div>
+
+                                    <small class="text-muted">
+                                        @step.Description
+                                    </small>
                                 </div>
 
-                                <small class="text-muted">
-                                    Khách hàng gửi yêu cầu
-                                </small>
                             </div>
-
-                        </div>
-
-
-                        <div class="timeline-item
-                             @(Model.Status == "Đã duyệt" ||
-                                                            Model.Status == "Đang chờ nhận hàng" ||
-                                                            Model.Status == "Đã nhận hàng" ||
-                                                            Model.Status == "Đang kiểm tra" ||
-                                                            Model.Status == "Đã hoàn tiền"
-                                                            ? "active" : "")">
-
-                            <div class="timeline-dot"></div>
-
-                            <div>
-                                <div class="fw-semibold">
-                                    Đã duyệt
-                                </div>
-
-                                <small class="text-muted">
-                                    PetFeast chấp nhận yêu cầu
-                                </small>
-                            </div>
-
-                        </div>
-
-
-                        <div class="timeline-item
-                             @(Model.Status == "Đang chờ nhận hàng" ||
-                                                            Model.Status == "Đã nhận hàng" ||
-                                                            Model.Status == "Đang kiểm tra" ||
-                                                            Model.Status == "Đã hoàn tiền"
-                                                            ? "active" : "")">
-
-                            <div class="timeline-dot"></div>
-
-                            <div>
-                                <div class="fw-semibold">
-                                    Đang chờ nhận hàng
-                                </div>
-
-                                <small class="text-muted">
-                                    Chờ khách gửi sản phẩm
-                                </small>
-                            </div>
-
-                        </div>
-
-
-                        <div class="timeline-item
-                             @(Model.Status == "Đã nhận hàng" ||
-                                                            Model.Status == "Đang kiểm tra" ||
-                                                            Model.Status == "Đã hoàn tiền"
-                                                            ? "active" : "")">
-
-                            <div class="timeline-dot"></div>
-
-                            <div>
-                                <div class="fw-semibold">
-                                    Đã nhận hàng
-                                </div>
-
-                                <small class="text-muted">
-                                    PetFeast đã nhận sản phẩm
-                                </small>
-                            </div>
-
-                        </div>
-
-
-                        <div class="timeline-item
-                             @(Model.Status == "Đang kiểm tra" ||
-                                                            Model.Status == "Đã hoàn tiền"
-                                                            ? "active" : "")">
-
-                            <div class="timeline-dot"></div>
-
-                            <div>
-                                <div class="fw-semibold">
-                                    Đang kiểm tra
-                                </div>
-
-                                <small class="text-muted">
-                                    Kiểm tra tình trạng sản phẩm
-                                </small>
-                            </div>
-
-                        </div>
-
-
-                        <div class="timeline-item
-                             @(Model.Status == "Đã hoàn tiền"
-                                                            ? "active" : "")">
-
-                            <div class="timeline-dot"></div>
-
-                            <div>
-                                <div class="fw-semibold">
-                                    Đã hoàn tiền
-                                </div>
-
-                                <small class="text-muted">
-                                    Hoàn tất yêu cầu
-                                </small>
-                            </div>
-
-                        </div>
+                        }
 
                     </div>
 
                     @if (Model.Status == "Từ chối")
                     {
                         <div class="rejected-process">
-
                             <i class="bi bi-x-circle-fill"></i>
 
                             <div>
                                 <strong>Yêu cầu đã bị từ chối</strong>
 
                                 <div class="small mt-1">
-                                    Vui lòng xem lý do bên dưới.
+                                    Vui lòng xem lý do từ chối bên dưới.
                                 </div>
                             </div>
-
                         </div>
                     }
+
 
                 </div>
 
@@ -958,6 +884,35 @@
                                 <i class="bi bi-cash-coin me-2"></i>
 
                                 Xác nhận hoàn tiền
+                            </button>
+
+                        </form>
+                        <!-- TỪ CHỐI SAU KHI KIỂM TRA -->
+
+                        <form asp-controller="Admin"
+                              asp-action="RejectReturnAfterInspection"
+                              asp-route-id="@Model.ReturnRequestId"
+                              method="post"
+                              class="mt-3">
+
+                            @Html.AntiForgeryToken()
+
+                            <label class="form-label fw-semibold">
+                                Lý do từ chối hoàn trả
+                            </label>
+
+                            <textarea name="adminNote"
+                                  class="form-control mb-3"
+                                  rows="4"
+                                  placeholder="Ví dụ: Sản phẩm bị hư hỏng do sử dụng sai cách..."
+                                  required></textarea>
+
+                            <button type="submit"
+                                    class="btn btn-reject w-100"
+                                    onclick="return confirm('Bạn có chắc muốn từ chối hoàn trả sau khi kiểm tra?');">
+
+                                <i class="bi bi-x-circle me-2"></i>
+                                Từ chối hoàn trả
                             </button>
 
                         </form>
@@ -1569,5 +1524,18 @@
 
         .refund-extra strong {
             color: #0a58ca;
+        }
+
+    .timeline-item.active {
+        color: #212529;
+    }
+
+        .timeline-item.active .timeline-dot {
+            background: #0d6efd;
+            box-shadow: 0 0 0 1px #0d6efd;
+        }
+
+        .timeline-item.active .fw-semibold {
+            color: #212529;
         }
 </style>

@@ -1,0 +1,99 @@
+﻿@model PetFeast.Models.Contacts.Contact
+
+@{
+    ViewData["Title"] = "Chi tiết liên hệ";
+}
+
+<div class="admin-page">
+
+    <div class="admin-page-header">
+
+        <div>
+            <h2 class="admin-order-title">
+                <i class="bi bi-envelope me-2"></i>
+                Chi tiết liên hệ
+            </h2>
+
+            <p class="admin-order-subtitle">
+                Xem thông tin và nội dung liên hệ của khách hàng
+            </p>
+        </div>
+
+        <a asp-action="Index"
+           class="admin-btn-secondary">
+
+            <i class="bi bi-arrow-left"></i>
+            Quay lại liên hệ
+
+        </a>
+
+    </div>
+
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-primary text-white">
+
+            <h5 class="mb-0">
+                Thông tin khách hàng
+            </h5>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row mb-3">
+
+                <div class="col-md-6">
+                    <strong>Họ và tên:</strong>
+                    <p>@Model.Name</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Email:</strong>
+                    <p>@Model.Email</p>
+                </div>
+
+            </div>
+
+            <div class="row mb-3">
+
+                <div class="col-md-6">
+                    <strong>Số điện thoại:</strong>
+                    <p>@Model.Phone</p>
+                </div>
+
+                <div class="col-md-6">
+                    <strong>Ngày gửi:</strong>
+                    <p>
+                        @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </p>
+                </div>
+
+            </div>
+
+            <hr />
+
+            <h5 class="mb-3">
+                Nội dung liên hệ
+            </h5>
+
+            <div class="border rounded p-3 bg-light"
+                 style="white-space: pre-wrap;">
+
+                @Model.Message
+
+            </div>
+
+            <div class="mt-4">
+
+                <span class="badge bg-success">
+                    Đã đọc
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

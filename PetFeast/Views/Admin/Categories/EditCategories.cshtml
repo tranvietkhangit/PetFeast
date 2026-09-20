@@ -4,43 +4,79 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card shadow mt-4">
+<div class="admin-page">
 
-    <div class="card-header bg-warning">
+    <div class="admin-page-header">
+        <div>
+            <h2 class="admin-page-title">Sửa danh mục</h2>
+            <p class="admin-page-subtitle">
+                Cập nhật thông tin danh mục sản phẩm
+            </p>
+        </div>
 
-        <h4>Sửa danh mục</h4>
+        <a asp-action="CategoryList"
+           class="admin-btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Quay lại
+        </a>
+    </div>
+
+    <div class="admin-card">
+
+        <div class="admin-card-header">
+            <i class="bi bi-pencil-square text-primary"></i>
+            <h4>Thông tin danh mục</h4>
+        </div>
+
+        <div class="admin-card-body">
+
+            <form asp-action="EditCategory"
+                  method="post"
+                  class="admin-form">
+
+                <input type="hidden"
+                       asp-for="CategoryId" />
+
+                <div asp-validation-summary="All"
+                     class="text-danger mb-3">
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryName"
+                           class="admin-form-label">
+                        Tên danh mục
+                    </label>
+
+                    <input asp-for="CategoryName"
+                           class="form-control"
+                           placeholder="Nhập tên danh mục..."
+                           required />
+
+                    <span asp-validation-for="CategoryName"
+                          class="text-danger">
+                    </span>
+                </div>
+
+                <div class="admin-form-actions">
+
+                    <button type="submit"
+                            class="admin-btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Cập nhật
+                    </button>
+
+                    <a asp-action="CategoryList"
+                       class="admin-btn-secondary">
+                        <i class="bi bi-x-circle"></i>
+                        Hủy
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
 
     </div>
 
-    <div class="card-body">
-
-        <form asp-action="EditCategory">
-
-            <input hidden asp-for="CategoryId">
-
-            <div class="mb-3">
-
-                <label>Tên danh mục</label>
-
-                <input asp-for="CategoryName"
-                       class="form-control">
-
-            </div>
-
-            <button class="btn btn-warning">
-
-                Cập nhật
-
-            </button>
-            <a asp-action="CategoryList"
-               class="btn btn-secondary">
-
-                <i class="bi bi-x-circle"></i>
-                Hủy
-
-            </a>
-        </form>
-
-    </div>
-
-</div>  
+</div>

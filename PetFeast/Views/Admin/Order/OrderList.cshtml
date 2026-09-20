@@ -4,261 +4,349 @@
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
 
-<div class="card shadow mt-4">
+<div class="container-fluid admin-list-page">
 
-    <div class="card-header bg-primary text-white">
-        <h4 class="mb-0">Quản lý đơn hàng</h4>
+    <!-- HEADER -->
+    <div class="admin-page-header">
+        <div>
+            <h3 class="admin-page-title">
+                Quản lý đơn hàng
+            </h3>
+
+            <p class="text-muted mb-0 mt-1">
+                Theo dõi đơn hàng, thanh toán và trạng thái giao hàng
+            </p>
+        </div>
     </div>
 
-    <div class="card-body">
+    <!-- CARD -->
+    <div class="admin-card">
 
-        <table class="table table-bordered align-middle">
+        <div class="admin-card-header">
+            <div>
+                <h4 class="mb-1">
+                    <i class="bi bi-receipt me-2"></i>
+                    Danh sách đơn hàng
+                </h4>
 
-            <thead class="table-dark">
+                <small class="opacity-75">
+                    Tổng cộng @Model.Count() đơn hàng
+                </small>
+            </div>
+        </div>
 
-                <tr>
-                    <th>Mã</th>
-                    <th>Khách hàng</th>
-                    <th>SĐT</th>
-                    <th>Ngày đặt</th>
-                    <th>Tổng tiền</th>
-                    <th>Thanh toán</th>
-                    <th>Trạng thái</th>
-                    <th class="text-center">Thao tác</th>
-                </tr>
+        <div class="admin-card-body">
 
-            </thead>
+            @if (!Model.Any())
+            {
+                <div class="admin-empty-state">
+                    <i class="bi bi-inbox"></i>
 
-            <tbody>
+                    <h5>Chưa có đơn hàng</h5>
 
-                @foreach (var item in Model)
-                {
-                    <tr>
+                    <p class="text-muted mb-0">
+                        Hiện tại chưa có đơn hàng nào trong hệ thống.
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="admin-table-wrapper">
 
-                        <td>
-                            #@item.OrderId
-                        </td>
+                    <table class="table admin-table order-table">
 
-                        <td>
-                            @item.CustomerName
-                        </td>
+                        <thead>
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Khách hàng</th>
+                                <th>Ngày đặt</th>
+                                <th>Tổng tiền</th>
+                                <th>Thanh toán</th>
+                                <th>Trạng thái</th>
+                                <th class="text-center">Thao tác</th>
+                            </tr>
+                        </thead>
 
-                        <td>
-                            @item.Phone
-                        </td>
+                        <tbody>
 
-                        <td>
-                            @item.OrderDate.ToString("dd/MM/yyyy HH:mm")
-                        </td>
-
-                        <td>
-                            <strong>
-                                @item.TotalAmount.ToString("N0") đ
-                            </strong>
-                        </td>
-
-                        <!-- THANH TOÁN -->
-                        <td>
-
-                            @if (item.PaymentMethod == "BankTransfer")
+                            @foreach (var item in Model)
                             {
-                                if (item.PaymentStatus == "Đã thanh toán")
-                                {
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-check-circle"></i>
-                                        Đã thanh toán
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="bi bi-clock"></i>
-                                        Chờ xác nhận
-                                    </span>
-                                }
+                                <tr>
 
-                                <div class="small text-muted mt-1">
-                                    Chuyển khoản
-                                </div>
+                                    <!-- MÃ ĐƠN -->
+                                    <td>
+                                        <a asp-action="OrderDetail"
+                                           asp-route-id="@item.OrderId"
+                                           class="order-code">
+                                            #@item.OrderId
+                                        </a>
+                                    </td>
+
+                                    <!-- KHÁCH HÀNG -->
+                                    <td>
+                                        <div class="customer-info">
+
+                                            <div class="customer-avatar">
+                                                <i class="bi bi-person-fill"></i>
+                                            </div>
+
+                                            <div>
+                                                <div class="customer-name">
+                                                    @(item.User?.FullName
+                                                                                                ?? item.CustomerName
+                                                                                                ?? "Khách hàng")
+                                        </div>
+
+                                        @if (item.User != null)
+                                                {
+                                                    <small class="text-muted">
+                                                        @item.User.Email
+                                                    </small>
+                                                }
+                                            </div>
+
+                                        </div>
+                                    </td>
+
+                                    <!-- NGÀY ĐẶT -->
+                                    <td>
+                                        <div class="order-date">
+                                            <strong>
+                                                @item.OrderDate.ToString("dd/MM/yyyy")
+                                            </strong>
+
+                                            <small>
+                                                @item.OrderDate.ToString("HH:mm")
+                                            </small>
+                                        </div>
+                                    </td>
+
+                                    <!-- TỔNG TIỀN -->
+                                    <td>
+                                        <strong class="order-total">
+                                            @item.TotalAmount.ToString("N0")đ
+                                        </strong>
+                                    </td>
+
+                                    <!-- THANH TOÁN -->
+                                    <td>
+                                        @if (item.PaymentMethod == "BankTransfer")
+                                        {
+                                            @if (item.PaymentStatus == "Đã thanh toán")
+                                            {
+                                                <span class="admin-status status-success">
+                                                    <i class="bi bi-check-circle"></i>
+                                                    Đã thanh toán
+                                                </span>
+                                            }
+                                            else if (item.PaymentStatus == "Đã hoàn tiền")
+                                            {
+                                                <span class="admin-status status-refunded">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                    Đã hoàn tiền
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="admin-status status-warning">
+                                                    <i class="bi bi-clock"></i>
+                                                    Chờ xác nhận
+                                                </span>
+
+                                                <small class="payment-method">
+                                                    Chuyển khoản
+                                                </small>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            @if (item.PaymentStatus == "Đã thanh toán")
+                                            {
+                                                <span class="admin-status status-success">
+                                                    <i class="bi bi-check-circle"></i>
+                                                    Đã thanh toán
+                                                </span>
+                                            }
+                                            else if (item.PaymentStatus == "Đã hoàn tiền")
+                                            {
+                                                <span class="admin-status status-refunded">
+                                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                                    Đã hoàn tiền
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="admin-status status-secondary">
+                                                    <i class="bi bi-wallet2"></i>
+                                                    COD
+                                                </span>
+                                            }
+                                        }
+                                    </td>
+
+                                    <!-- TRẠNG THÁI -->
+                                    <td>
+                                        @if (item.Status == "Chờ xác nhận")
+                                        {
+                                            <span class="admin-status status-warning">
+                                                <i class="bi bi-clock"></i>
+                                                Chờ xác nhận
+                                            </span>
+                                        }
+                                        else if (item.Status == "Đang giao")
+                                        {
+                                            <span class="admin-status status-primary">
+                                                <i class="bi bi-truck"></i>
+                                                Đang giao
+                                            </span>
+                                        }
+                                        else if (item.Status == "Hoàn thành")
+                                        {
+                                            <span class="admin-status status-success">
+                                                <i class="bi bi-check-circle"></i>
+                                                Hoàn thành
+                                            </span>
+                                        }
+                                        else if (item.Status == "Đã hủy")
+                                        {
+                                            <span class="admin-status status-danger">
+                                                <i class="bi bi-x-circle"></i>
+                                                Đã hủy
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-status status-secondary">
+                                                @item.Status
+                                            </span>
+                                        }
+                                    </td>
+
+                                    <!-- THAO TÁC -->
+                                    <td>
+                                        <div class="admin-order-actions">
+
+                                            <!-- CHI TIẾT -->
+                                            <a asp-action="OrderDetail"
+                                               asp-route-id="@item.OrderId"
+                                               class="admin-detail-btn"
+                                               title="Xem chi tiết">
+
+                                                <i class="bi bi-eye"></i>
+                                                Chi tiết
+                                            </a>
+
+                                            <!-- XÁC NHẬN THANH TOÁN -->
+                                            @if (item.PaymentMethod == "BankTransfer"
+                                                                                && item.PaymentStatus != "Đã thanh toán"
+                                                                                && item.PaymentStatus != "Đã hoàn tiền"
+                                                                                && item.Status == "Chờ xác nhận")
+                                            {
+                                                <form asp-action="ConfirmPayment"
+                                                      method="post"
+                                                      onsubmit="return confirm('Xác nhận đơn hàng đã thanh toán?')">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@item.OrderId" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-success"
+                                                            title="Xác nhận thanh toán">
+
+                                                        <i class="bi bi-check2-circle"></i>
+                                                    </button>
+
+                                                </form>
+                                            }
+
+                                            <!-- XÁC NHẬN ĐƠN -->
+                                            @if (item.Status == "Chờ xác nhận"
+                                                                                && (item.PaymentMethod == "COD"
+                                                                                || item.PaymentStatus == "Đã thanh toán"))
+                                            {
+                                                <form asp-action="ConfirmOrder"
+                                                      method="post"
+                                                      onsubmit="return confirm('Xác nhận đơn hàng này?')">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@item.OrderId" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-primary"
+                                                            title="Xác nhận đơn hàng">
+
+                                                        <i class="bi bi-box-seam"></i>
+                                                    </button>
+
+                                                </form>
+                                            }
+
+                                            <!-- HOÀN THÀNH -->
+                                            @if (item.Status == "Đang giao")
+                                            {
+                                                <form asp-action="CompleteOrder"
+                                                      method="post"
+                                                      onsubmit="return confirm('Xác nhận đơn hàng đã hoàn thành?')">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@item.OrderId" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-success"
+                                                            title="Hoàn thành">
+
+                                                        <i class="bi bi-check-lg"></i>
+                                                    </button>
+
+                                                </form>
+                                            }
+
+                                            <!-- HỦY ĐƠN -->
+                                            @if (item.Status != "Đã hủy"
+                                                                                && item.Status != "Hoàn thành")
+                                            {
+                                                <form asp-action="CancelOrder"
+                                                      method="post"
+                                                      onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <input type="hidden"
+                                                           name="id"
+                                                           value="@item.OrderId" />
+
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-danger"
+                                                            title="Hủy đơn hàng">
+
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+
+                                                </form>
+                                            }
+
+                                        </div>
+                                    </td>
+
+                                </tr>
                             }
-                            else
-                            {
-                                if (item.PaymentStatus == "Đã thanh toán")
-                                {
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-check-circle"></i>
-                                        Đã thanh toán
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="badge bg-secondary">
-                                        COD
-                                    </span>
-                                }
-                            }
 
-                        </td>
+                        </tbody>
 
-                        <!-- TRẠNG THÁI ĐƠN -->
-                        <td>
+                    </table>
 
-                            @if (item.Status == "Chờ xác nhận")
-                            {
-                                <span class="badge bg-warning text-dark">
-                                    @item.Status
-                                </span>
-                            }
-                            else if (item.Status == "Đang giao")
-                            {
-                                <span class="badge bg-primary">
-                                    @item.Status
-                                </span>
-                            }
-                            else if (item.Status == "Hoàn thành")
-                            {
-                                <span class="badge bg-success">
-                                    @item.Status
-                                </span>
-                            }
-                            else if (item.Status == "Đã hủy")
-                            {
-                                <span class="badge bg-danger">
-                                    @item.Status
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">
-                                    @item.Status
-                                </span>
-                            }
+                </div>
+            }
 
-                        </td>
-
-                        <!-- THAO TÁC -->
-                        <td class="text-center">
-
-                            <!-- CHI TIẾT -->
-                            <a asp-action="OrderDetail"
-                               asp-route-id="@item.OrderId"
-                               class="btn btn-outline-info btn-sm"
-                               title="Chi tiết">
-
-                                <i class="bi bi-eye"></i>
-
-                            </a>
-
-
-                            <!-- XÁC NHẬN THANH TOÁN -->
-                            @if (item.PaymentMethod == "BankTransfer"
-                                                    && item.PaymentStatus != "Đã thanh toán"
-                                                    && item.Status == "Chờ xác nhận")
-                            {
-                                <form asp-controller="Admin"
-                                      asp-action="ConfirmPayment"
-                                      asp-route-id="@item.OrderId"
-                                      method="post"
-                                      style="display:inline;">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <button type="submit"
-                                            class="btn btn-outline-warning btn-sm"
-                                            title="Xác nhận thanh toán"
-                                            onclick="return confirm('Bạn đã kiểm tra và xác nhận số tiền chuyển khoản của đơn hàng này?');">
-
-                                        <i class="bi bi-cash-coin"></i>
-
-                                    </button>
-
-                                </form>
-                            }
-
-
-                            <!-- XÁC NHẬN ĐANG GIAO -->
-                            @if (item.Status == "Chờ xác nhận"
-                                                    && (item.PaymentMethod == "COD"
-                                                    || item.PaymentStatus == "Đã thanh toán"))
-                            {
-                                <form asp-controller="Admin"
-                                      asp-action="ConfirmOrder"
-                                      asp-route-id="@item.OrderId"
-                                      method="post"
-                                      style="display:inline;">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <button type="submit"
-                                            class="btn btn-outline-primary btn-sm"
-                                            title="Xác nhận đơn / Đang giao"
-                                            onclick="return confirm('Xác nhận đơn hàng này và chuyển sang trạng thái Đang giao?');">
-
-                                        <i class="bi bi-truck"></i>
-
-                                    </button>
-
-                                </form>
-                            }
-
-
-                            <!-- HOÀN THÀNH -->
-                            @if (item.Status == "Đang giao")
-                            {
-                                <form asp-controller="Admin"
-                                      asp-action="CompleteOrder"
-                                      asp-route-id="@item.OrderId"
-                                      method="post"
-                                      style="display:inline;">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <button type="submit"
-                                            class="btn btn-outline-success btn-sm"
-                                            title="Hoàn thành"
-                                            onclick="return confirm('Xác nhận đơn hàng đã giao thành công?');">
-
-                                        <i class="bi bi-check-circle"></i>
-
-                                    </button>
-
-                                </form>
-                            }
-
-
-                            <!-- HỦY ĐƠN -->
-                            @if (item.Status != "Đã hủy"
-                                                    && item.Status != "Hoàn thành")
-                            {
-                                <form asp-controller="Admin"
-                                      asp-action="CancelOrder"
-                                      asp-route-id="@item.OrderId"
-                                      method="post"
-                                      style="display:inline;">
-
-                                    @Html.AntiForgeryToken()
-
-                                    <button type="submit"
-                                            class="btn btn-danger btn-sm"
-                                            title="Hủy đơn"
-                                            onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
-
-                                        <i class="bi bi-x-circle"></i>
-
-                                    </button>
-
-                                </form>
-                            }
-
-                        </td>
-
-                    </tr>
-                }
-
-            </tbody>
-
-        </table>
-
+        </div>
     </div>
-
 </div>

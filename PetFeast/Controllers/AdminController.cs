@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetFeast.Data;
+using PetFeast.Models.Contacts;
 using PetFeast.Models.Identity;
 using PetFeast.Models.Interfaces;
+using PetFeast.Models.Orders;
 using PetFeast.Models.Points;
 using PetFeast.Models.Products;
 using PetFeast.Models.Services;
 using PetFeast.Models.Voucher;
-using PetFeast.Models.Orders;
 namespace PetFeast.Controllers
 {
     [Authorize(Roles = "Admin")]
@@ -491,16 +492,22 @@ namespace PetFeast.Controllers
 
             return RedirectToAction(nameof(CategoryList));
         }
-        public IActionResult OrderList()
+        public async Task<IActionResult> OrderList()
         {
-            var orders = _context.Orders
+            var orders = await _context.Orders
+                .Include(o => o.User)
                 .Include(o => o.OrderDetails)
                     .ThenInclude(od => od.Product)
-                .Include(o => o.UserVoucher)
+                .AsNoTracking()
                 .OrderByDescending(o => o.OrderDate)
-                .ToList();
+                .ToListAsync();
 
-            return View("Order/OrderList", orders);
+            Console.WriteLine($"Tổng số đơn hàng: {orders.Count}");
+
+            return View(
+                "~/Views/Admin/Order/OrderList.cshtml",
+                orders
+            );
         }
         public IActionResult OrderDetail(int id)
         {
@@ -676,8 +683,7 @@ namespace PetFeast.Controllers
             // 4. CỘNG 1 ĐIỂM
             // ==========================================
 
-            int points = await _pointsRepository
-                .AddPointsForOrderAsync(order);
+            int points = await _pointsRepository.AddPointsForOrderAsync(order);
 
             await _context.SaveChangesAsync();
 
@@ -1502,6 +1508,160 @@ namespace PetFeast.Controllers
                 newOrderCount,
                 pendingReturnCount
             });
+        }
+        // =========================
+        // DANH SÁCH LIÊN HỆ
+        // =========================
+        public async Task<IActionResult> Index(string? status = null)
+        {
+            IQueryable<Contact> query = _context.Contacts
+                .AsNoTracking();
+
+            if (status == "unread")
+            {
+                query = query.Where(c => !c.IsRead);
+            }
+            else if (status == "read")
+            {
+                query = query.Where(c => c.IsRead);
+            }
+
+            ViewBag.Status = status;
+
+            ViewBag.UnreadCount = await _context.Contacts
+                .CountAsync(c => !c.IsRead);
+
+            var contacts = await query
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            return View(
+                "~/Views/Admin/AdminContact/Index.cshtml",
+                contacts
+            );
+        }
+
+        // =========================
+        // CHI TIẾT LIÊN HỆ
+        // =========================
+        public async Task<IActionResult> Details(int id)
+        {
+            var contact = await _context.Contacts
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (contact == null)
+            {
+                return NotFound();
+            }
+
+            // Tự động đánh dấu đã đọc
+            if (!contact.IsRead)
+            {
+                contact.IsRead = true;
+
+                await _context.SaveChangesAsync();
+            }
+
+            return View(
+    "~/Views/Admin/AdminContact/Details.cshtml",
+    contact
+);
+        }
+
+        // =========================
+        // ĐÁNH DẤU CHƯA ĐỌC
+        // =========================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkUnread(int id)
+        {
+            var contact = await _context.Contacts
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (contact == null)
+            {
+                return NotFound();
+            }
+
+            contact.IsRead = false;
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        // =========================
+        // XÓA LIÊN HỆ
+        // =========================
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var contact = await _context.Contacts
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (contact == null)
+            {
+                return NotFound();
+            }
+
+            _context.Contacts.Remove(contact);
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Xóa liên hệ thành công.";
+
+            return RedirectToAction(nameof(Index));
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectReturnAfterInspection(
+    int id,
+    string adminNote)
+        {
+            var returnRequest = await _context.ReturnRequests
+                .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
+
+            if (returnRequest == null)
+            {
+                return NotFound();
+            }
+
+            if (returnRequest.Status != "Đang kiểm tra")
+            {
+                TempData["Error"] =
+                    "Chỉ có thể từ chối khi đang kiểm tra sản phẩm.";
+
+                return RedirectToAction(
+                    nameof(ReturnRequestDetail),
+                    new { id }
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(adminNote))
+            {
+                TempData["Error"] =
+                    "Vui lòng nhập lý do từ chối.";
+
+                return RedirectToAction(
+                    nameof(ReturnRequestDetail),
+                    new { id }
+                );
+            }
+
+            returnRequest.Status = "Từ chối";
+            returnRequest.AdminNote = adminNote.Trim();
+
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] =
+                "Đã từ chối yêu cầu hoàn trả sau khi kiểm tra.";
+
+            return RedirectToAction(
+                nameof(ReturnRequestDetail),
+                new { id }
+            );
         }
     }
 }

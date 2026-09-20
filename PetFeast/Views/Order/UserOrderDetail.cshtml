@@ -229,96 +229,98 @@
             <div class="card-body">
 
                 <!-- STATUS CURRENT -->
-                <div class="return-current-status mb-4">
+                @if (returnRequest.Status != "Từ chối")
+                {
+                    <div class="return-current-status mb-4">
 
-                    @if (returnRequest.Status == "Chờ xử lý")
-                    {
-                        <div class="return-status-icon status-pending">
-                            <i class="bi bi-clock"></i>
-                        </div>
-
-                        <div>
-                            <div class="fw-bold">
-                                Yêu cầu đang chờ xử lý
+                        @if (returnRequest.Status == "Chờ xử lý")
+                        {
+                            <div class="return-status-icon status-pending">
+                                <i class="bi bi-clock"></i>
                             </div>
 
-                            <div class="small text-muted">
-                                PetFeast đang xem xét yêu cầu của bạn.
-                            </div>
-                        </div>
-                    }
-                    else if (returnRequest.Status == "Đã duyệt")
-                    {
-                        <div class="return-status-icon status-approved">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
+                            <div>
+                                <div class="fw-bold">
+                                    Yêu cầu đang chờ xử lý
+                                </div>
 
-                        <div>
-                            <div class="fw-bold text-success">
-                                Yêu cầu đã được duyệt
+                                <div class="small text-muted">
+                                    PetFeast đang xem xét yêu cầu của bạn.
+                                </div>
                             </div>
-
-                            <div class="small text-muted">
-                                Vui lòng gửi sản phẩm về cho PetFeast.
-                            </div>
-                        </div>
-                    }
-                    else if (returnRequest.Status == "Đang chờ nhận hàng")
-                    {
-                        <div class="return-status-icon status-shipping">
-                            <i class="bi bi-box-seam"></i>
-                        </div>
-
-                        <div>
-                            <div class="fw-bold text-primary">
-                                Đang chờ nhận hàng
+                        }
+                        else if (returnRequest.Status == "Đã duyệt")
+                        {
+                            <div class="return-status-icon status-approved">
+                                <i class="bi bi-check-circle"></i>
                             </div>
 
-                            <div class="small text-muted">
-                                PetFeast đang chờ nhận sản phẩm bạn gửi về.
-                            </div>
-                        </div>
-                    }
-                    else if (returnRequest.Status == "Đã nhận hàng")
-                    {
-                        <div class="return-status-icon status-received">
-                            <i class="bi bi-box2-heart"></i>
-                        </div>
+                            <div>
+                                <div class="fw-bold text-success">
+                                    Yêu cầu đã được duyệt
+                                </div>
 
-                        <div>
-                            <div class="fw-bold text-primary">
-                                PetFeast đã nhận hàng
+                                <div class="small text-muted">
+                                    Vui lòng gửi sản phẩm về cho PetFeast.
+                                </div>
                             </div>
-
-                            <div class="small text-muted">
-                                Sản phẩm đã được tiếp nhận và chuẩn bị kiểm tra.
-                            </div>
-                        </div>
-                    }
-                    else if (returnRequest.Status == "Đang kiểm tra")
-                    {
-                        <div class="return-status-icon status-inspecting">
-                            <i class="bi bi-search"></i>
-                        </div>
-
-                        <div>
-                            <div class="fw-bold text-primary">
-                                Sản phẩm đang được kiểm tra
+                        }
+                        else if (returnRequest.Status == "Đang chờ nhận hàng")
+                        {
+                            <div class="return-status-icon status-shipping">
+                                <i class="bi bi-box-seam"></i>
                             </div>
 
-                            <div class="small text-muted">
-                                PetFeast đang kiểm tra tình trạng sản phẩm.
-                            </div>
-                        </div>
-                    }
-                    else if (returnRequest.Status == "Đã hoàn tiền")
-                    {
-                        <div class="return-status-icon status-completed">
-                            <i class="bi bi-cash-coin"></i>
-                        </div>
+                            <div>
+                                <div class="fw-bold text-primary">
+                                    Đang chờ nhận hàng
+                                </div>
 
-                        <div>
-                            <div class="fw-bold text-success">
+                                <div class="small text-muted">
+                                    PetFeast đang chờ nhận sản phẩm bạn gửi về.
+                                </div>
+                            </div>
+                        }
+                        else if (returnRequest.Status == "Đã nhận hàng")
+                        {
+                            <div class="return-status-icon status-received">
+                                <i class="bi bi-box2-heart"></i>
+                            </div>
+
+                            <div>
+                                <div class="fw-bold text-primary">
+                                    PetFeast đã nhận hàng
+                                </div>
+
+                                <div class="small text-muted">
+                                    Sản phẩm đã được tiếp nhận và chuẩn bị kiểm tra.
+                                </div>
+                            </div>
+                        }
+                        else if (returnRequest.Status == "Đang kiểm tra")
+                        {
+                            <div class="return-status-icon status-inspecting">
+                                <i class="bi bi-search"></i>
+                            </div>
+
+                            <div>
+                                <div class="fw-bold text-primary">
+                                    Sản phẩm đang được kiểm tra
+                                </div>
+
+                                <div class="small text-muted">
+                                    PetFeast đang kiểm tra tình trạng sản phẩm.
+                                </div>
+                            </div>
+                        }
+                        else if (returnRequest.Status == "Đã hoàn tiền")
+                        {
+                            <div class="return-status-icon status-completed">
+                                <i class="bi bi-cash-coin"></i>
+                            </div>
+
+                            <div>
+                                <div class="fw-bold text-success">
                                 Đã hoàn tiền
                             </div>
 
@@ -327,31 +329,15 @@
                             </div>
                         </div>
                     }
-                    else if (returnRequest.Status == "Từ chối")
-                    {
-                        <div class="return-status-icon status-rejected">
-                            <i class="bi bi-x-circle"></i>
-                        </div>
-
-                        <div>
-                            <div class="fw-bold text-danger">
-                                Yêu cầu bị từ chối
-                            </div>
-
-                            <div class="small text-muted">
-                                PetFeast không chấp nhận yêu cầu trả hàng.
-                            </div>
-                        </div>
-                    }
-
+                    
                 </div>
+                }
 
 
                 <!-- TIMELINE -->
                 @if (returnRequest.Status != "Từ chối")
                 {
                     <div class="return-timeline">
-
                         <!-- 1 -->
                         <div class="return-step active">
 

@@ -145,14 +145,15 @@ namespace PetFeast.Controllers
                     x.IsDefault);
 
             if (defaultAddress == null &&
-                order.DeliveryMethod == "Ship")
+    order.DeliveryMethod == "Ship")
             {
-                TempData["Error"] =
-                    "Bạn chưa có địa chỉ nhận hàng.";
+                TempData["Info"] =
+                    "Bạn chưa có địa chỉ nhận hàng. Vui lòng thêm địa chỉ.";
 
                 return RedirectToAction(
                     "Create",
-                    "Address");
+                    "Address",
+                    new { fromCheckout = true });
             }
 
             // =========================================================

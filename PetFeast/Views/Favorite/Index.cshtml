@@ -250,7 +250,169 @@
     }
 
 </div>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
 
+            document.addEventListener("click", async function (event) {
+
+                const button = event.target.closest(
+                    ".favorite-btn"
+                );
+
+                if (!button) return;
+
+                const form = button.closest(".favorite-form");
+
+                if (!form) return;
+
+                const productId = form.dataset.productId;
+
+                if (!productId) return;
+
+                const favoriteItem = form.closest(".favorite-item");
+
+                if (!favoriteItem) return;
+
+                const token = form.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                )?.value;
+
+                if (!token) {
+                    alert("Không tìm thấy mã bảo mật.");
+                    return;
+                }
+
+                button.disabled = true;
+
+                try {
+                    const formData = new FormData();
+
+                    formData.append("productId", productId);
+                    formData.append(
+                        "__RequestVerificationToken",
+                        token
+                    );
+
+                    const response = await fetch(
+                        "/Favorite/ToggleAjax",
+                        {
+                            method: "POST",
+                            body: formData
+                        }
+                    );
+
+                    if (!response.ok) {
+                        throw new Error("Request failed");
+                    }
+
+                    const result = await response.json();
+
+                    if (result.requireLogin) {
+                        window.location.href =
+                            "/Identity/Account/Login";
+
+                        return;
+                    }
+
+                    if (result.success &&
+                        result.isFavorite === false) {
+
+                        // Hiệu ứng biến mất
+                        favoriteItem.style.transition =
+                            "opacity 0.3s ease, transform 0.3s ease";
+
+                        favoriteItem.style.opacity = "0";
+                        favoriteItem.style.transform = "scale(0.9)";
+
+                        setTimeout(function () {
+
+                            favoriteItem.remove();
+
+                            const remainingItems =
+                                document.querySelectorAll(
+                                    ".favorite-item"
+                                );
+
+                            // Khi không còn sản phẩm yêu thích
+                            if (remainingItems.length === 0) {
+
+                                const container =
+                                    document.querySelector(
+                                        ".favorite-page .row.g-4"
+                                    );
+
+                                if (container) {
+                                    container.innerHTML = `
+                                        <div class="col-12">
+                                            <div class="empty-favorite text-center py-5">
+
+                                                <div class="empty-favorite-icon">
+                                                    <i class="bi bi-heart"></i>
+                                                </div>
+
+                                                <h4 class="fw-bold mt-4">
+                                                    Chưa có sản phẩm yêu thích
+                                                </h4>
+
+                                                <p class="text-muted">
+                                                    Bạn chưa có sản phẩm nào
+                                                    trong danh sách yêu thích.
+                                                </p>
+
+                                                <a href="/Product/Index"
+                                                   class="btn btn-primary px-4">
+
+                                                    <i class="bi bi-bag me-2"></i>
+                                                    Xem sản phẩm
+
+                                                </a>
+
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+
+                                // Ẩn phân trang khi danh sách trống
+                                const pagination =
+                                    document.querySelector(
+                                        ".favorite-pagination"
+                                    );
+
+                                if (pagination) {
+                                    pagination.remove();
+                                }
+                            }
+
+                        }, 300);
+
+                    } else {
+                        alert(
+                            "Không thể bỏ yêu thích. Vui lòng thử lại."
+                        );
+
+                        button.disabled = false;
+                    }
+
+                } catch (error) {
+
+                    console.error(
+                        "Lỗi bỏ yêu thích:",
+                        error
+                    );
+
+                    alert(
+                        "Có lỗi xảy ra. Vui lòng thử lại."
+                    );
+
+                    button.disabled = false;
+                }
+
+            });
+
+        });
+    </script>
+}
 
 <style>
 

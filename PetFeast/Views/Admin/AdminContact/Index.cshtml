@@ -1,0 +1,292 @@
+﻿@model IEnumerable<PetFeast.Models.Contacts.Contact>
+
+@{
+    ViewData["Title"] = "Quản lý liên hệ";
+
+    string? currentStatus = ViewBag.Status;
+    int unreadCount = ViewBag.UnreadCount ?? 0;
+}
+
+<div class="container-fluid admin-list-page">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between
+                align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold">
+                Quản lý liên hệ
+            </h2>
+
+            <p class="text-muted mb-0">
+                Xem và quản lý tin nhắn từ khách hàng.
+            </p>
+        </div>
+
+        <span class="badge bg-danger fs-6">
+            Chưa đọc: @unreadCount
+        </span>
+
+    </div>
+
+    <!-- THÔNG BÁO -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["Success"]
+        </div>
+    }
+
+    <!-- BỘ LỌC -->
+    <div class="mb-3">
+
+        <a asp-action="Index"
+           class="btn @(string.IsNullOrEmpty(currentStatus)
+                          ? "btn-primary"
+                          : "btn-outline-primary")">
+            Tất cả
+        </a>
+
+        <a asp-action="Index"
+           asp-route-status="unread"
+           class="btn @(currentStatus == "unread"
+                          ? "btn-primary"
+                          : "btn-outline-primary")">
+            Chưa đọc
+        </a>
+
+        <a asp-action="Index"
+           asp-route-status="read"
+           class="btn @(currentStatus == "read"
+                          ? "btn-primary"
+                          : "btn-outline-primary")">
+            Đã đọc
+        </a>
+
+    </div>
+
+    <!-- BẢNG LIÊN HỆ -->
+    <div class="card shadow-sm border-0">
+
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+
+                    <tr>
+                        <th>Khách hàng</th>
+                        <th>Email</th>
+                        <th>Số điện thoại</th>
+                        <th>Ngày gửi</th>
+                        <th>Trạng thái</th>
+                        <th class="text-center">Thao tác</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="6"
+                                class="text-center py-4 text-muted">
+
+                                <i class="bi bi-envelope-open fs-3"></i>
+
+                                <p class="mb-0 mt-2">
+                                    Chưa có liên hệ nào.
+                                </p>
+
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var contact in Model)
+                        {
+                            <tr>
+
+                        <!-- KHÁCH HÀNG -->
+                        <td>
+                            <strong>@contact.Name</strong>
+                        </td>
+
+                                <!-- EMAIL -->
+                                <td>
+                                    @contact.Email
+                                </td>
+
+                                <!-- SỐ ĐIỆN THOẠI -->
+                                <td>
+                                    @contact.Phone
+                                </td>
+
+                                <!-- NGÀY GỬI -->
+                                <td>
+                            @if (contact.CreatedAt == DateTime.MinValue)
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            @contact.CreatedAt.ToString(
+                                            "dd/MM/yyyy HH:mm")
+                            </span>
+                                                        }
+                                </td>
+
+                                <!-- TRẠNG THÁI -->
+                                <td>
+                                    @if (contact.IsRead)
+                                    {
+                                        <span class="contact-status read">
+                                            <span class="status-dot"></span>
+                                            Đã đọc
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="contact-status unread">
+                                            <span class="status-dot"></span>
+                                            Chưa đọc
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- THAO TÁC -->
+                                <td class="text-center">
+
+                                    <div class="contact-actions">
+
+                                        <a asp-action="Details"
+                                           asp-route-id="@contact.Id"
+                                           class="btn btn-sm btn-primary">
+
+                                            <i class="bi bi-eye"></i>
+                                            <span>Xem</span>
+
+                                        </a>
+
+                                        <form asp-action="Delete"
+                                              asp-route-id="@contact.Id"
+                                              method="post"
+                                              onsubmit="return confirm(
+                                                          'Bạn có chắc muốn xóa liên hệ này?'
+                                                      );">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-danger">
+
+                                                <i class="bi bi-trash"></i>
+                                                <span>Xóa</span>
+
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+
+    /* ============================= */
+    /* DÒNG CHƯA ĐỌC */
+    /* ============================= */
+
+    .contact-unread {
+        background-color: #f8fbff !important;
+        border-left: 4px solid #0d6efd;
+    }
+
+    /* ============================= */
+    /* TRẠNG THÁI LIÊN HỆ */
+    /* ============================= */
+
+    .contact-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    /* Chưa đọc - đỏ */
+
+    .contact-status.unread {
+        color: #dc3545;
+    }
+
+        .contact-status.unread .status-dot {
+            background-color: #dc3545;
+        }
+
+    /* Đã đọc - xanh lá */
+
+    .contact-status.read {
+        color: #198754;
+    }
+
+        .contact-status.read .status-dot {
+            background-color: #198754;
+        }
+
+    /* ============================= */
+    /* NÚT THAO TÁC */
+    /* ============================= */
+
+    .contact-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+        .contact-actions form {
+            margin: 0;
+        }
+
+        .contact-actions .btn {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            min-width: 65px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+            .contact-actions .btn i {
+                font-size: 14px;
+            }
+
+</style>

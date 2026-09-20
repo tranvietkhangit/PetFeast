@@ -26,32 +26,32 @@ namespace PetFeast.Models.Services
         // =========================================================
         public async Task<int> AddPointsForOrderAsync(Order order)
         {
-            // Đơn hàng chưa có UserId
             if (string.IsNullOrEmpty(order.UserId))
                 return 0;
 
-            // Kiểm tra đơn hàng đã được cộng điểm chưa
-            bool alreadyEarned = await _context.PointTransactions
-                .AnyAsync(x =>
-                    x.OrderId == order.OrderId &&
-                    x.Type == "Earn");
-
-            if (alreadyEarned)
-                return 0;
-
-            // Tìm user
             var user = await _userManager.FindByIdAsync(order.UserId);
 
             if (user == null)
                 return 0;
 
-            // Mỗi đơn hàng = 1 điểm
-            const int points = 1;
+            // Kiểm tra đơn hàng đã được cộng điểm chưa
+            bool alreadyEarned = await _context.PointTransactions
+                .AnyAsync(p =>
+                    p.OrderId == order.OrderId &&
+                    p.Type == "Earn");
 
-            // Cộng điểm
+            if (alreadyEarned)
+                return 0;
+
+            // Mỗi sản phẩm theo số lượng = 1 điểm
+            int points = order.OrderDetails
+                .Sum(detail => detail.Quantity);
+
+            if (points <= 0)
+                return 0;
+
             user.Points += points;
 
-            // Tạo lịch sử giao dịch
             var transaction = new PointTransaction
             {
                 UserId = user.Id,
@@ -59,14 +59,14 @@ namespace PetFeast.Models.Services
                 Type = "Earn",
                 OrderId = order.OrderId,
                 Description =
-                    $"Tích {points} điểm từ đơn hàng #{order.OrderId}",
+                    $"Tích {points} điểm từ đơn hàng hoàn thành #{order.OrderId}",
                 CreatedAt = DateTime.Now
             };
 
             _context.PointTransactions.Add(transaction);
 
-            // Không SaveChanges ở đây.
-            // Controller sẽ SaveChanges().
+            await _context.SaveChangesAsync();
+
             return points;
         }
 
