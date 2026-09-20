@@ -1,0 +1,1087 @@
+﻿@model PetFeast.Models.Orders.Order
+
+<div class="container mt-4 mb-5">
+
+    <!-- HEADER -->
+    <div class="d-flex align-items-center mb-4">
+
+        <a asp-controller="Order"
+           asp-action="UserOrderList"
+           class="btn btn-outline-primary me-3">
+
+            <i class="bi bi-arrow-left"></i>
+            Quay lại
+
+        </a>
+
+        <h2 class="fw-bold text-primary mb-0">
+            <i class="bi bi-receipt me-2"></i>
+            Chi tiết đơn hàng #@Model.OrderId
+        </h2>
+
+    </div>
+
+
+    <!-- ORDER INFO -->
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Ngày đặt
+                    </div>
+
+                    <div class="fw-semibold">
+                        @Model.OrderDate.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Trạng thái
+                    </div>
+
+                    @if (Model.Status == "Đang giao")
+                    {
+                        <span class="badge bg-primary">
+                            <i class="bi bi-truck me-1"></i>
+                            @Model.Status
+                        </span>
+                    }
+                    else if (Model.Status == "Hoàn thành")
+                    {
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>
+                            @Model.Status
+                        </span>
+                    }
+                    else if (Model.Status == "Đã hủy")
+                    {
+                        <span class="badge bg-danger">
+                            <i class="bi bi-x-circle me-1"></i>
+                            @Model.Status
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">
+                            @Model.Status
+                        </span>
+                    }
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Phương thức thanh toán
+                    </div>
+
+                    <div class="fw-semibold">
+                        @if (Model.PaymentMethod == "BankTransfer")
+                        {
+                            <span>
+                                <i class="bi bi-qr-code me-1"></i>
+                                Chuyển khoản
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                <i class="bi bi-cash-coin me-1"></i>
+                                Thanh toán khi nhận hàng
+                            </span>
+                        }
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- CUSTOMER / DELIVERY -->
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-primary text-white fw-bold">
+            <i class="bi bi-geo-alt me-2"></i>
+            Thông tin nhận hàng
+        </div>
+
+        <div class="card-body">
+
+            <div class="row g-3">
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Người nhận
+                    </div>
+
+                    <div class="fw-semibold">
+                        @Model.CustomerName
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Số điện thoại
+                    </div>
+
+                    <div class="fw-semibold">
+                        @Model.Phone
+                    </div>
+
+                </div>
+
+
+                <div class="col-md-4">
+
+                    <div class="text-muted small">
+                        Hình thức nhận hàng
+                    </div>
+
+                    <div class="fw-semibold">
+
+                        @if (Model.DeliveryMethod == "Ship")
+                        {
+                            <span>
+                                <i class="bi bi-truck me-1 text-primary"></i>
+                                Giao hàng
+                            </span>
+                        }
+                        else
+                        {
+                            <span>
+                                <i class="bi bi-shop me-1 text-primary"></i>
+                                Nhận tại cửa hàng
+                            </span>
+                        }
+
+                    </div>
+
+                </div>
+
+
+                <div class="col-12">
+
+                    <div class="text-muted small">
+                        Địa chỉ
+                    </div>
+
+                    <div class="fw-semibold">
+                        @Model.Address
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- RETURN REQUEST -->
+    @if (Model.ReturnRequest == null &&
+        Model.Status == "Hoàn thành" &&
+        Model.CompletedDate.HasValue &&
+        DateTime.Now > Model.CompletedDate.Value.AddDays(7))
+    {
+        <div class="alert alert-secondary border-0 shadow-sm mb-4">
+            <i class="bi bi-info-circle me-2"></i>
+
+            Đơn hàng này đã quá thời hạn
+            <strong>7 ngày</strong>
+            để yêu cầu trả hàng.
+        </div>
+    }
+    else if (Model.ReturnRequest != null)
+    {
+        var returnRequest = Model.ReturnRequest;
+
+        <div class="card border-0 shadow-sm mb-4 return-status-card">
+
+            <div class="card-header bg-white fw-bold">
+
+                <i class="bi bi-arrow-repeat me-2 text-primary"></i>
+                Theo dõi yêu cầu trả hàng
+
+                <span class="float-end text-muted small">
+                    #@returnRequest.ReturnRequestId
+                </span>
+
+            </div>
+
+            <div class="card-body">
+
+                <!-- STATUS CURRENT -->
+                <div class="return-current-status mb-4">
+
+                    @if (returnRequest.Status == "Chờ xử lý")
+                    {
+                        <div class="return-status-icon status-pending">
+                            <i class="bi bi-clock"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold">
+                                Yêu cầu đang chờ xử lý
+                            </div>
+
+                            <div class="small text-muted">
+                                PetFeast đang xem xét yêu cầu của bạn.
+                            </div>
+                        </div>
+                    }
+                    else if (returnRequest.Status == "Đã duyệt")
+                    {
+                        <div class="return-status-icon status-approved">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold text-success">
+                                Yêu cầu đã được duyệt
+                            </div>
+
+                            <div class="small text-muted">
+                                Vui lòng gửi sản phẩm về cho PetFeast.
+                            </div>
+                        </div>
+                    }
+                    else if (returnRequest.Status == "Đang chờ nhận hàng")
+                    {
+                        <div class="return-status-icon status-shipping">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold text-primary">
+                                Đang chờ nhận hàng
+                            </div>
+
+                            <div class="small text-muted">
+                                PetFeast đang chờ nhận sản phẩm bạn gửi về.
+                            </div>
+                        </div>
+                    }
+                    else if (returnRequest.Status == "Đã nhận hàng")
+                    {
+                        <div class="return-status-icon status-received">
+                            <i class="bi bi-box2-heart"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold text-primary">
+                                PetFeast đã nhận hàng
+                            </div>
+
+                            <div class="small text-muted">
+                                Sản phẩm đã được tiếp nhận và chuẩn bị kiểm tra.
+                            </div>
+                        </div>
+                    }
+                    else if (returnRequest.Status == "Đang kiểm tra")
+                    {
+                        <div class="return-status-icon status-inspecting">
+                            <i class="bi bi-search"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold text-primary">
+                                Sản phẩm đang được kiểm tra
+                            </div>
+
+                            <div class="small text-muted">
+                                PetFeast đang kiểm tra tình trạng sản phẩm.
+                            </div>
+                        </div>
+                    }
+                    else if (returnRequest.Status == "Đã hoàn tiền")
+                    {
+                        <div class="return-status-icon status-completed">
+                            <i class="bi bi-cash-coin"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold text-success">
+                                Đã hoàn tiền
+                            </div>
+
+                            <div class="small text-muted">
+                                Yêu cầu trả hàng đã được hoàn tất.
+                            </div>
+                        </div>
+                    }
+                    else if (returnRequest.Status == "Từ chối")
+                    {
+                        <div class="return-status-icon status-rejected">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+
+                        <div>
+                            <div class="fw-bold text-danger">
+                                Yêu cầu bị từ chối
+                            </div>
+
+                            <div class="small text-muted">
+                                PetFeast không chấp nhận yêu cầu trả hàng.
+                            </div>
+                        </div>
+                    }
+
+                </div>
+
+
+                <!-- TIMELINE -->
+                @if (returnRequest.Status != "Từ chối")
+                {
+                    <div class="return-timeline">
+
+                        <!-- 1 -->
+                        <div class="return-step active">
+
+                            <div class="return-step-dot">
+                                <i class="bi bi-send"></i>
+                            </div>
+
+                            <div class="return-step-content">
+                                <div class="fw-semibold">
+                                    Chờ xử lý
+                                </div>
+
+                                <small class="text-muted">
+                                    Yêu cầu đã được gửi
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <!-- 2 -->
+                        <div class="return-step
+                                @(returnRequest.Status == "Đã duyệt" ||
+                                                       returnRequest.Status == "Đang chờ nhận hàng" ||
+                                                       returnRequest.Status == "Đã nhận hàng" ||
+                                                       returnRequest.Status == "Đang kiểm tra" ||
+                                                       returnRequest.Status == "Đã hoàn tiền"
+                                                         ? "active" : "")">
+
+                            <div class="return-step-dot">
+                                <i class="bi bi-check"></i>
+                            </div>
+
+                            <div class="return-step-content">
+                                <div class="fw-semibold">
+                                    Đã duyệt
+                                </div>
+
+                                <small class="text-muted">
+                                    PetFeast chấp nhận yêu cầu
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <!-- 3 -->
+                        <div class="return-step
+                                @(returnRequest.Status == "Đang chờ nhận hàng" ||
+                                                       returnRequest.Status == "Đã nhận hàng" ||
+                                                       returnRequest.Status == "Đang kiểm tra" ||
+                                                       returnRequest.Status == "Đã hoàn tiền"
+                                                         ? "active" : "")">
+
+                            <div class="return-step-dot">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+
+                            <div class="return-step-content">
+                                <div class="fw-semibold">
+                                    Chờ nhận hàng
+                                </div>
+
+                                <small class="text-muted">
+                                    Chờ PetFeast nhận sản phẩm
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <!-- 4 -->
+                        <div class="return-step
+                                @(returnRequest.Status == "Đã nhận hàng" ||
+                                                       returnRequest.Status == "Đang kiểm tra" ||
+                                                       returnRequest.Status == "Đã hoàn tiền"
+                                                         ? "active" : "")">
+
+                            <div class="return-step-dot">
+                                <i class="bi bi-box2-heart"></i>
+                            </div>
+
+                            <div class="return-step-content">
+                                <div class="fw-semibold">
+                                    Đã nhận hàng
+                                </div>
+
+                                <small class="text-muted">
+                                    PetFeast đã nhận sản phẩm
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <!-- 5 -->
+                        <div class="return-step
+                                @(returnRequest.Status == "Đang kiểm tra" ||
+                                                       returnRequest.Status == "Đã hoàn tiền"
+                                                         ? "active" : "")">
+
+                            <div class="return-step-dot">
+                                <i class="bi bi-search"></i>
+                            </div>
+
+                            <div class="return-step-content">
+                                <div class="fw-semibold">
+                                    Đang kiểm tra
+                                </div>
+
+                                <small class="text-muted">
+                                    Kiểm tra tình trạng sản phẩm
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <!-- 6 -->
+                        <div class="return-step
+                                @(returnRequest.Status == "Đã hoàn tiền"
+                                                         ? "active" : "")">
+
+                    <div class="return-step-dot">
+                        <i class="bi bi-cash-coin"></i>
+                    </div>
+
+                            <div class="return-step-content">
+                                <div class="fw-semibold">
+                                    Đã hoàn tiền
+                                </div>
+
+                                <small class="text-muted">
+                                    Hoàn tất yêu cầu trả hàng
+                                </small>
+                            </div>
+
+                        </div>
+
+                    </div>
+                        }
+
+
+                <!-- REJECTED -->
+                @if (returnRequest.Status == "Từ chối")
+                {
+                    <div class="return-rejected-box">
+
+                        <i class="bi bi-x-circle-fill"></i>
+
+                        <div>
+
+                            <div class="fw-bold">
+                                Yêu cầu trả hàng bị từ chối
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(returnRequest.AdminNote))
+                            {
+                                <div class="small mt-1">
+                                    <strong>Lý do:</strong>
+                                    @returnRequest.AdminNote
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
+
+                <!-- REFUND -->
+                @if (returnRequest.Status == "Đã hoàn tiền")
+                {
+                    <div class="refund-success-box mt-4">
+
+                        <div class="refund-success-icon">
+                            <i class="bi bi-check-lg"></i>
+                        </div>
+
+                        <div class="flex-grow-1">
+
+                            <div class="fw-bold text-success mb-1">
+                                Hoàn tiền thành công
+                            </div>
+
+                            <div class="small text-muted mb-3">
+                                Yêu cầu trả hàng đã được PetFeast xử lý hoàn tất.
+                            </div>
+
+                            <!-- TIỀN ĐÃ THANH TOÁN -->
+                            <div class="refund-detail-row">
+                                <span>
+                                    <i class="bi bi-receipt me-2"></i>
+                                    Tiền khách đã thanh toán
+                                </span>
+
+                                <strong>
+                                    @Model.TotalAmount.ToString("N0") đ
+                                </strong>
+                            </div>
+
+                            <!-- PHÍ VẬN CHUYỂN -->
+                            @if (Model.ShippingFee > 0)
+                            {
+                                <div class="refund-detail-row">
+                                    <span>
+                                        <i class="bi bi-truck me-2"></i>
+                                        Phí vận chuyển không hoàn
+                                    </span>
+
+                                    <strong class="text-danger">
+                                        -@Model.ShippingFee.ToString("N0") đ
+                                    </strong>
+                                </div>
+                            }
+
+                            <!-- SỐ TIỀN HOÀN -->
+                            <div class="refund-detail-row refund-total-row">
+                                <span>
+                                    <i class="bi bi-cash-coin me-2"></i>
+                                    Số tiền được hoàn
+                                </span>
+
+                                <strong class="refund-amount">
+                                    @returnRequest.RefundAmount.ToString("N0") đ
+                                </strong>
+                            </div>
+
+                            <!-- ĐIỂM -->
+                            @if (Model.UsedPoints > 0)
+                            {
+                                <div class="refund-detail-row">
+                                    <span>
+                                        <i class="bi bi-coin me-2"></i>
+                                        Điểm được hoàn lại
+                                    </span>
+
+                                    <strong class="text-primary">
+                                        +@Model.UsedPoints điểm
+                                    </strong>
+                                </div>
+                            }
+
+                            <!-- VOUCHER -->
+                            @if (Model.UserVoucherId.HasValue)
+                            {
+                                <div class="refund-detail-row">
+                                    <span>
+                                        <i class="bi bi-ticket-perforated me-2"></i>
+                                        Voucher
+                                    </span>
+
+                                    <strong class="text-primary">
+                                        Đã kích hoạt lại
+                                    </strong>
+                                </div>
+                            }
+
+                            <!-- THỜI GIAN -->
+                            @if (returnRequest.CompletedAt.HasValue)
+                            {
+                                <div class="refund-completed-time">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Hoàn tất lúc:
+                                    @returnRequest.CompletedAt.Value
+                                    .ToString("dd/MM/yyyy HH:mm")
+                                </div>
+                            }
+
+                        </div>
+
+                    </div>
+                }
+
+
+                <!-- GENERAL INFO -->
+                <div class="return-request-info mt-4">
+
+                    <div class="small text-muted">
+                        Ngày gửi yêu cầu
+                    </div>
+
+                    <div class="fw-semibold">
+                        @returnRequest.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    }
+    <!-- PRODUCTS -->
+    <div class="card border-0 shadow-sm mb-4">
+
+        <div class="card-header bg-primary text-white fw-bold">
+            <i class="bi bi-box-seam me-2"></i>
+            Sản phẩm
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table align-middle mb-0">
+
+                    <thead class="table-light">
+
+                        <tr>
+                            <th style="width: 90px;">Sản phẩm</th>
+                            <th>Tên sản phẩm</th>
+                            <th class="text-center">SL</th>
+                            <th class="text-end">Đơn giá</th>
+                            <th class="text-end">Thành tiền</th>
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @foreach (var item in Model.OrderDetails)
+                        {
+                            <tr>
+
+                                <td>
+
+                                    <img src="@item.Product.ImageUrl"
+                                         class="detail-product-image"
+                                         alt="@item.Product.ProductName">
+
+                                </td>
+
+                                <td>
+
+                                    <div class="fw-semibold">
+                                        @item.Product.ProductName
+                                    </div>
+
+                                </td>
+
+                                <td class="text-center">
+                                    @item.Quantity
+                                </td>
+
+                                <td class="text-end text-success">
+                                    @item.Price.ToString("N0") đ
+                                </td>
+
+                                <td class="text-end text-success fw-bold">
+                                    @((item.Price * item.Quantity).ToString("N0")) đ
+                                </td>
+
+                            </tr>
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- PAYMENT SUMMARY -->
+    <div class="row justify-content-end">
+
+        <div class="col-lg-5">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-header bg-light fw-bold">
+                    Chi tiết thanh toán
+                </div>
+
+                <div class="card-body">
+
+                    <div class="d-flex justify-content-between mb-2">
+
+                        <span>
+                            Tiền sản phẩm
+                        </span>
+
+                        <span class="text-success">
+                            @(
+                                                        Model.OrderDetails
+                                                        .Sum(x => x.Price * x.Quantity)
+                                                        .ToString("N0")
+                                                        ) đ
+                        </span>
+
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mb-2">
+
+                        <span>
+                            Phí giao hàng
+                        </span>
+
+                        <span class="text-success">
+                            @Model.ShippingFee.ToString("N0") đ
+                        </span>
+
+                    </div>
+
+
+                    @if (Model.PointDiscount > 0)
+                                        {
+                    <div class="d-flex justify-content-between mb-2">
+
+                        <span>
+                            Giảm bằng điểm
+                        </span>
+
+                        <span class="text-success">
+                            -@Model.PointDiscount.ToString("N0") đ
+                        </span>
+
+                    </div>
+                                        }
+
+
+                    @if (Model.VoucherDiscount > 0)
+                    {
+                        <div class="d-flex justify-content-between mb-2">
+
+                            <span>
+                                Giảm bằng voucher
+                            </span>
+
+                            <span class="text-success">
+                                -@Model.VoucherDiscount.ToString("N0") đ
+                            </span>
+
+                        </div>
+                    }
+
+
+                    <hr />
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <span class="fw-bold fs-5">
+                            Tổng thanh toán
+                        </span>
+
+                        <span class="fw-bold text-success fs-4">
+                            @Model.TotalAmount.ToString("N0") đ
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    .detail-product-image {
+        width: 70px;
+        height: 70px;
+        object-fit: contain;
+        border-radius: 8px;
+        background: #f8f9fa;
+        border: 1px solid #eee;
+    }
+
+    .card {
+        border-radius: 12px;
+    }
+
+    .card-header {
+        padding: 12px 16px;
+    }
+
+    .table th {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .table td {
+        font-size: 14px;
+    }
+    /* =========================
+       RETURN REQUEST
+    ========================= */
+
+    .return-card {
+        border-left: 4px solid #ffc107 !important;
+    }
+
+    .return-btn {
+        border-radius: 8px;
+        padding: 9px 16px;
+        font-weight: 600;
+        transition: all .2s ease;
+    }
+
+        .return-btn:hover {
+            transform: translateY(-1px);
+        }
+
+    .return-status-card {
+        border-left: 4px solid #0d6efd !important;
+    }
+
+    .return-current-status {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .return-status-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .status-pending {
+        background: #fff8e1;
+        color: #b78103;
+    }
+
+    .status-approved {
+        background: #e8f5e9;
+        color: #198754;
+    }
+
+    .status-shipping {
+        background: #e7f1ff;
+        color: #0d6efd;
+    }
+
+    .status-received {
+        background: #e8f0fe;
+        color: #1769aa;
+    }
+
+    .status-inspecting {
+        background: #f0eafd;
+        color: #6f42c1;
+    }
+
+    .status-completed {
+        background: #dff6e8;
+        color: #157347;
+    }
+
+    .status-rejected {
+        background: #fdecec;
+        color: #dc3545;
+    }
+
+
+    /* TIMELINE */
+
+    .return-timeline {
+        position: relative;
+        padding-left: 8px;
+    }
+
+    .return-step {
+        position: relative;
+        display: flex;
+        gap: 14px;
+        padding-bottom: 22px;
+        color: #adb5bd;
+    }
+
+        .return-step:last-child {
+            padding-bottom: 0;
+        }
+
+        .return-step::before {
+            content: "";
+            position: absolute;
+            left: 8px;
+            top: 18px;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+
+        .return-step:last-child::before {
+            display: none;
+        }
+
+    .return-step-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #e9ecef;
+        color: #adb5bd;
+        border: 3px solid #fff;
+        box-shadow: 0 0 0 1px #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 8px;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .return-step.active {
+        color: #212529;
+    }
+
+        .return-step.active::before {
+            background: #0d6efd;
+        }
+
+        .return-step.active .return-step-dot {
+            background: #0d6efd;
+            color: #fff;
+            box-shadow: 0 0 0 1px #0d6efd;
+        }
+
+
+    /* REJECT */
+
+    .return-rejected-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 9px;
+        background: #fdecec;
+        color: #dc3545;
+    }
+
+        .return-rejected-box > i {
+            font-size: 20px;
+        }
+
+
+    /* REFUND */
+
+   
+
+    .return-request-info {
+        border-top: 1px solid #edf0f3;
+        padding-top: 12px;
+    }
+    /* =========================
+       REFUND DETAIL
+    ========================= */
+
+    .refund-success-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 18px;
+        background: #e8f5e9;
+        border: 1px solid #c8e6c9;
+        border-radius: 10px;
+    }
+
+    .refund-success-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: #198754;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        flex-shrink: 0;
+    }
+
+    .refund-detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(25, 135, 84, 0.12);
+        font-size: 14px;
+    }
+
+        .refund-detail-row:last-of-type {
+            border-bottom: none;
+        }
+
+        .refund-detail-row i {
+            color: #198754;
+        }
+
+    .refund-amount {
+        color: #198754;
+        font-size: 19px;
+        font-weight: 700;
+    }
+
+    .refund-completed-time {
+        margin-top: 10px;
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .refund-total-row {
+        margin-top: 5px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(25, 135, 84, 0.2);
+    }
+
+        .refund-total-row span {
+            font-weight: 600;
+        }
+
+        .refund-total-row .refund-amount {
+            font-size: 20px;
+        }
+</style>

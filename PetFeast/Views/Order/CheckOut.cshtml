@@ -178,15 +178,18 @@
                                     <td>
                                         x @item.Quantity
                                     </td>
-                                    <td class="text-danger fw-bold">
-                                        @item.TotalPrice.ToString("N0") đ
-                                    </td>
+                                    <td class="text-success fw-bold">
+    @item.TotalPrice.ToString("N0") đ
+</td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
+                <!-- ========================== -->
                 <!-- PHƯƠNG THỨC THANH TOÁN -->
+                <!-- ========================== -->
+
                 <div class="card border-0 shadow-sm p-4 mb-4">
 
                     <h4 class="fw-bold mb-4">
@@ -194,9 +197,9 @@
                         Phương thức thanh toán
                     </h4>
 
+
                     <!-- COD -->
                     <div class="form-check mb-3">
-
                         <input class="form-check-input"
                                type="radio"
                                name="PaymentMethod"
@@ -212,11 +215,13 @@
 
                         </label>
 
+                        <div class="text-muted small ms-4 mt-1">
+                            Thanh toán trực tiếp khi nhận hàng.
+                        </div>
                     </div>
 
                     <!-- BANK TRANSFER -->
                     <div class="form-check">
-
                         <input class="form-check-input"
                                type="radio"
                                name="PaymentMethod"
@@ -226,12 +231,18 @@
                         <label class="form-check-label fw-semibold"
                                for="paymentBank">
 
-                            <i class="bi bi-qr-code me-2"></i>
-                            Chuyển khoản qua mã QR
+                            <i class="bi bi-bank me-2"></i>
+                            Chuyển khoản ngân hàng
 
                         </label>
 
+                        <div class="text-muted small ms-4 mt-1">
+                            Sau khi đặt hàng, bạn sẽ nhận được mã QR và thông tin chuyển khoản.
+                        </div>
                     </div>
+
+
+                    
 
                 </div>
             </div>
@@ -426,7 +437,7 @@
                             Tổng tiền thanh toán
                         </strong>
 
-                        <strong class="text-danger fs-4"
+                        <strong class="text-success fs-4"
                                 id="totalPayment">
                             @((Model.Sum(x => x.TotalPrice) + 20000).ToString("N0")) đ
                         </strong>
@@ -446,23 +457,11 @@
 <script>
 
     // ==========================
-    // VIETQR
-    // ==========================
-
-    const BANK_ID = "MB";
-    const ACCOUNT_NO = "0344356136";
-    const ACCOUNT_NAME = "VO DUONG DUY ANH";
-
-
-    // ==========================
     // TỔNG TIỀN SẢN PHẨM
     // ==========================
 
-    const productTotal =
-        @Model.Sum(x => x.TotalPrice);
-
-    const userPoints =
-        @ViewBag.UserPoints;
+    const productTotal = @Model.Sum(x => x.TotalPrice);
+    const userPoints = @ViewBag.UserPoints;
 
 
     // ==========================
@@ -475,14 +474,10 @@
         );
 
     const shippingAddress =
-        document.getElementById(
-            "shippingAddress"
-        );
+        document.getElementById("shippingAddress");
 
     const storeInfo =
-        document.getElementById(
-            "storeInfo"
-        );
+        document.getElementById("storeInfo");
 
 
     function toggleDelivery()
@@ -519,12 +514,11 @@
 
 
     // ==========================
-    // TÍNH TOÁN TỔNG TIỀN
+    // TÍNH TỔNG TIỀN
     // ==========================
 
     function updateTotal()
     {
-
         // ==========================
         // PHÍ SHIP
         // ==========================
@@ -534,9 +528,7 @@
                 'input[name="DeliveryMethod"]:checked'
             ).value;
 
-
         let shipping = 0;
-
 
         if (delivery === "Ship")
         {
@@ -549,43 +541,30 @@
         // ==========================
 
         const usedPointsInput =
-            document.getElementById(
-                "usedPoints"
-            );
-
+            document.getElementById("usedPoints");
 
         let usedPoints = 0;
-
 
         if (usedPointsInput)
         {
             usedPoints =
-                parseInt(
-                    usedPointsInput.value
-                ) || 0;
+                parseInt(usedPointsInput.value) || 0;
 
-
-            // Không âm
             if (usedPoints < 0)
             {
                 usedPoints = 0;
                 usedPointsInput.value = 0;
             }
 
-
-            // Không vượt quá điểm đang có
             if (usedPoints > userPoints)
             {
                 usedPoints = userPoints;
-
-                usedPointsInput.value =
-                    userPoints;
+                usedPointsInput.value = userPoints;
             }
         }
 
 
         // ==========================
-        // GIẢM TỪ ĐIỂM
         // 1 ĐIỂM = 100Đ
         // ==========================
 
@@ -597,22 +576,19 @@
             productTotal + shipping;
 
 
-        // Không cho điểm giảm quá tổng
+        // Không giảm quá tổng đơn
         if (pointDiscount > totalBeforeDiscount)
         {
-
             usedPoints =
                 Math.floor(
                     totalBeforeDiscount / 100
                 );
-
 
             if (usedPointsInput)
             {
                 usedPointsInput.value =
                     usedPoints;
             }
-
 
             pointDiscount =
                 usedPoints * 100;
@@ -624,31 +600,24 @@
         // ==========================
 
         const voucherSelect =
-            document.getElementById(
-                "userVoucher"
-            );
-
+            document.getElementById("userVoucher");
 
         let voucherDiscount = 0;
-
 
         if (
             voucherSelect &&
             voucherSelect.value
         )
         {
-
             const selectedOption =
                 voucherSelect.options[
                     voucherSelect.selectedIndex
                 ];
 
-
             const discount =
                 parseFloat(
                     selectedOption.dataset.discount
                 ) || 0;
-
 
             const minimum =
                 parseFloat(
@@ -656,26 +625,16 @@
                 ) || 0;
 
 
-            // Kiểm tra đơn tối thiểu
+            // Điều kiện đơn tối thiểu
             if (productTotal >= minimum)
             {
-
-                voucherDiscount =
-                    discount;
-
+                voucherDiscount = discount;
             }
-            else
-            {
-
-                voucherDiscount = 0;
-
-            }
-
         }
 
 
         // ==========================
-        // KHÔNG CHO GIẢM QUÁ TIỀN
+        // KHÔNG GIẢM QUÁ TỔNG
         // ==========================
 
         const remainingAfterPoints =
@@ -730,7 +689,6 @@
                 "pointDiscount"
             );
 
-
         if (pointDiscountElement)
         {
             pointDiscountElement.innerText =
@@ -748,7 +706,6 @@
             document.getElementById(
                 "voucherDiscount"
             );
-
 
         if (voucherDiscountElement)
         {
@@ -776,10 +733,7 @@
     // ==========================
 
     const usedPointsInput =
-        document.getElementById(
-            "usedPoints"
-        );
-
+        document.getElementById("usedPoints");
 
     if (usedPointsInput)
     {
@@ -795,10 +749,7 @@
     // ==========================
 
     const useAllPoints =
-        document.getElementById(
-            "useAllPoints"
-        );
-
+        document.getElementById("useAllPoints");
 
     if (useAllPoints)
     {
@@ -823,19 +774,13 @@
     // ==========================
 
     const voucherSelect =
-        document.getElementById(
-            "userVoucher"
-        );
-
+        document.getElementById("userVoucher");
 
     if (voucherSelect)
     {
         voucherSelect.addEventListener(
             "change",
-            function ()
-            {
-                updateTotal();
-            }
+            updateTotal
         );
     }
 

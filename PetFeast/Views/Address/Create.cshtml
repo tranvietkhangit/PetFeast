@@ -78,44 +78,52 @@
 
                     </div>
 
-                    <!-- TỈNH / THÀNH -->
-
                     <div class="col-md-6">
 
-                        <label asp-for="City"
-                               class="form-label fw-semibold">
+                        <label class="form-label fw-semibold">
                             Tỉnh / Thành phố
                         </label>
 
-                        <input asp-for="City"
-                               class="form-control"
-                               placeholder="Ví dụ: Lâm Đồng" />
+                        <select id="province"
+                                class="form-select"
+                                required>
 
-                        <span asp-validation-for="City"
-                              class="text-danger">
-                        </span>
+                            <option value="">
+                                -- Chọn Tỉnh / Thành phố --
+                            </option>
+
+                        </select>
 
                     </div>
 
-                    <!-- PHƯỜNG / XÃ -->
 
                     <div class="col-md-6">
 
-                        <label asp-for="Ward"
-                               class="form-label fw-semibold">
+                        <label class="form-label fw-semibold">
                             Phường / Xã
                         </label>
 
-                        <input asp-for="Ward"
-                               class="form-control"
-                               placeholder="Nhập phường / xã" />
+                        <select id="ward"
+                                class="form-select"
+                                disabled
+                                required>
 
-                        <span asp-validation-for="Ward"
-                              class="text-danger">
-                        </span>
+                            <option value="">
+                                -- Chọn Phường / Xã --
+                            </option>
+
+                        </select>
 
                     </div>
 
+
+                    <input type="hidden"
+                           asp-for="City"
+                           id="cityValue" />
+
+                    <input type="hidden"
+                           asp-for="Ward"
+                           id="wardValue" />
                     <!-- ĐỊA CHỈ CHI TIẾT -->
 
                     <div class="col-12">
@@ -182,7 +190,22 @@
     </div>
 
 </div>
-
 @section Scripts {
+
     <partial name="_ValidationScriptsPartial" />
+
+    <script src="~/js/address.js"></script>
+
+    <script>
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                loadAddressData();
+
+            }
+        );
+
+    </script>
 }

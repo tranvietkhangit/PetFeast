@@ -29,7 +29,14 @@ builder.Services.AddScoped<EmailService>();
 // Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
+    // Bắt buộc xác nhận Email trước khi đăng nhập
+    options.SignIn.RequireConfirmedEmail = true;
+
+    // Không bắt buộc xác nhận tài khoản theo cơ chế mặc định
     options.SignIn.RequireConfirmedAccount = false;
+
+    // Email không được trùng
+    options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<PetFeastDBContext>()
 .AddDefaultTokenProviders();
@@ -111,7 +118,8 @@ using (var scope = app.Services.CreateScope())
         admin = new ApplicationUser
         {
             UserName = email,
-            Email = email
+            Email = email,
+            EmailConfirmed = true
         };
 
         var result =

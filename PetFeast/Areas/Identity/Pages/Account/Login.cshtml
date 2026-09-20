@@ -17,8 +17,7 @@
 
             <img src="~/img/Logo/logo1.png"
                  class="auth-logo"
-                 alt="PetFeast"
-                 style="width:400px !important;">
+                 alt="PetFeast">
 
         </div>
 
@@ -215,3 +214,76 @@
         });
     </script>
 }
+<style>
+    /* =========================
+       LOGIN / REGISTER
+       ========================= */
+
+    .auth-page {
+        width: 100%;
+    }
+
+    .auth-wrapper {
+        min-height: 550px;
+    }
+
+    .auth-logo {
+        width: 280px;
+        max-width: 100%;
+        height: auto;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .auth-page .policy-content {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 35px;
+        border-radius: 15px;
+        background: #fff;
+    }
+
+    /* =========================
+       MOBILE
+       ========================= */
+
+    @@media (max-width: 991.98px) {
+
+        .auth-page {
+            margin-top: 30px !important;
+        }
+
+        .auth-logo {
+            width: 220px;
+        }
+
+        .auth-page .policy-content {
+            max-width: 500px;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+
+        .auth-page {
+            margin-top: 20px !important;
+            margin-bottom: 20px !important;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .auth-logo {
+            width: 180px;
+        }
+
+        .auth-page .policy-content {
+            padding: 25px 20px;
+            border-radius: 12px;
+        }
+
+        .auth-page h2 {
+            font-size: 24px;
+        }
+    }
+</style>

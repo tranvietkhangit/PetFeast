@@ -200,29 +200,155 @@
     let barChartInstance = null;
     let donutChartInstance = null;
 
-    function initBarChart() {
-        const ctx = document.getElementById('resultChart').getContext('2d');
+            function initBarChart() {
+
+        const canvas = document.getElementById('resultChart');
+
+        if (!canvas) {
+            console.error("Không tìm thấy canvas resultChart");
+            return;
+        }
+
+        const currentYearData = @Html.Raw(
+                        System.Text.Json.JsonSerializer.Serialize(
+                                ViewBag.RevenueCurrentYear ?? new decimal[12]
+                        )
+                );
+
+        const previousYearData = @Html.Raw(
+                        System.Text.Json.JsonSerializer.Serialize(
+                                ViewBag.RevenuePrevYear ?? new decimal[12]
+                        )
+                );
+
+        console.log("Doanh thu năm nay:", currentYearData);
+        console.log("Doanh thu năm trước:", previousYearData);
+
+        if (barChartInstance) {
+            barChartInstance.destroy();
+        }
+
+        const ctx = canvas.getContext('2d');
+
         barChartInstance = new Chart(ctx, {
+
             type: 'bar',
+
             data: {
-                labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9'],
+
+                labels: [
+                    'T1', 'T2', 'T3', 'T4',
+                    'T5', 'T6', 'T7', 'T8',
+                    'T9', 'T10', 'T11', 'T12'
+                ],
+
                 datasets: [
-                    { label: 'Năm nay', data: [0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#0f3c68', barThickness: 9, borderRadius: 2 },
-                    { label: 'Năm trước', data: [0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#0ea5e9', barThickness: 9, borderRadius: 2 }
+
+                    {
+                        label: 'Năm nay',
+
+                        data: currentYearData,
+
+                        backgroundColor: '#0f3c68',
+
+                        barThickness: 9,
+
+                        borderRadius: 2
+                    },
+
+                    {
+                        label: 'Năm trước',
+
+                        data: previousYearData,
+
+                        backgroundColor: '#0ea5e9',
+
+                        barThickness: 9,
+
+                        borderRadius: 2
+                    }
+
                 ]
             },
+
             options: {
+
                 responsive: true,
+
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { font: { size: 10, weight: 'bold' }, color: '#64748b' } },
-                    y: {
-                        grid: { color: '#f1f5f9' },
-                        ticks: { font: { size: 10 }, callback: val => Number(val).toLocaleString('vi-VN') + ' đ' }
+
+                plugins: {
+
+                    legend: {
+                        display: false
+                    },
+
+                    tooltip: {
+
+                        callbacks: {
+
+                            label: function (context) {
+
+                                return Number(context.raw)
+                                    .toLocaleString('vi-VN') + ' ₫';
+
+                            }
+
+                        }
+
                     }
+
+                },
+
+                scales: {
+
+                    x: {
+
+                        grid: {
+                            display: false
+                        },
+
+                        ticks: {
+
+                            font: {
+                                size: 10,
+                                weight: 'bold'
+                            },
+
+                            color: '#64748b'
+                        }
+
+                    },
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        grid: {
+                            color: '#f1f5f9'
+                        },
+
+                        ticks: {
+
+                            font: {
+                                size: 10
+                            },
+
+                            callback: function (value) {
+
+                                return Number(value)
+                                    .toLocaleString('vi-VN') + ' đ';
+
+                            }
+
+                        }
+
+                    }
+
                 }
+
             }
+
         });
     }
 
@@ -361,9 +487,14 @@
         }
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function () {
+
+        console.log("Dashboard loaded");
+
         initBarChart();
+
         initDonutChart(@(ViewBag.CompletionRate ?? 0));
+
         fetchDashboardRealtime();
 
         setInterval(fetchDashboardRealtime, 8000);

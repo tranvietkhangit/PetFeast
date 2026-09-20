@@ -55,12 +55,36 @@ namespace PetFeast.Models.Services
         }
         public IEnumerable<Product> GetBestSellingProducts(int count)
         {
-            return _context.OrderDetails
+            // Lấy sản phẩm bán chạy
+            var bestSellingIds = _context.OrderDetails
                 .GroupBy(od => od.ProductId)
                 .OrderByDescending(g => g.Sum(x => x.Quantity))
+                .Select(g => g.Key)
                 .Take(count)
-                .Select(g => g.First().Product)
                 .ToList();
+
+            // Lấy sản phẩm theo thứ tự bán chạy
+            var bestSellingProducts = _context.Products
+                .Include(p => p.Category)
+                .Where(p => bestSellingIds.Contains(p.ProductId))
+                .ToList()
+                .OrderBy(p => bestSellingIds.IndexOf(p.ProductId))
+                .ToList();
+
+            // Nếu chưa đủ số lượng thì lấy thêm sản phẩm khác
+            if (bestSellingProducts.Count < count)
+            {
+                var remainingProducts = _context.Products
+                    .Include(p => p.Category)
+                    .Where(p => !bestSellingIds.Contains(p.ProductId))
+                    .OrderByDescending(p => p.ProductId)
+                    .Take(count - bestSellingProducts.Count)
+                    .ToList();
+
+                bestSellingProducts.AddRange(remainingProducts);
+            }
+
+            return bestSellingProducts;
         }
     }
 }

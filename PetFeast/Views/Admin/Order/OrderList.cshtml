@@ -3,30 +3,28 @@
 @{
     Layout = "~/Views/Shared/_AdminLayout.cshtml";
 }
+
 <div class="card shadow mt-4">
 
-    <div class="card-header bg-danger text-white">
-
-        <h4>Quản lý đơn hàng</h4>
-
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Quản lý đơn hàng</h4>
     </div>
 
     <div class="card-body">
 
-        <table class="table table-bordered">
+        <table class="table table-bordered align-middle">
 
             <thead class="table-dark">
 
                 <tr>
-
                     <th>Mã</th>
                     <th>Khách hàng</th>
                     <th>SĐT</th>
                     <th>Ngày đặt</th>
                     <th>Tổng tiền</th>
+                    <th>Thanh toán</th>
                     <th>Trạng thái</th>
-                    <th></th>
-
+                    <th class="text-center">Thao tác</th>
                 </tr>
 
             </thead>
@@ -37,21 +35,77 @@
                 {
                     <tr>
 
-                        <td>#@item.OrderId</td>
+                        <td>
+                            #@item.OrderId
+                        </td>
 
-                        <td>@item.CustomerName</td>
+                        <td>
+                            @item.CustomerName
+                        </td>
 
-                        <td>@item.Phone</td>
+                        <td>
+                            @item.Phone
+                        </td>
 
-                        <td>@item.OrderDate.ToString("dd/MM/yyyy")</td>
+                        <td>
+                            @item.OrderDate.ToString("dd/MM/yyyy HH:mm")
+                        </td>
 
-                        <td>@item.TotalAmount.ToString("N0") đ</td>
+                        <td>
+                            <strong>
+                                @item.TotalAmount.ToString("N0") đ
+                            </strong>
+                        </td>
 
+                        <!-- THANH TOÁN -->
+                        <td>
+
+                            @if (item.PaymentMethod == "BankTransfer")
+                            {
+                                if (item.PaymentStatus == "Đã thanh toán")
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i>
+                                        Đã thanh toán
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="bi bi-clock"></i>
+                                        Chờ xác nhận
+                                    </span>
+                                }
+
+                                <div class="small text-muted mt-1">
+                                    Chuyển khoản
+                                </div>
+                            }
+                            else
+                            {
+                                if (item.PaymentStatus == "Đã thanh toán")
+                                {
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i>
+                                        Đã thanh toán
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">
+                                        COD
+                                    </span>
+                                }
+                            }
+
+                        </td>
+
+                        <!-- TRẠNG THÁI ĐƠN -->
                         <td>
 
                             @if (item.Status == "Chờ xác nhận")
                             {
-                                <span class="badge bg-warning">
+                                <span class="badge bg-warning text-dark">
                                     @item.Status
                                 </span>
                             }
@@ -67,18 +121,25 @@
                                     @item.Status
                                 </span>
                             }
-                            else
+                            else if (item.Status == "Đã hủy")
                             {
                                 <span class="badge bg-danger">
+                                    @item.Status
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">
                                     @item.Status
                                 </span>
                             }
 
                         </td>
 
+                        <!-- THAO TÁC -->
                         <td class="text-center">
 
-
+                            <!-- CHI TIẾT -->
                             <a asp-action="OrderDetail"
                                asp-route-id="@item.OrderId"
                                class="btn btn-outline-info btn-sm"
@@ -89,43 +150,105 @@
                             </a>
 
 
-                            <a asp-action="ConfirmOrder"
-                               asp-route-id="@item.OrderId"
-                               class="btn btn-outline-primary btn-sm"
-                               title="Đang giao">
+                            <!-- XÁC NHẬN THANH TOÁN -->
+                            @if (item.PaymentMethod == "BankTransfer"
+                                                    && item.PaymentStatus != "Đã thanh toán"
+                                                    && item.Status == "Chờ xác nhận")
+                            {
+                                <form asp-controller="Admin"
+                                      asp-action="ConfirmPayment"
+                                      asp-route-id="@item.OrderId"
+                                      method="post"
+                                      style="display:inline;">
 
-                                <i class="bi bi-truck"></i>
+                                    @Html.AntiForgeryToken()
 
-                            </a>
+                                    <button type="submit"
+                                            class="btn btn-outline-warning btn-sm"
+                                            title="Xác nhận thanh toán"
+                                            onclick="return confirm('Bạn đã kiểm tra và xác nhận số tiền chuyển khoản của đơn hàng này?');">
+
+                                        <i class="bi bi-cash-coin"></i>
+
+                                    </button>
+
+                                </form>
+                            }
 
 
-                            <a asp-action="CompleteOrder"
-                               asp-route-id="@item.OrderId"
-                               class="btn btn-outline-success btn-sm"
-                               title="Hoàn thành">
+                            <!-- XÁC NHẬN ĐANG GIAO -->
+                            @if (item.Status == "Chờ xác nhận"
+                                                    && (item.PaymentMethod == "COD"
+                                                    || item.PaymentStatus == "Đã thanh toán"))
+                            {
+                                <form asp-controller="Admin"
+                                      asp-action="ConfirmOrder"
+                                      asp-route-id="@item.OrderId"
+                                      method="post"
+                                      style="display:inline;">
 
-                                <i class="bi bi-check-circle"></i>
+                                    @Html.AntiForgeryToken()
 
-                            </a>
+                                    <button type="submit"
+                                            class="btn btn-outline-primary btn-sm"
+                                            title="Xác nhận đơn / Đang giao"
+                                            onclick="return confirm('Xác nhận đơn hàng này và chuyển sang trạng thái Đang giao?');">
+
+                                        <i class="bi bi-truck"></i>
+
+                                    </button>
+
+                                </form>
+                            }
 
 
-                            <form asp-controller="Admin"
-                                  asp-action="CancelOrder"
-                                  asp-route-id="@item.OrderId"
-                                  method="post"
-                                  style="display:inline;">
+                            <!-- HOÀN THÀNH -->
+                            @if (item.Status == "Đang giao")
+                            {
+                                <form asp-controller="Admin"
+                                      asp-action="CompleteOrder"
+                                      asp-route-id="@item.OrderId"
+                                      method="post"
+                                      style="display:inline;">
 
-                                @Html.AntiForgeryToken()
+                                    @Html.AntiForgeryToken()
 
-                                <button type="submit"
-                                        class="btn btn-sm btn-danger"
-                                        title="Hủy đơn"
-                                        onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
-                                    <i class="bi bi-x-circle"></i>
-                                </button>
+                                    <button type="submit"
+                                            class="btn btn-outline-success btn-sm"
+                                            title="Hoàn thành"
+                                            onclick="return confirm('Xác nhận đơn hàng đã giao thành công?');">
 
-                            </form>
+                                        <i class="bi bi-check-circle"></i>
 
+                                    </button>
+
+                                </form>
+                            }
+
+
+                            <!-- HỦY ĐƠN -->
+                            @if (item.Status != "Đã hủy"
+                                                    && item.Status != "Hoàn thành")
+                            {
+                                <form asp-controller="Admin"
+                                      asp-action="CancelOrder"
+                                      asp-route-id="@item.OrderId"
+                                      method="post"
+                                      style="display:inline;">
+
+                                    @Html.AntiForgeryToken()
+
+                                    <button type="submit"
+                                            class="btn btn-danger btn-sm"
+                                            title="Hủy đơn"
+                                            onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
+
+                                        <i class="bi bi-x-circle"></i>
+
+                                    </button>
+
+                                </form>
+                            }
 
                         </td>
 

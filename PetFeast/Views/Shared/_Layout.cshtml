@@ -64,9 +64,9 @@
                                    placeholder="Tìm kiếm sản phẩm..." />
 
                             <button type="submit"
-                                    class="btn btn-primary">
+                                    class="btn btn-primary search-btn">
                                 <i class="bi bi-search"></i>
-                                Tìm kiếm
+                                <span>Tìm kiếm</span>
                             </button>
 
                         </div>
@@ -116,34 +116,43 @@
 
         <div class="container">
 
-            <ul class="navbar-nav">
+            <button class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#mainMenu"
+                    aria-controls="mainMenu"
+                    aria-expanded="false"
+                    aria-label="Mở menu">
 
-                <!-- Trang chủ -->
-                <li class="nav-item">
+                <span class="navbar-toggler-icon"></span>
 
-                    <a class="nav-link"
-                       asp-controller="Home"
-                       asp-action="Index">
-                        <i class="bi bi-house"></i>
-                        Trang chủ
+            </button>
 
-                    </a>
+            <div class="collapse navbar-collapse" id="mainMenu">
 
-                </li>
+                <ul class="navbar-nav">
 
-                <!-- Sản phẩm Dropdown -->
-                <li class="nav-item dropdown">
+                    <!-- Trang chủ -->
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           asp-controller="Home"
+                           asp-action="Index">
+                            <i class="bi bi-house"></i>
+                            Trang chủ
+                        </a>
+                    </li>
 
-                    <a class="nav-link dropdown-toggle"
-                       href="#"
-                       role="button"
-                       data-bs-toggle="dropdown">
-                        <i class="bi bi-box-seam"></i>
-                        Sản phẩm
+                    <!-- Sản phẩm -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle"
+                           href="#"
+                           role="button"
+                           data-bs-toggle="dropdown">
+                            <i class="bi bi-box-seam"></i>
+                            Sản phẩm
+                        </a>
 
-                    </a>
-
-                    <ul class="dropdown-menu">
+                        <ul class="dropdown-menu">
 
                         <li>
                             <a class="dropdown-item"
@@ -244,7 +253,7 @@
 
 
             </ul>
-
+            </div>
         </div>
 
     </nav>
@@ -571,14 +580,21 @@
 </body>
 </html>
 <style>
+
+    /* =====================================================
+           DESKTOP - GIỮ NGUYÊN GIAO DIỆN
+        ===================================================== */
+
     .logo-img {
         width: 150px;
         height: auto;
         object-fit: contain;
     }
-    /* =========================================
-       HEADER CART
-    ========================================= */
+
+
+    /* =====================================================
+           CART - DESKTOP
+        ===================================================== */
 
     .cart-header {
         position: relative;
@@ -592,7 +608,7 @@
         border: 1px solid #d7e7ff;
         border-radius: 12px;
         text-decoration: none !important;
-        transition: all 0.25s ease;
+        transition: background-color .25s ease, color .25s ease, box-shadow .25s ease, transform .25s ease;
     }
 
         .cart-header > i {
@@ -600,15 +616,23 @@
             line-height: 1;
         }
 
-        /* Hover */
         .cart-header:hover {
             background: #0d6efd;
             color: #fff !important;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.20);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, .20);
         }
 
-    /* Số lượng */
+        /* Không thu nhỏ khi click */
+        .cart-header:active {
+            transform: translateY(-2px);
+        }
+
+
+    /* =====================================================
+           CART BADGE
+        ===================================================== */
+
     .cart-badge {
         position: absolute;
         top: -7px;
@@ -628,11 +652,409 @@
         line-height: 1;
     }
 
-    .cart-header {
-        transition: transform 0.15s ease;
-    }
 
-        .cart-header:active {
-            transform: scale(0.92);
+    /* =====================================================
+           MOBILE
+           CHỈ CHẠY TRÊN ĐIỆN THOẠI
+        ===================================================== */
+
+    @@media (max-width: 575.98px) {
+        /* =========================================
+               HEADER
+            ========================================= */
+
+        header .container {
+            padding-left: 12px;
+            padding-right: 12px;
         }
+
+        .header-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-left: -6px;
+            margin-right: -6px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            min-height: auto;
+        }
+            /* =========================================
+               LOGO
+            ========================================= */
+
+            .header-row > .col-lg-3 {
+                order: 1;
+                width: 60%;
+                padding-left: 6px;
+                padding-right: 6px;
+            }
+
+        .logo-link {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-img {
+            width: 125px;
+            height: auto;
+            max-width: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        /* =========================================
+               ACCOUNT + CART
+            ========================================= */
+
+        .header-row > .col-lg-4 {
+            order: 2;
+            width: 40%;
+            padding-left: 6px;
+            padding-right: 6px;
+            margin-top: 0;
+        }
+
+            .header-row > .col-lg-4 > ul {
+                display: flex !important;
+                justify-content: flex-end !important;
+                align-items: center !important;
+                gap: 8px;
+                margin: 0 !important;
+                padding: 0;
+            }
+        /* =========================================
+               ACCOUNT ICON
+            ========================================= */
+
+        .header-row .nav-item.dropdown {
+            margin: 0 !important;
+        }
+
+            .header-row .nav-item.dropdown > .nav-link {
+                width: 40px;
+                height: 40px;
+                min-width: 40px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #eef5ff;
+                color: #0d6efd !important;
+                border: 1px solid #d7e7ff;
+                border-radius: 11px;
+                transition: background-color .2s ease, color .2s ease, box-shadow .2s ease, transform .2s ease;
+            }
+
+                .header-row .nav-item.dropdown > .nav-link:hover {
+                    background: #0d6efd;
+                    color: white !important;
+                    transform: translateY(-2px);
+                    box-shadow: 0 5px 14px rgba(13, 110, 253, .18);
+                }
+
+                .header-row .nav-item.dropdown > .nav-link:active {
+                    transform: translateY(-2px);
+                }
+
+            .header-row .nav-item.dropdown .account-icon {
+                font-size: 21px;
+                line-height: 1;
+            }
+            /* Ẩn Username trên mobile */
+
+            .header-row .nav-item.dropdown > .nav-link > span {
+                display: none;
+            }
+            /* Ẩn mũi tên dropdown */
+
+            .header-row .nav-item.dropdown > .nav-link::after {
+                display: none;
+            }
+        /* =========================================
+               CART MOBILE
+            ========================================= */
+
+        .cart-header {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            padding: 0 !important;
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            border-radius: 11px;
+        }
+
+            .cart-header > i {
+                font-size: 21px;
+            }
+
+            .cart-header:hover {
+                transform: translateY(-2px);
+            }
+
+            .cart-header:active {
+                transform: translateY(-2px);
+            }
+
+        .cart-badge {
+            top: -5px;
+            right: -5px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            font-size: 9px;
+            border-width: 2px;
+        }
+        /* =========================================
+               SEARCH
+            ========================================= */
+
+        .header-row > .col-lg-5 {
+            order: 3;
+            width: 100%;
+            padding-left: 6px;
+            padding-right: 6px;
+            margin-top: 8px;
+        }
+
+        .header-search {
+            width: 100%;
+        }
+
+            .header-search .input-group {
+                height: 42px;
+                background: white;
+                border: 1px solid #d7e7ff;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(13, 110, 253, .06);
+            }
+
+            .header-search .form-control {
+                height: 42px;
+                border: none !important;
+                box-shadow: none !important;
+                padding-left: 14px;
+                font-size: 14px;
+                min-width: 0;
+            }
+
+                .header-search .form-control::placeholder {
+                    color: #8a96a3;
+                }
+
+            .header-search .search-btn {
+                width: 48px;
+                height: 42px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: none;
+                border-radius: 0;
+                font-size: 0;
+            }
+
+                .header-search .search-btn i {
+                    font-size: 18px;
+                }
+
+                .header-search .search-btn:active {
+                    transform: none;
+                }
+        /* =========================================
+       MOBILE NAVBAR
+    ========================================= */
+
+        nav.navbar {
+            background: #0d6efd !important;
+            padding: 7px 0;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,.08);
+        }
+
+            nav.navbar .container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+            /* =========================================
+       HAMBURGER
+    ========================================= */
+
+            nav.navbar .navbar-toggler {
+                width: 44px;
+                height: 40px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #ffffff;
+                border: none !important;
+                outline: none;
+                border-radius: 10px;
+                box-shadow: none !important;
+            }
+                /* Hover */
+
+                nav.navbar .navbar-toggler:hover {
+                    background: #f1f6ff;
+                }
+                /* Focus */
+
+                nav.navbar .navbar-toggler:focus {
+                    background: #ffffff;
+                    border: none !important;
+                    outline: none;
+                    box-shadow: none !important;
+                }
+                /* Click - không shrink */
+
+                nav.navbar .navbar-toggler:active {
+                    background: #ffffff;
+                    border: none !important;
+                    outline: none;
+                    box-shadow: none !important;
+                    transform: none;
+                }
+            /* =========================================
+       HAMBURGER ICON - XANH
+    ========================================= */
+
+            nav.navbar .navbar-toggler-icon {
+                background-image: none !important;
+                width: 24px;
+                height: 18px;
+                position: relative;
+                display: block;
+                border-top: 2px solid #0d6efd;
+                border-bottom: 2px solid #0d6efd;
+            }
+                /* Gạch giữa */
+
+                nav.navbar .navbar-toggler-icon::after {
+                    content: "";
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    top: 50%;
+                    height: 2px;
+                    background: #0d6efd;
+                    transform: translateY(-50%);
+                }
+            /* =========================================
+       KHUNG TRẮNG CHỨA MENU
+    ========================================= */
+
+            nav.navbar .navbar-collapse {
+                margin-top: 8px;
+                padding: 8px;
+                background: #ffffff;
+                border: 1px solid rgba(255,255,255,.8);
+                border-radius: 13px;
+                box-shadow: 0 4px 15px rgba(0,0,0,.12);
+            }
+            /* =========================================
+       GRID 2 CỘT
+    ========================================= */
+
+            nav.navbar .navbar-nav {
+                width: 100%;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+                /* =========================================
+       MENU ITEM
+    ========================================= */
+
+                nav.navbar .navbar-nav > .nav-item {
+                    width: 100%;
+                    margin: 0 !important;
+                }
+                    /* =========================================
+       MENU BUTTON
+    ========================================= */
+
+                    nav.navbar .navbar-nav > .nav-item > .nav-link {
+                        width: 100%;
+                        min-height: 42px;
+                        display: flex;
+                        align-items: center;
+                        padding: 8px 10px;
+                        background: #0d6efd;
+                        color: #ffffff !important;
+                        border: 2px solid #0d6efd;
+                        border-radius: 9px;
+                        font-size: 13px;
+                        font-weight: 600;
+                        white-space: nowrap;
+                        transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease;
+                    }
+                        /* =========================================
+       HOVER
+    ========================================= */
+
+                        nav.navbar .navbar-nav > .nav-item > .nav-link:hover {
+                            background: #0a58ca;
+                            border-color: #0a58ca;
+                            color: #ffffff !important;
+                            box-shadow: 0 3px 8px rgba(13,110,253,.22);
+                        }
+                        /* Không shrink khi click */
+
+                        nav.navbar .navbar-nav > .nav-item > .nav-link:active {
+                            transform: none;
+                        }
+                        /* =========================================
+       ICON
+    ========================================= */
+
+                        nav.navbar .navbar-nav > .nav-item > .nav-link i {
+                            width: 20px;
+                            margin-right: 5px;
+                            font-size: 14px;
+                            text-align: center;
+                            flex-shrink: 0;
+                        }
+            /* =========================================
+       DROPDOWN
+    ========================================= */
+
+            nav.navbar .dropdown-menu {
+                position: absolute !important;
+                top: 100%;
+                left: 0;
+                min-width: 190px;
+                margin-top: 4px !important;
+                padding: 5px;
+                background: #ffffff !important;
+                border: 1px solid #dfe6ee;
+                border-radius: 9px;
+                box-shadow: 0 5px 18px rgba(0,0,0,.15);
+                z-index: 1000;
+            }
+            /* Dropdown item */
+
+            nav.navbar .dropdown-item {
+                padding: 8px 12px;
+                font-size: 13px;
+                color: #333 !important;
+                border-radius: 7px;
+            }
+
+                nav.navbar .dropdown-item:hover {
+                    background: #eef5ff;
+                    color: #0d6efd !important;
+                }
+            /* =========================================
+       MŨI TÊN SẢN PHẨM
+    ========================================= */
+
+            nav.navbar .dropdown-toggle::after {
+                margin-left: 5px;
+                border-top-color: #ffffff;
+            }
+            }
 </style>

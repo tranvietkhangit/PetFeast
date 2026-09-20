@@ -59,7 +59,10 @@ namespace PetFeast.Controllers
         {
             const int pageSize = 9;
 
-            // Lấy các sản phẩm đang giảm giá
+            // ==========================================
+            // LẤY SẢN PHẨM ĐANG KHUYẾN MÃI
+            // ==========================================
+
             var products = _productRepository
                 .GetAll()
                 .Where(x => x.DiscountPercent > 0)
@@ -67,14 +70,33 @@ namespace PetFeast.Controllers
 
 
             // ==========================================
-            // LỌC % GIẢM GIÁ
-            // ==========================================
+            // LỌC MỨC GIẢM GIÁ
 
             if (minDiscount.HasValue)
             {
-                products = products
-                    .Where(x => x.DiscountPercent == minDiscount.Value)
-                    .ToList();
+                products = minDiscount.Value switch
+                {
+                    10 => products
+                        .Where(x => x.DiscountPercent >= 10 &&
+                                    x.DiscountPercent < 20)
+                        .ToList(),
+
+                    20 => products
+                        .Where(x => x.DiscountPercent >= 20 &&
+                                    x.DiscountPercent < 30)
+                        .ToList(),
+
+                    30 => products
+                        .Where(x => x.DiscountPercent >= 30 &&
+                                    x.DiscountPercent < 50)
+                        .ToList(),
+
+                    50 => products
+                        .Where(x => x.DiscountPercent >= 50)
+                        .ToList(),
+
+                    _ => products
+                };
             }
 
 
@@ -163,7 +185,8 @@ namespace PetFeast.Controllers
             if (User.Identity?.IsAuthenticated == true)
             {
                 string? userId =
-                    User.FindFirstValue(ClaimTypes.NameIdentifier);
+                    User.FindFirstValue(
+                        ClaimTypes.NameIdentifier);
 
                 if (!string.IsNullOrEmpty(userId))
                 {
@@ -174,23 +197,26 @@ namespace PetFeast.Controllers
                 }
             }
 
-            ViewBag.FavoriteProductIds = favoriteProductIds;
+            ViewBag.FavoriteProductIds =
+                favoriteProductIds;
 
 
             // ==========================================
-            // GIÁ CAO NHẤT
+            // TÍNH GIÁ CAO NHẤT SAU KHI GIẢM
             // ==========================================
 
             var discountedProducts = _productRepository
-    .GetAll()
-    .Where(x => x.DiscountPercent > 0)
-    .ToList();
+                .GetAll()
+                .Where(x => x.DiscountPercent > 0)
+                .ToList();
 
-            decimal highestDiscountPrice = discountedProducts.Any()
-                ? discountedProducts.Max(x => x.DiscountPrice)
-                : 0;
+            decimal highestDiscountPrice =
+                discountedProducts.Any()
+                    ? discountedProducts.Max(x => x.DiscountPrice)
+                    : 0;
 
-            ViewBag.MaxDiscountPrice = (int)Math.Ceiling(highestDiscountPrice);
+            int dynamicMaxPrice =
+                (int)Math.Ceiling(highestDiscountPrice);
 
 
             // ==========================================
@@ -200,19 +226,20 @@ namespace PetFeast.Controllers
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = totalPages;
 
-            ViewBag.MinDiscount = minDiscount;
+            ViewBag.MinDiscount =
+                minDiscount;
 
             ViewBag.MinPrice =
                 minPrice ?? 0;
 
             ViewBag.MaxPrice =
-                maxPrice ?? (int)highestDiscountPrice;
+                maxPrice ?? dynamicMaxPrice;
 
             ViewBag.SortOrder =
                 sortOrder;
 
             ViewBag.MaxDiscountPrice =
-                (int)Math.Ceiling(highestDiscountPrice);
+                dynamicMaxPrice;
 
 
             return View(pagedProducts);

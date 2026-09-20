@@ -658,26 +658,29 @@ namespace PetFeast.Controllers
 
             if (result.Succeeded)
             {
+                // KIỂM TRA LẠI MẬT KHẨU VỪA ĐẶT
+                var passwordCheck = await _userManager.CheckPasswordAsync(
+                    user,
+                    newPassword);
+
+                if (!passwordCheck)
+                {
+                    ModelState.AddModelError(
+                        "",
+                        "Mật khẩu đã được xử lý nhưng không thể xác thực lại. Vui lòng thử lại.");
+
+                    ViewBag.UserId = userId;
+                    return View("ResetPassword");
+                }
+
                 // Xóa toàn bộ Session reset password
+                HttpContext.Session.Remove("ResetOtp");
+                HttpContext.Session.Remove("ResetUserId");
+                HttpContext.Session.Remove("ResetOtpExpiry");
+                HttpContext.Session.Remove("ResetVerified");
 
-                HttpContext.Session.Remove(
-                    "ResetOtp");
-
-                HttpContext.Session.Remove(
-                    "ResetUserId");
-
-                HttpContext.Session.Remove(
-                    "ResetOtpExpiry");
-
-                HttpContext.Session.Remove(
-                    "ResetVerified");
-
-                TempData["Success"] =
-                    "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.";
-
-                // ==============================
-                // CHUYỂN ĐẾN LOGIN
-                // ==============================
+                TempData["ResetSuccess"] =
+     "Đặt lại mật khẩu thành công. Bạn có thể đăng nhập bằng mật khẩu mới.";
 
                 return RedirectToPage(
                     "/Account/Login",

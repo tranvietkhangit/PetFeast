@@ -54,22 +54,11 @@ namespace PetFeast.Controllers
                 return Unauthorized();
             }
 
-            // Lấy địa chỉ mặc định
+            // Lấy địa chỉ mặc định nếu có
             var defaultAddress = await _context.UserAddresses
                 .FirstOrDefaultAsync(x =>
                     x.UserId == user.Id &&
                     x.IsDefault);
-
-            // Nếu chưa có địa chỉ
-            if (defaultAddress == null)
-            {
-                TempData["Error"] =
-                    "Bạn chưa có địa chỉ nhận hàng. Vui lòng thêm địa chỉ trước khi đặt hàng.";
-
-                return RedirectToAction(
-                    "Create",
-                    "Address");
-            }
 
             // Số điểm hiện có
             ViewBag.UserPoints = user.Points;
@@ -129,7 +118,23 @@ namespace PetFeast.Controllers
             {
                 return Unauthorized();
             }
+            if (order.DeliveryMethod != "Ship" &&
+    order.DeliveryMethod != "Pickup")
+            {
+                TempData["Error"] =
+                    "Phương thức nhận hàng không hợp lệ.";
 
+                return RedirectToAction(nameof(CheckOut));
+            }
+
+            if (order.PaymentMethod != "COD" &&
+                order.PaymentMethod != "BankTransfer")
+            {
+                TempData["Error"] =
+                    "Phương thức thanh toán không hợp lệ.";
+
+                return RedirectToAction(nameof(CheckOut));
+            }
             // =========================================================
             // 3. LẤY ĐỊA CHỈ MẶC ĐỊNH
             // =========================================================
@@ -198,11 +203,47 @@ namespace PetFeast.Controllers
             }
 
             // =========================================================
-            // 6. TÍNH TỔNG TIỀN SẢN PHẨM
+            // 6. LẤY GIÁ SẢN PHẨM MỚI NHẤT TỪ DATABASE
             // =========================================================
 
-            var productTotal =
-                cart.Sum(x => x.TotalPrice);
+            var productIds = cart
+                .Select(x => x.ProductId)
+                .Distinct()
+                .ToList();
+
+            var products = await _context.Products
+                .Where(p => productIds.Contains(p.ProductId))
+                .ToDictionaryAsync(p => p.ProductId);
+
+            // Kiểm tra sản phẩm còn tồn tại
+            foreach (var item in cart)
+            {
+                if (!products.ContainsKey(item.ProductId))
+                {
+                    TempData["Error"] =
+                        "Một sản phẩm trong giỏ hàng không còn tồn tại.";
+
+                    return RedirectToAction(
+                        "Index",
+                        "ShoppingCart");
+                }
+            }
+
+            // =========================================================
+            // TÍNH LẠI TỔNG TIỀN TỪ DATABASE
+            // =========================================================
+
+            decimal productTotal = 0;
+
+            foreach (var item in cart)
+            {
+                var product = products[item.ProductId];
+
+                // Giá hiện tại sau giảm giá
+                var currentPrice = product.DiscountPrice;
+
+                productTotal += currentPrice * item.Quantity;
+            }
 
             // =========================================================
             // 7. PHÍ VẬN CHUYỂN
@@ -328,7 +369,7 @@ namespace PetFeast.Controllers
             // =========================================================
 
             order.UsedPoints =
-                usedPoints;
+    usedPoints;
 
             order.PointDiscount =
                 pointDiscount;
@@ -338,6 +379,15 @@ namespace PetFeast.Controllers
 
             order.VoucherDiscount =
                 voucherDiscount;
+
+            // ==========================================
+            // TRẠNG THÁI THANH TOÁN
+            // ==========================================
+
+            // Khi khách vừa đặt hàng:
+            // COD hoặc chuyển khoản đều chưa được xác nhận thanh toán.
+            // Admin sẽ xác nhận thanh toán sau đối với BankTransfer.
+            order.PaymentStatus = "Chưa thanh toán";
 
             // =========================================================
             // 12. TÍNH TỔNG THANH TOÁN
@@ -372,9 +422,7 @@ namespace PetFeast.Controllers
                 foreach (var item in cart)
                 {
                     // Lấy sản phẩm mới nhất từ database
-                    var product = await _context.Products
-                        .FirstOrDefaultAsync(p =>
-                            p.ProductId == item.ProductId);
+                    var product = products[item.ProductId];
 
                     if (product == null)
                     {
@@ -428,12 +476,14 @@ namespace PetFeast.Controllers
                     // TẠO ORDER DETAIL
                     // =================================================
 
+                    var currentPrice = product.DiscountPrice;
+
                     order.OrderDetails.Add(
                         new OrderDetail
                         {
                             ProductId = item.ProductId,
                             Quantity = item.Quantity,
-                            Price = item.Price
+                            Price = currentPrice
                         });
                 }
 
@@ -559,8 +609,11 @@ namespace PetFeast.Controllers
             }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             var order = await _context.Orders
-                .FirstOrDefaultAsync(x => x.OrderId == orderId && x.UserId == userId);
+                .FirstOrDefaultAsync(x =>
+                    x.OrderId == orderId &&
+                    x.UserId == userId);
 
             if (order == null)
             {
@@ -570,111 +623,553 @@ namespace PetFeast.Controllers
             return View(order);
         }
         [Authorize]
-        public async Task<IActionResult> UserOrderList()
+        public async Task<IActionResult> UserOrderList(int page = 1)
         {
-            var userId =
-                User.FindFirstValue(
-                    ClaimTypes.NameIdentifier);
+            const int pageSize = 5;
+
+            var userId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var totalOrders = await _context.Orders
+                .CountAsync(x => x.UserId == userId);
+
+            var totalPages = (int)Math.Ceiling(
+                totalOrders / (double)pageSize);
+
+            if (page < 1)
+                page = 1;
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
 
             var orders = await _context.Orders
     .Where(x => x.UserId == userId)
     .Include(x => x.OrderDetails)
         .ThenInclude(x => x.Product)
+    .Include(x => x.ReturnRequest)
     .OrderByDescending(x => x.OrderDate)
+    .Skip((page - 1) * pageSize)
+    .Take(pageSize)
     .ToListAsync();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
 
             return View(orders);
         }
         [Authorize]
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CancelMyOrder(int id)
+        public async Task<IActionResult> UserOrderDetail(int id)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var userId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
             var order = await _context.Orders
-                .Include(o => o.UserVoucher)
+    .Include(x => x.OrderDetails)
+        .ThenInclude(x => x.Product)
+    .Include(x => x.UserVoucher)
+        .ThenInclude(x => x.Voucher)
+    .Include(x => x.ReturnRequest)
+    .FirstOrDefaultAsync(x =>
+        x.OrderId == id &&
+        x.UserId == userId);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            return View(order);
+        }
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CancelMyOrder(
+     int id,
+     string cancellationReason)
+        {
+            var userId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            await using var transaction =
+                await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                var order = await _context.Orders
+                    .Include(o => o.UserVoucher)
+                        .ThenInclude(uv => uv.Voucher)
+                    .Include(o => o.OrderDetails)
+                        .ThenInclude(od => od.Product)
+                    .FirstOrDefaultAsync(o =>
+                        o.OrderId == id &&
+                        o.UserId == userId);
+
+                if (order == null)
+                {
+                    TempData["Error"] =
+                        "Không tìm thấy đơn hàng.";
+
+                    return RedirectToAction(nameof(UserOrderList));
+                }
+
+                // Chỉ được hủy khi đang chờ xác nhận
+                if (order.Status != "Chờ xác nhận")
+                {
+                    TempData["Error"] =
+                        "Chỉ có thể hủy đơn hàng khi đơn đang ở trạng thái Chờ xác nhận.";
+
+                    return RedirectToAction(nameof(UserOrderList));
+                }
+
+                if (string.IsNullOrWhiteSpace(cancellationReason))
+                {
+                    TempData["Error"] =
+                        "Vui lòng chọn lý do hủy đơn hàng.";
+
+                    return RedirectToAction(nameof(UserOrderList));
+                }
+
+                var user = await _userManager.FindByIdAsync(userId);
+
+                if (user == null)
+                {
+                    TempData["Error"] =
+                        "Không tìm thấy tài khoản.";
+
+                    return RedirectToAction(nameof(UserOrderList));
+                }
+
+                // ==========================================
+                // 1. HOÀN LẠI TỒN KHO
+                // ==========================================
+
+                if (order.OrderDetails != null)
+                {
+                    foreach (var detail in order.OrderDetails)
+                    {
+                        if (detail.Product != null)
+                        {
+                            detail.Product.Quantity += detail.Quantity;
+                        }
+                    }
+                }
+
+                // ==========================================
+                // 2. HOÀN LẠI ĐIỂM ĐÃ SỬ DỤNG
+                // ==========================================
+
+                if (order.UsedPoints > 0)
+                {
+                    user.Points += order.UsedPoints;
+
+                    var refundPointTransaction =
+                        new PointTransaction
+                        {
+                            UserId = user.Id,
+                            Points = order.UsedPoints,
+                            Type = "Refund",
+                            Description =
+                                $"Hoàn {order.UsedPoints} điểm " +
+                                $"do hủy đơn hàng #{order.OrderId}",
+                            OrderId = order.OrderId,
+                            CreatedAt = DateTime.Now
+                        };
+
+                    _context.PointTransactions.Add(
+                        refundPointTransaction);
+                }
+
+                // ==========================================
+                // 3. HOÀN LẠI VOUCHER
+                // ==========================================
+
+                if (order.UserVoucher != null &&
+                    order.UserVoucher.IsUsed)
+                {
+                    order.UserVoucher.IsUsed = false;
+                    order.UserVoucher.UsedDate = null;
+
+                    if (order.UserVoucher.Voucher != null)
+                    {
+                        order.UserVoucher.Voucher.Quantity++;
+                    }
+                }
+
+                // ==========================================
+                // 4. LƯU LÝ DO HỦY
+                // ==========================================
+
+                order.CancellationReason =
+                    cancellationReason.Trim();
+
+                // ==========================================
+                // 5. ĐỔI TRẠNG THÁI
+                // ==========================================
+
+                order.Status = "Đã hủy";
+
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                TempData["Success"] =
+                    "Hủy đơn hàng thành công. " +
+                    "Sản phẩm, điểm và voucher đã được hoàn lại.";
+
+                return RedirectToAction(nameof(UserOrderList));
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+
+                TempData["Error"] =
+                    "Có lỗi xảy ra trong quá trình hủy đơn hàng.";
+
+                return RedirectToAction(nameof(UserOrderList));
+            }
+        }
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> ReturnRequest(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var order = await _context.Orders
+    .AsNoTracking()
+    .Include(o => o.OrderDetails)
+        .ThenInclude(od => od.Product)
+    .Include(o => o.ReturnRequest)
+    .FirstOrDefaultAsync(o =>
+        o.OrderId == id &&
+        o.UserId == userId);
+
+            if (order == null)
+                return NotFound();
+
+            // Chỉ được yêu cầu trả hàng khi đơn đã hoàn thành
+            if (order.Status != "Hoàn thành")
+            {
+                TempData["Error"] =
+                    "Chỉ có thể yêu cầu trả hàng đối với đơn hàng đã hoàn thành.";
+
+                return RedirectToAction(nameof(UserOrderDetail), new { id });
+            }
+
+            // Đã có yêu cầu trả hàng
+            if (order.ReturnRequest != null)
+            {
+                TempData["Error"] =
+                    "Đơn hàng này đã có yêu cầu trả hàng.";
+
+                return RedirectToAction(nameof(UserOrderDetail), new { id });
+            }
+
+            // Kiểm tra thời hạn 7 ngày
+            if (!order.CompletedDate.HasValue ||
+                DateTime.Now > order.CompletedDate.Value.AddDays(7))
+            {
+                TempData["Error"] =
+                    "Đơn hàng đã quá thời hạn 7 ngày để yêu cầu trả hàng.";
+
+                return RedirectToAction(nameof(UserOrderDetail), new { id });
+            }
+
+            ViewBag.Order = order;
+
+            return View();
+        }
+        [HttpPost]
+        [Authorize]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(60 * 1024 * 1024)]
+        public async Task<IActionResult> ReturnRequest(
+     int id,
+     string reason,
+     string? description,
+     IFormFile? evidenceImage,
+     IFormFile? evidenceVideo)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var order = await _context.Orders
+                .Include(o => o.ReturnRequest)
                 .FirstOrDefaultAsync(o =>
                     o.OrderId == id &&
                     o.UserId == userId);
 
             if (order == null)
+                return NotFound();
+
+            // =========================================================
+            // 1. KIỂM TRA TRẠNG THÁI ĐƠN HÀNG
+            // =========================================================
+
+            if (order.Status != "Hoàn thành")
             {
-                TempData["Error"] = "Không tìm thấy đơn hàng.";
-                return RedirectToAction(nameof(UserOrderList));
+                TempData["Error"] =
+                    "Chỉ có thể yêu cầu trả hàng đối với đơn hàng đã hoàn thành.";
+
+                return RedirectToAction(
+                    nameof(UserOrderDetail),
+                    new { id });
             }
 
-            // Chỉ cho phép hủy những đơn chưa hoàn thành / chưa hủy
-            if (order.Status == "Hoàn thành")
+            // =========================================================
+            // 2. KIỂM TRA ĐÃ CÓ YÊU CẦU TRẢ HÀNG CHƯA
+            // =========================================================
+
+            if (order.ReturnRequest != null)
             {
-                TempData["Error"] = "Đơn hàng đã hoàn thành nên không thể hủy.";
-                return RedirectToAction(nameof(UserOrderList));
+                TempData["Error"] =
+                    "Đơn hàng này đã có yêu cầu trả hàng.";
+
+                return RedirectToAction(
+                    nameof(UserOrderDetail),
+                    new { id });
             }
 
-            if (order.Status == "Đã hủy")
+            // =========================================================
+            // 3. KIỂM TRA THỜI HẠN 7 NGÀY
+            // =========================================================
+
+            if (!order.CompletedDate.HasValue ||
+                DateTime.Now > order.CompletedDate.Value.AddDays(7))
             {
-                TempData["Error"] = "Đơn hàng này đã được hủy trước đó.";
-                return RedirectToAction(nameof(UserOrderList));
+                TempData["Error"] =
+                    "Đơn hàng đã quá thời hạn 7 ngày để yêu cầu trả hàng.";
+
+                return RedirectToAction(
+                    nameof(UserOrderDetail),
+                    new { id });
             }
 
-            var user = await _userManager.FindByIdAsync(userId);
+            // =========================================================
+            // 4. KIỂM TRA LÝ DO
+            // =========================================================
 
-            if (user == null)
+            if (string.IsNullOrWhiteSpace(reason))
             {
-                TempData["Error"] = "Không tìm thấy tài khoản.";
-                return RedirectToAction(nameof(UserOrderList));
+                TempData["Error"] =
+                    "Vui lòng chọn lý do trả hàng.";
+
+                return RedirectToAction(
+                    nameof(ReturnRequest),
+                    new { id });
             }
 
-            // ==========================================
-            // 1. HOÀN ĐIỂM
-            // ==========================================
+            // =========================================================
+            // 5. PHẢI CÓ ẢNH HOẶC VIDEO
+            // =========================================================
 
-            if (order.UsedPoints > 0)
+            if (evidenceImage == null &&
+                evidenceVideo == null)
             {
-                user.Points += order.UsedPoints;
+                TempData["Error"] =
+                    "Vui lòng cung cấp ít nhất một hình ảnh hoặc video làm bằng chứng.";
 
-                var refundPointTransaction = new PointTransaction
+                return RedirectToAction(
+                    nameof(ReturnRequest),
+                    new { id });
+            }
+
+            // =========================================================
+            // 6. KIỂM TRA DUNG LƯỢNG
+            // =========================================================
+
+            const long maxImageSize = 5 * 1024 * 1024;   // 5 MB
+            const long maxVideoSize = 50 * 1024 * 1024;  // 50 MB
+
+            if (evidenceImage != null &&
+                evidenceImage.Length > maxImageSize)
+            {
+                TempData["Error"] =
+                    "Hình ảnh không được vượt quá 5 MB.";
+
+                return RedirectToAction(
+                    nameof(ReturnRequest),
+                    new { id });
+            }
+
+            if (evidenceVideo != null &&
+                evidenceVideo.Length > maxVideoSize)
+            {
+                TempData["Error"] =
+                    "Video không được vượt quá 50 MB.";
+
+                return RedirectToAction(
+                    nameof(ReturnRequest),
+                    new { id });
+            }
+
+            // =========================================================
+            // 7. KIỂM TRA EXTENSION TRƯỚC KHI LƯU FILE
+            // =========================================================
+
+            string? imageExtension = null;
+            string? videoExtension = null;
+
+            // ---------- IMAGE ----------
+
+            if (evidenceImage != null &&
+                evidenceImage.Length > 0)
+            {
+                var allowedImageExtensions = new[]
                 {
-                    UserId = userId,
-                    Points = order.UsedPoints,
-                    Type = "Refund",
-                    Description = $"Hoàn {order.UsedPoints} điểm do hủy đơn hàng #{order.OrderId}",
-                    OrderId = order.OrderId,
-                    CreatedAt = DateTime.Now
-                };
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
+        };
 
-                _context.PointTransactions.Add(refundPointTransaction);
-            }
+                imageExtension =
+                    Path.GetExtension(evidenceImage.FileName)
+                        .ToLowerInvariant();
 
-            // ==========================================
-            // 2. HOÀN VOUCHER
-            // ==========================================
-
-            if (order.UserVoucherId.HasValue)
-            {
-                var userVoucher = order.UserVoucher;
-
-                if (userVoucher != null)
+                if (!allowedImageExtensions.Contains(imageExtension))
                 {
-                    userVoucher.IsUsed = false;
-                    userVoucher.UsedDate = null;
+                    TempData["Error"] =
+                        "Hình ảnh phải có định dạng JPG, JPEG, PNG hoặc WEBP.";
+
+                    return RedirectToAction(
+                        nameof(ReturnRequest),
+                        new { id });
                 }
             }
 
-            // ==========================================
-            // 3. ĐỔI TRẠNG THÁI ĐƠN
-            // ==========================================
+            // ---------- VIDEO ----------
 
-            order.Status = "Đã hủy";
+            if (evidenceVideo != null &&
+                evidenceVideo.Length > 0)
+            {
+                var allowedVideoExtensions = new[]
+                {
+            ".mp4",
+            ".mov",
+            ".avi",
+            ".webm"
+        };
+
+                videoExtension =
+                    Path.GetExtension(evidenceVideo.FileName)
+                        .ToLowerInvariant();
+
+                if (!allowedVideoExtensions.Contains(videoExtension))
+                {
+                    TempData["Error"] =
+                        "Video phải có định dạng MP4, MOV, AVI hoặc WEBM.";
+
+                    return RedirectToAction(
+                        nameof(ReturnRequest),
+                        new { id });
+                }
+            }
+
+            // =========================================================
+            // 8. TẠO THƯ MỤC UPLOAD
+            // =========================================================
+
+            var folderPath = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "uploads",
+                "returns");
+
+            Directory.CreateDirectory(folderPath);
+
+            string? imageUrl = null;
+            string? videoUrl = null;
+
+            // =========================================================
+            // 9. LƯU IMAGE
+            // =========================================================
+
+            if (evidenceImage != null &&
+                evidenceImage.Length > 0 &&
+                imageExtension != null)
+            {
+                var fileName =
+                    Guid.NewGuid().ToString() +
+                    imageExtension;
+
+                var filePath =
+                    Path.Combine(folderPath, fileName);
+
+                using (var stream = new FileStream(
+                    filePath,
+                    FileMode.Create))
+                {
+                    await evidenceImage.CopyToAsync(stream);
+                }
+
+                imageUrl =
+                    "/uploads/returns/" + fileName;
+            }
+
+            // =========================================================
+            // 10. LƯU VIDEO
+            // =========================================================
+
+            if (evidenceVideo != null &&
+                evidenceVideo.Length > 0 &&
+                videoExtension != null)
+            {
+                var fileName =
+                    Guid.NewGuid().ToString() +
+                    videoExtension;
+
+                var filePath =
+                    Path.Combine(folderPath, fileName);
+
+                using (var stream = new FileStream(
+                    filePath,
+                    FileMode.Create))
+                {
+                    await evidenceVideo.CopyToAsync(stream);
+                }
+
+                videoUrl =
+                    "/uploads/returns/" + fileName;
+            }
+
+            // =========================================================
+            // 11. TẠO RETURN REQUEST
+            // =========================================================
+
+            var returnRequest = new ReturnRequest
+            {
+                OrderId = order.OrderId,
+                UserId = userId!,
+                Reason = reason.Trim(),
+                Description = description?.Trim(),
+                EvidenceImageUrl = imageUrl,
+                EvidenceVideoUrl = videoUrl,
+                Status = "Chờ xử lý",
+                CreatedAt = DateTime.Now
+            };
+
+            _context.ReturnRequests.Add(returnRequest);
 
             await _context.SaveChangesAsync();
 
-            TempData["Success"] = "Hủy đơn hàng thành công. Điểm và voucher đã được hoàn lại.";
+            // =========================================================
+            // 12. THÔNG BÁO
+            // =========================================================
 
-            return RedirectToAction(nameof(UserOrderList));
+            TempData["Success"] =
+                "Yêu cầu trả hàng đã được gửi. PetFeast sẽ kiểm tra và xử lý.";
+
+            return RedirectToAction(
+                nameof(UserOrderDetail),
+                new { id });
         }
     }
 }

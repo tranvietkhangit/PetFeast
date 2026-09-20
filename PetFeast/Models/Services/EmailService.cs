@@ -18,8 +18,8 @@ namespace PetFeast.Models.Services
         // ==========================================
 
         public async Task SendResetOtpEmailAsync(
-    string email,
-    string otp)
+            string email,
+            string otp)
         {
             var smtpHost =
                 _configuration["EmailSettings:SmtpHost"];
@@ -88,6 +88,113 @@ namespace PetFeast.Models.Services
 
     <p>
         Nếu bạn không yêu cầu đặt lại mật khẩu,
+        hãy bỏ qua email này.
+    </p>
+
+    <hr>
+
+    <p>
+        Trân trọng,<br>
+        <strong>PetFeast</strong>
+    </p>
+
+</body>
+</html>";
+
+            using var smtp = new SmtpClient(
+                smtpHost,
+                smtpPort);
+
+            smtp.EnableSsl = true;
+
+            smtp.Credentials =
+                new NetworkCredential(
+                    smtpEmail,
+                    smtpPassword);
+
+            await smtp.SendMailAsync(message);
+        }
+
+
+        // ==========================================
+        // GỬI OTP XÁC NHẬN ĐĂNG KÝ
+        // ==========================================
+
+        public async Task SendRegisterOtpEmailAsync(
+            string email,
+            string otp,
+            string userName)
+        {
+            var smtpHost =
+                _configuration["EmailSettings:SmtpHost"];
+
+            var smtpPort =
+                int.Parse(
+                    _configuration["EmailSettings:SmtpPort"] ?? "587");
+
+            var smtpEmail =
+                _configuration["EmailSettings:Email"];
+
+            var smtpPassword =
+                _configuration["EmailSettings:Password"];
+
+            using var message = new MailMessage();
+
+            message.From = new MailAddress(
+                smtpEmail!,
+                "PetFeast");
+
+            message.To.Add(email);
+
+            message.Subject =
+                "PetFeast - Mã OTP xác nhận đăng ký";
+
+            message.IsBodyHtml = true;
+
+            message.Body = $@"
+<!DOCTYPE html>
+<html>
+<body style='font-family:Arial,sans-serif;'>
+
+    <h2 style='color:#0d6efd;'>
+        PetFeast
+    </h2>
+
+    <p>
+        Xin chào <strong>{userName}</strong>,
+    </p>
+
+    <p>
+        Cảm ơn bạn đã đăng ký tài khoản
+        tại PetFeast.
+    </p>
+
+    <p>
+        Để hoàn tất đăng ký,
+        vui lòng sử dụng mã OTP bên dưới:
+    </p>
+
+    <div style='
+        font-size:32px;
+        font-weight:bold;
+        letter-spacing:8px;
+        color:#0d6efd;
+        margin:20px 0;
+    '>
+        {otp}
+    </div>
+
+    <p>
+        Mã OTP có hiệu lực trong
+        <strong>5 phút</strong>.
+    </p>
+
+    <p>
+        Không chia sẻ mã OTP này cho bất kỳ ai.
+    </p>
+
+    <p>
+        Nếu bạn không thực hiện đăng ký tài khoản,
         hãy bỏ qua email này.
     </p>
 

@@ -112,41 +112,103 @@ namespace PetFeast.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
 
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            ExternalLogins =
+                (await _signInManager
+                    .GetExternalAuthenticationSchemesAsync())
+                .ToList();
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                // This doesn't count login failures towards account lockout
-                // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-                var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-                if (result.Succeeded)
-                {
-                    var user = await _userManager.FindByEmailAsync(Input.Email);
-
-                    if (await _userManager.IsInRoleAsync(user, "Admin"))
-                    {
-                        return RedirectToAction("Dashboard", "Admin");
-                    }
-
-                    return LocalRedirect(returnUrl ?? "~/");
-                }
-                if (result.RequiresTwoFactor)
-                {
-                    return RedirectToPage("./LoginWith2fa", new { ReturnUrl = returnUrl, RememberMe = Input.RememberMe });
-                }
-                if (result.IsLockedOut)
-                {
-                    _logger.LogWarning("User account locked out.");
-                    return RedirectToPage("./Lockout");
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                    return Page();
-                }
+                return Page();
             }
 
-            // If we got this far, something failed, redisplay form
+            var user = await _userManager.FindByEmailAsync(Input.Email);
+
+            if (user == null)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Không tìm thấy tài khoản với email này.");
+
+                return Page();
+            }
+
+            _logger.LogInformation(
+                "LOGIN DEBUG - UserId: {UserId}, Email: {Email}, EmailConfirmed: {EmailConfirmed}, UserName: {UserName}",
+                user.Id,
+                user.Email,
+                user.EmailConfirmed,
+                user.UserName);
+            bool passwordOk = await _userManager.CheckPasswordAsync(
+    user,
+    Input.Password);
+
+            _logger.LogInformation(
+                "PASSWORD DEBUG - PasswordCorrect: {PasswordCorrect}",
+                passwordOk);
+            var passwordCorrect = await _userManager.CheckPasswordAsync(
+    user,
+    Input.Password);
+
+            _logger.LogInformation(
+                "PASSWORD DEBUG - Correct: {Correct}",
+                passwordCorrect);
+            var result = await _signInManager.PasswordSignInAsync(
+                user,
+                Input.Password,
+                Input.RememberMe,
+                lockoutOnFailure: false);
+
+            _logger.LogInformation(
+     "LOGIN RESULT - Succeeded: {Succeeded}, NotAllowed: {NotAllowed}, LockedOut: {LockedOut}, RequiresTwoFactor: {RequiresTwoFactor}",
+     result.Succeeded,
+     result.IsNotAllowed,
+     result.IsLockedOut,
+     result.RequiresTwoFactor);
+
+            if (result.Succeeded)
+            {
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
+                {
+                    return RedirectToAction(
+                        "Dashboard",
+                        "Admin");
+                }
+
+                return LocalRedirect(returnUrl);
+            }
+
+            if (result.IsNotAllowed)
+            {
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Tài khoản chưa được phép đăng nhập.");
+
+                return Page();
+            }
+
+            if (result.IsLockedOut)
+            {
+                _logger.LogWarning("User account locked out.");
+
+                return RedirectToPage("./Lockout");
+            }
+
+            if (result.RequiresTwoFactor)
+            {
+                return RedirectToPage(
+                    "./LoginWith2fa",
+                    new
+                    {
+                        ReturnUrl = returnUrl,
+                        RememberMe = Input.RememberMe
+                    });
+            }
+
+            ModelState.AddModelError(
+                string.Empty,
+                "Email hoặc mật khẩu không chính xác.");
+
             return Page();
         }
     }

@@ -1,24 +1,19 @@
-﻿// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-#nullable disable
+﻿#nullable disable
 
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Text;
-using System.Text.Encodings.Web;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using PetFeast.Models.Identity;
+using PetFeast.Models.Services;
 
 namespace PetFeast.Areas.Identity.Pages.Account
 {
@@ -29,117 +24,267 @@ namespace PetFeast.Areas.Identity.Pages.Account
         private readonly IUserStore<ApplicationUser> _userStore;
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
+        private readonly EmailService _emailService;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
-            ILogger<RegisterModel> logger)
+            ILogger<RegisterModel> logger,
+            EmailService emailService)
         {
             _userManager = userManager;
             _userStore = userStore;
             _emailStore = GetEmailStore();
             _signInManager = signInManager;
             _logger = logger;
+            _emailService = emailService;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
+        // ==========================================
+        // INPUT MODEL
+        // ==========================================
+
         public class InputModel
         {
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [EmailAddress]
+            [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]
+            [StringLength(
+                50,
+                MinimumLength = 3,
+                ErrorMessage = "Tên đăng nhập phải từ {2} đến {1} ký tự.")]
+            [Display(Name = "Tên đăng nhập")]
+            public string UserName { get; set; }
+
+            [Required(ErrorMessage = "Vui lòng nhập email.")]
+            [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
             [Display(Name = "Email")]
             public string Email { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
-            [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+            [StringLength(
+                100,
+                ErrorMessage = "Mật khẩu phải có ít nhất {2} ký tự.",
+                MinimumLength = 6)]
             [DataType(DataType.Password)]
-            [Display(Name = "Password")]
+            [Display(Name = "Mật khẩu")]
             public string Password { get; set; }
 
-            /// <summary>
-            ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-            ///     directly from your code. This API may change or be removed in future releases.
-            /// </summary>
+            [Required(ErrorMessage = "Vui lòng nhập lại mật khẩu.")]
             [DataType(DataType.Password)]
-            [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+            [Display(Name = "Nhập lại mật khẩu")]
+            [Compare(
+                "Password",
+                ErrorMessage = "Mật khẩu và xác nhận mật khẩu không khớp.")]
             public string ConfirmPassword { get; set; }
         }
 
+        // ==========================================
+        // GET REGISTER
+        // ==========================================
 
         public async Task OnGetAsync(string returnUrl = null)
         {
             ReturnUrl = returnUrl;
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+
+            ExternalLogins =
+                (await _signInManager
+                    .GetExternalAuthenticationSchemesAsync())
+                .ToList();
         }
 
-        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        // ==========================================
+        // POST REGISTER
+        // ==========================================
+
+        public async Task<IActionResult> OnPostAsync(
+            string returnUrl = null)
         {
             returnUrl ??= Url.Content("~/");
-            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            if (ModelState.IsValid)
+
+            ReturnUrl = returnUrl;
+
+            ExternalLogins =
+                (await _signInManager
+                    .GetExternalAuthenticationSchemesAsync())
+                .ToList();
+
+            // ==========================================
+            // VALIDATE FORM
+            // ==========================================
+
+            if (!ModelState.IsValid)
             {
-                var user = CreateUser();
-
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-                var result = await _userManager.CreateAsync(user, Input.Password);
-
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation("User created a new account with password.");
-
-                 
-                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                    {
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-                    }
-                    else
-                    {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
-                    }
-                }
-                foreach (var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                return Page();
             }
 
-            // If we got this far, something failed, redisplay form
-            return Page();
+            // ==========================================
+            // KIỂM TRA USERNAME
+            // ==========================================
+
+            var existingUser =
+                await _userManager.FindByNameAsync(
+                    Input.UserName);
+
+            if (existingUser != null)
+            {
+                ModelState.AddModelError(
+                    "Input.UserName",
+                    "Tên đăng nhập này đã được sử dụng.");
+
+                return Page();
+            }
+
+            // ==========================================
+            // KIỂM TRA EMAIL
+            // ==========================================
+
+            var existingEmail =
+                await _userManager.FindByEmailAsync(
+                    Input.Email);
+
+            if (existingEmail != null)
+            {
+                ModelState.AddModelError(
+                    "Input.Email",
+                    "Email này đã được đăng ký.");
+
+                return Page();
+            }
+
+            // ==========================================
+            // TẠO USER
+            // ==========================================
+
+            var user = CreateUser();
+
+            await _userStore.SetUserNameAsync(
+                user,
+                Input.UserName,
+                CancellationToken.None);
+
+            await _emailStore.SetEmailAsync(
+                user,
+                Input.Email,
+                CancellationToken.None);
+
+            // Chưa xác nhận email
+            user.EmailConfirmed = false;
+
+            var result =
+                await _userManager.CreateAsync(
+                    user,
+                    Input.Password);
+
+            if (!result.Succeeded)
+            {
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(
+                        string.Empty,
+                        error.Description);
+                }
+
+                return Page();
+            }
+
+            _logger.LogInformation(
+                "User created a new account. Waiting for OTP verification.");
+
+            // ==========================================
+            // TẠO OTP 6 SỐ
+            // ==========================================
+
+            string otp =
+                RandomNumberGenerator
+                    .GetInt32(100000, 1000000)
+                    .ToString();
+
+            // OTP có hiệu lực 5 phút
+            DateTime expiry =
+                DateTime.Now.AddMinutes(5);
+
+            // ==========================================
+            // LƯU OTP VÀO SESSION
+            // ==========================================
+
+            HttpContext.Session.SetString(
+                "RegisterOtp",
+                otp);
+
+            HttpContext.Session.SetString(
+                "RegisterUserId",
+                user.Id);
+
+            HttpContext.Session.SetString(
+                "RegisterEmail",
+                Input.Email);
+
+            HttpContext.Session.SetString(
+                "RegisterOtpExpiry",
+                expiry.ToString("O"));
+
+            // ==========================================
+            // GỬI OTP QUA EMAIL
+            // ==========================================
+
+            try
+            {
+                await _emailService.SendRegisterOtpEmailAsync(
+                    Input.Email,
+                    otp,
+                    Input.UserName);
+
+                // Lưu thời gian gửi OTP
+                HttpContext.Session.SetString(
+                    "RegisterOtpLastSent",
+                    DateTime.Now.ToString("O"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Không thể gửi OTP đăng ký đến {Email}",
+                    Input.Email);
+
+                // Xóa tài khoản nếu gửi OTP thất bại
+                await _userManager.DeleteAsync(user);
+
+                // Xóa Session OTP
+                HttpContext.Session.Remove("RegisterOtp");
+                HttpContext.Session.Remove("RegisterUserId");
+                HttpContext.Session.Remove("RegisterEmail");
+                HttpContext.Session.Remove("RegisterOtpExpiry");
+                HttpContext.Session.Remove("RegisterOtpLastSent");
+
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Không thể gửi mã OTP. Vui lòng thử lại.");
+
+                return Page();
+            }
+
+            // ==========================================
+            // CHUYỂN SANG TRANG OTP
+            // ==========================================
+
+            return RedirectToPage(
+                "./VerifyRegisterOtp",
+                new
+                {
+                    returnUrl = returnUrl
+                });
         }
+
+        // ==========================================
+        // CREATE USER
+        // ==========================================
 
         private ApplicationUser CreateUser()
         {
@@ -149,18 +294,25 @@ namespace PetFeast.Areas.Identity.Pages.Account
             }
             catch
             {
-                throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
-                    $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
-                    $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
+                throw new InvalidOperationException(
+                    $"Can't create an instance of '{nameof(ApplicationUser)}'. " +
+                    $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class " +
+                    $"and has a parameterless constructor.");
             }
         }
+
+        // ==========================================
+        // EMAIL STORE
+        // ==========================================
 
         private IUserEmailStore<ApplicationUser> GetEmailStore()
         {
             if (!_userManager.SupportsUserEmail)
             {
-                throw new NotSupportedException("The default UI requires a user store with email support.");
+                throw new NotSupportedException(
+                    "The default UI requires a user store with email support.");
             }
+
             return (IUserEmailStore<ApplicationUser>)_userStore;
         }
     }

@@ -8,8 +8,8 @@
     // ==========================
 
     var bankId = "MB";
-    var accountNo = "0344356136";
-    var accountName = "VO DUONG DUY ANH";
+    var accountNo = "068206009089";
+    var accountName = "TRAN VIET KHANG";
 
     var memo =
         $"PETFEAST DH{Model.OrderId}".ToUpper();
@@ -43,7 +43,21 @@
             <h3 class="fw-bold text-dark mb-2">
                 Đơn hàng #@Model.OrderId đã được ghi nhận!
             </h3>
-
+            @if (Model.PaymentMethod == "BankTransfer")
+            {
+                <div class="alert alert-warning d-inline-block px-4 py-2 mb-3">
+                    <i class="bi bi-clock-history me-1"></i>
+                    Thanh toán:
+                    <strong>@Model.PaymentStatus</strong>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success d-inline-block px-4 py-2 mb-3">
+                    <i class="bi bi-cash-coin me-1"></i>
+                    Thanh toán khi nhận hàng (COD)
+                </div>
+            }
             <p class="text-muted mb-4">
                 Cảm ơn bạn đã mua sắm tại
                 <strong>PetFeast</strong>.
@@ -137,7 +151,7 @@
                     Tổng thanh toán
                 </strong>
 
-                <strong class="text-danger fs-4">
+                <strong class="text-success fs-4">
                     @Model.TotalAmount.ToString("N0") đ
                 </strong>
 
@@ -292,9 +306,14 @@
 
                     <i class="bi bi-info-circle-fill me-1"></i>
 
-                    Shop sẽ kiểm tra biến động số dư
-                    và chuyển trạng thái đơn hàng
-                    ngay khi nhận được thanh toán.
+                    Sau khi chuyển khoản thành công,
+                    PetFeast sẽ kiểm tra thanh toán và xác nhận đơn hàng.
+
+                    <br />
+
+                    <strong>
+                        Vui lòng giữ lại giao dịch chuyển khoản để đối chiếu nếu cần.
+                    </strong>
 
                 </div>
 

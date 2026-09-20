@@ -305,6 +305,12 @@ namespace PetFeast.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("CustomerName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -320,6 +326,10 @@ namespace PetFeast.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PaymentStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -353,11 +363,14 @@ namespace PetFeast.Migrations
                         .HasColumnType("int");
 
                     b.Property<decimal>("VoucherDiscount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("OrderId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserVoucherId");
 
                     b.ToTable("Orders");
                 });
@@ -390,6 +403,68 @@ namespace PetFeast.Migrations
                     b.HasIndex("ProductId");
 
                     b.ToTable("OrderDetails");
+                });
+
+            modelBuilder.Entity("PetFeast.Models.Orders.ReturnRequest", b =>
+                {
+                    b.Property<int>("ReturnRequestId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReturnRequestId"));
+
+                    b.Property<string>("AdminNote")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EvidenceImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EvidenceVideoUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("RefundAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("ReturnFee")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("ReturnRequestId");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ReturnRequests");
                 });
 
             modelBuilder.Entity("PetFeast.Models.Points.PointTransaction", b =>
@@ -608,6 +683,7 @@ namespace PetFeast.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("DiscountAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("ExpiryDate")
@@ -617,6 +693,7 @@ namespace PetFeast.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal>("MinimumOrderAmount")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
@@ -702,7 +779,13 @@ namespace PetFeast.Migrations
                         .WithMany()
                         .HasForeignKey("UserId");
 
+                    b.HasOne("PetFeast.Models.Voucher.UserVoucher", "UserVoucher")
+                        .WithMany()
+                        .HasForeignKey("UserVoucherId");
+
                     b.Navigation("User");
+
+                    b.Navigation("UserVoucher");
                 });
 
             modelBuilder.Entity("PetFeast.Models.Orders.OrderDetail", b =>
@@ -722,6 +805,25 @@ namespace PetFeast.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("PetFeast.Models.Orders.ReturnRequest", b =>
+                {
+                    b.HasOne("PetFeast.Models.Orders.Order", "Order")
+                        .WithOne("ReturnRequest")
+                        .HasForeignKey("PetFeast.Models.Orders.ReturnRequest", "OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetFeast.Models.Identity.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PetFeast.Models.Points.PointTransaction", b =>
@@ -834,6 +936,8 @@ namespace PetFeast.Migrations
                     b.Navigation("OrderDetails");
 
                     b.Navigation("PointTransactions");
+
+                    b.Navigation("ReturnRequest");
                 });
 
             modelBuilder.Entity("PetFeast.Models.Products.Category", b =>

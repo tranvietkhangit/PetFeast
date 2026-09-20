@@ -2,117 +2,278 @@
 <html>
 <head>
 
-	<meta charset="utf-8">
+    <meta charset="utf-8">
 
-	<title>PetFeast Admin</title>
+    <title>PetFeast Admin</title>
 
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-		  rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
 
-	<link rel="stylesheet"
-		  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-	<link rel="icon"
-		  type="image/png"
-		  href="~/img/Logo/logo1.png">
-	<link rel="stylesheet" href="~/css/admin.css" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="icon"
+          type="image/png"
+          href="~/img/Logo/logo1.png">
+
+    <link rel="stylesheet" href="~/css/admin.css" />
 
 </head>
 
 <body>
 
-	<div class="sidebar">
+    <div class="sidebar">
 
-		<div class="logo">
+        <div class="logo">
 
-			<img src="~/img/logo/logo1.png"
-				 alt="PetFeast Logo">
+            <img src="~/img/logo/logo1.png"
+                 alt="PetFeast Logo">
 
-		</div>
+        </div>
 
-		<ul>
+        <ul>
 
-			<li>
-				<a asp-controller="Admin"
-				   asp-action="Dashboard">
+            <li>
+                <a asp-controller="Admin"
+                   asp-action="Dashboard">
 
-					<i class="bi bi-speedometer2"></i>
-					Dashboard
+                    <i class="bi bi-speedometer2"></i>
+                    Dashboard
 
-				</a>
-			</li>
+                </a>
+            </li>
 
-			<li>
-				<a asp-controller="Admin"
-				   asp-action="ProductList">
+            <li>
+                <a asp-controller="Admin"
+                   asp-action="ProductList">
 
-					<i class="bi bi-box-seam"></i> Sản phẩm
+                    <i class="bi bi-box-seam"></i>
+                    Sản phẩm
 
-				</a>
-			</li>
+                </a>
+            </li>
 
-			<li>
-				<a asp-controller="Admin"
-				   asp-action="CategoryList">
+            <li>
+                <a asp-controller="Admin"
+                   asp-action="CategoryList">
 
-					<i class="bi bi-grid"></i> Danh mục
+                    <i class="bi bi-grid"></i>
+                    Danh mục
 
-				</a>
-			</li>
+                </a>
+            </li>
 
-			<li>
-				<a asp-controller="Admin"
-				   asp-action="OrderList">
+            <!-- ĐƠN HÀNG -->
+            <li>
+                <a asp-controller="Admin"
+                   asp-action="OrderList">
 
-					<i class="bi bi-cart3"></i> Đơn hàng
+                    <i class="bi bi-cart3"></i>
+                    <span>Đơn hàng</span>
 
-				</a>
-			</li>
-			<li>
-				<a asp-controller="Admin"
-				   asp-action="VoucherList"
-				   class="nav-link">
-					<i class="bi bi-ticket-perforated me-2"></i>
-					Quản lý Voucher
-				</a>
-			</li>
-			<li>
+                    <span id="newOrderBadge"
+                          class="notification-badge d-none">
+                        0
+                    </span>
 
-				<form asp-area="Identity"
-					  asp-page="/Account/Logout"
-					  method="post">
+                </a>
+            </li>
 
-					<button type="submit" class="logout-btn">
+            <!-- HOÀN TRẢ -->
+            <li>
+                <a asp-controller="Admin"
+                   asp-action="ReturnRequestList">
 
-						<i class="bi bi-box-arrow-right"></i>
-						Đăng xuất
+                    <i class="bi bi-arrow-return-left"></i>
+                    <span>Hoàn trả</span>
 
-					</button>
+                    <span id="returnBadge"
+                          class="notification-badge d-none">
+                        0
+                    </span>
 
-				</form>
+                </a>
+            </li>
 
-			</li>
+            <!-- VOUCHER -->
+            <li>
+                <a asp-controller="Admin"
+                   asp-action="VoucherList"
+                   class="nav-link">
 
-		</ul>
+                    <i class="bi bi-ticket-perforated me-2"></i>
+                    Quản lý Voucher
 
-	</div>
+                </a>
+            </li>
 
-	<div class="main">
+            <!-- ĐĂNG XUẤT -->
+            <li>
 
-		<div class="topbar">
+                <form asp-area="Identity"
+                      asp-page="/Account/Logout"
+                      method="post">
 
-			<h3>Quản lý PetFeast</h3>
+                    <button type="submit"
+                            class="logout-btn">
 
-		</div>
+                        <i class="bi bi-box-arrow-right"></i>
+                        Đăng xuất
 
-		<div class="content">
+                    </button>
 
-			@RenderBody()
+                </form>
 
-		</div>
+            </li>
 
-	</div>
+        </ul>
 
-	@await RenderSectionAsync("Scripts", required: false)
+    </div>
+
+    <div class="main">
+
+        <div class="topbar">
+
+            <h3>Quản lý PetFeast</h3>
+
+        </div>
+
+        <div class="content">
+
+            @RenderBody()
+
+        </div>
+
+    </div>
+
+    <!-- ============================= -->
+    <!-- CẬP NHẬT THÔNG BÁO ADMIN -->
+    <!-- ============================= -->
+
+    <script>
+
+        async function updateAdminNotifications() {
+
+            try {
+
+                const response =
+                    await fetch('/Admin/GetAdminNotificationCount');
+
+                if (!response.ok)
+                    return;
+
+                const data = await response.json();
+
+                const orderBadge =
+                    document.getElementById('newOrderBadge');
+
+                const returnBadge =
+                    document.getElementById('returnBadge');
+
+
+                // =========================
+                // ĐƠN HÀNG MỚI
+                // =========================
+
+                if (data.newOrderCount > 0) {
+
+                    orderBadge.textContent =
+                        data.newOrderCount;
+
+                    orderBadge.classList.remove('d-none');
+
+                }
+                else {
+
+                    orderBadge.classList.add('d-none');
+
+                }
+
+
+                // =========================
+                // YÊU CẦU HOÀN TRẢ
+                // =========================
+
+                if (data.pendingReturnCount > 0) {
+
+                    returnBadge.textContent =
+                        data.pendingReturnCount;
+
+                    returnBadge.classList.remove('d-none');
+
+                }
+                else {
+
+                    returnBadge.classList.add('d-none');
+
+                }
+
+            }
+            catch (error) {
+
+                console.error(
+                    'Không thể cập nhật thông báo:',
+                    error
+                );
+
+            }
+
+        }
+
+
+        // Cập nhật ngay khi mở trang
+        updateAdminNotifications();
+
+
+        // Cập nhật mỗi 10 giây
+        setInterval(
+            updateAdminNotifications,
+            10000
+        );
+
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
 
 </body>
 </html>
+<style>
+    .notification-badge {
+        margin-left: auto;
+        min-width: 24px;
+        height: 24px;
+        padding: 0 7px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #dc3545;
+        color: #fff;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        box-shadow: 0 2px 6px rgba(220, 53, 69, 0.35);
+        animation: notificationPulse 2s infinite;
+    }
+
+    @@keyframes notificationPulse {
+        0%
+
+    {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 6px rgba(220, 53, 69, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+
+    }
+
+    .notification-badge.d-none {
+        display: none !important;
+    }
+</style>

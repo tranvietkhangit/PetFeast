@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PetFeast.Data;
 using PetFeast.Models.Identity;
 using PetFeast.Models.Orders;
 using PetFeast.Models.Points;
-using PetFeast.Data;
-using Microsoft.EntityFrameworkCore;
+
 namespace PetFeast.Models.Services
 {
     public class PointsRepository
@@ -20,6 +20,10 @@ namespace PetFeast.Models.Services
             _userManager = userManager;
         }
 
+        // =========================================================
+        // CỘNG ĐIỂM KHI ĐƠN HÀNG HOÀN THÀNH
+        // MỖI ĐƠN HÀNG = 1 ĐIỂM
+        // =========================================================
         public async Task<int> AddPointsForOrderAsync(Order order)
         {
             // Đơn hàng chưa có UserId
@@ -41,20 +45,13 @@ namespace PetFeast.Models.Services
             if (user == null)
                 return 0;
 
-            // ==========================================
-            // 1 SẢN PHẨM = 1 ĐIỂM
-            // ==========================================
-
-            int points = order.OrderDetails?
-                .Sum(x => x.Quantity) ?? 0;
-
-            if (points <= 0)
-                return 0;
+            // Mỗi đơn hàng = 1 điểm
+            const int points = 1;
 
             // Cộng điểm
             user.Points += points;
 
-            // Lưu lịch sử
+            // Tạo lịch sử giao dịch
             var transaction = new PointTransaction
             {
                 UserId = user.Id,
@@ -68,9 +65,87 @@ namespace PetFeast.Models.Services
 
             _context.PointTransactions.Add(transaction);
 
-            await _context.SaveChangesAsync();
-
+            // Không SaveChanges ở đây.
+            // Controller sẽ SaveChanges().
             return points;
+        }
+
+        // =========================================================
+        // THU HỒI ĐIỂM KHI ĐƠN HÀNG ĐƯỢC TRẢ HÀNG
+        // =========================================================
+        public async Task<int> RemovePointsForReturnedOrderAsync(Order order)
+        {
+            // Đơn hàng chưa có UserId
+            if (string.IsNullOrEmpty(order.UserId))
+                return 0;
+
+            // Tìm user
+            var user = await _userManager.FindByIdAsync(order.UserId);
+
+            if (user == null)
+                return 0;
+
+            // =====================================================
+            // KIỂM TRA ĐƠN HÀNG ĐÃ TỪNG ĐƯỢC CỘNG ĐIỂM CHƯA
+            // =====================================================
+
+            var earnTransaction = await _context.PointTransactions
+                .FirstOrDefaultAsync(x =>
+                    x.OrderId == order.OrderId &&
+                    x.Type == "Earn");
+
+            if (earnTransaction == null)
+                return 0;
+
+            // =====================================================
+            // KIỂM TRA ĐÃ THU HỒI ĐIỂM CHƯA
+            // =====================================================
+
+            bool alreadyRemoved = await _context.PointTransactions
+                .AnyAsync(x =>
+                    x.OrderId == order.OrderId &&
+                    x.Type == "Return");
+
+            if (alreadyRemoved)
+                return 0;
+
+            // Số điểm cần thu hồi
+            int points = earnTransaction.Points;
+
+            // Không cho điểm user bị âm
+            int removedPoints =
+                Math.Min(points, user.Points);
+
+            if (removedPoints <= 0)
+                return 0;
+
+            // =====================================================
+            // TRỪ ĐIỂM
+            // =====================================================
+
+            user.Points -= removedPoints;
+
+            // =====================================================
+            // TẠO LỊCH SỬ
+            // =====================================================
+
+            var transaction = new PointTransaction
+            {
+                UserId = user.Id,
+                Points = -removedPoints,
+                Type = "Return",
+                OrderId = order.OrderId,
+                Description =
+                    $"Thu hồi {removedPoints} điểm " +
+                    $"do trả hàng đơn #{order.OrderId}",
+                CreatedAt = DateTime.Now
+            };
+
+            _context.PointTransactions.Add(transaction);
+
+            // Không SaveChanges ở đây.
+            // Controller sẽ SaveChanges().
+            return removedPoints;
         }
     }
 }

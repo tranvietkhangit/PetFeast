@@ -19,6 +19,7 @@ namespace PetFeast.Models.Orders
         public string Address { get; set; } = "";
         public string DeliveryMethod { get; set; } = "";
         public string PaymentMethod { get; set; } = "COD";
+        public string PaymentStatus { get; set; } = "Chưa thanh toán";
         public string? Note { get; set; }
         public decimal ShippingFee { get; set; }
         public decimal TotalAmount { get; set; }
@@ -26,10 +27,12 @@ namespace PetFeast.Models.Orders
 
         public decimal PointDiscount { get; set; } = 0;
         public DateTime OrderDate { get; set; } = DateTime.Now;
-
+        public DateTime? CompletedDate { get; set; }
         public List<OrderDetail>? OrderDetails { get; set; }
         public string? UserId { get; set; }
         public string Status { get; set; } = "Chờ xác nhận";
+        // Lý do hủy đơn
+        public string? CancellationReason { get; set; }
         public ApplicationUser? User { get; set; }
 
         public List<PointTransaction> PointTransactions { get; set; } = new List<PointTransaction>();
@@ -38,5 +41,6 @@ namespace PetFeast.Models.Orders
         public UserVoucher? UserVoucher { get; set; }
 
         public decimal VoucherDiscount { get; set; } = 0;
+        public ReturnRequest? ReturnRequest { get; set; }
     }
 }

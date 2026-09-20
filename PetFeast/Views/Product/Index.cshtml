@@ -39,7 +39,10 @@
 
 
         </div>
-        <form method="get" class="sort-form">
+        <form method="get"
+      asp-controller="Product"
+      asp-action="Index"
+      class="sort-form">
 
     <input type="hidden"
            name="keyword"
@@ -58,8 +61,7 @@
            value="@Context.Request.Query["maxPrice"]" />
 
     <select name="sortOrder"
-            class="form-select sort-select"
-            onchange="this.form.submit()">
+        class="form-select sort-select">
 
         <option value="">
             Sắp xếp
@@ -80,12 +82,16 @@
 </form>
         </div>
 
-    <div class="row">
+    <div class="row product-main">
+
 
         <!-- SIDEBAR -->
         <div class="col-md-3">
 
-            <form method="get">
+            <form method="get"
+      asp-controller="Product"
+      asp-action="Index"
+      class="product-filter-form">
 
                 <div class="card mb-3">
 
@@ -96,17 +102,17 @@
                     <div class="list-group list-group-flush">
 
                         <a href="/Product"
-                           class="list-group-item">
-                            Tất cả
-                        </a>
+   class="list-group-item category-filter-link">
+    Tất cả
+</a>
 
-                        @foreach (var c in ViewBag.Categories)
-                        {
-                            <a href="/Product?categoryId=@c.CategoryId"
-                               class="list-group-item">
-                                @c.CategoryName
-                            </a>
-                        }
+@foreach (var c in ViewBag.Categories)
+{
+    <a href="/Product?categoryId=@c.CategoryId"
+       class="list-group-item category-filter-link">
+        @c.CategoryName
+    </a>
+}
 
                     </div>
 
@@ -261,17 +267,24 @@
                        @foreach (var item in Model)
 {
     bool isFavorite = favoriteProductIds.Contains(item.ProductId);
+bool isOutOfStock = item.Quantity <= 0;
 
     <div class="col-md-4 mb-4">
 
-        <div class="card h-100 product-card">
+        <div class="card h-100 product-card @(isOutOfStock ? "out-of-stock" : "")">
 
             <!-- =========================
                  PRODUCT IMAGE
                  ========================= -->
 
             <div class="product-image-wrapper">
-
+                @if (isOutOfStock)
+{
+    <span class="out-of-stock-badge">
+        <i class="bi bi-x-circle me-1"></i>
+        Hết hàng
+    </span>
+}
                 <a asp-action="Detail"
                    asp-route-id="@item.ProductId">
 
@@ -329,39 +342,41 @@
 
             <div class="card-body">
 
-                <h6>
-                    @item.ProductName
-                </h6>
+                <h6 class="product-name">
+    @item.ProductName
+</h6>
 
 
                 @if (item.DiscountPercent > 0)
-                {
-                    <span class="discount-badge">
-                        -@item.DiscountPercent%
-                    </span>
+{
+    <div class="product-price-box">
 
-                    <div class="mb-2">
+        <div class="price-old">
+            @item.Price.ToString("N0") đ
+        </div>
 
-                        <div class="price-box">
+        <div class="price-new">
+            @item.DiscountPrice.ToString("N0") đ
+        </div>
 
-                            <span class="old-price">
-                                @item.Price.ToString("N0") đ
-                            </span>
+        <div class="price-saving">
+            <i class="bi bi-tag-fill me-1"></i>
+            Tiết kiệm
+            @((item.Price - item.DiscountPrice).ToString("N0")) đ
+        </div>
 
-                            <span class="new-price">
-                                @item.DiscountPrice.ToString("N0") đ
-                            </span>
+    </div>
+}
+else
+{
+    <div class="product-price-box">
 
-                        </div>
+        <div class="price-normal">
+            @item.Price.ToString("N0") đ
+        </div>
 
-                    </div>
-                }
-                else
-                {
-                    <p class="text-danger fw-bold mb-0">
-                        @item.Price.ToString("N0") đ
-                    </p>
-                }
+    </div>
+}
 
             </div>
 
@@ -372,15 +387,30 @@
 
             <div class="card-footer bg-white border-0">
 
-                <button type="button"
-                        class="btn btn-primary w-100 add-to-cart-btn"
-                        data-product-id="@item.ProductId">
+                @if (isOutOfStock)
+{
+    <button type="button"
+            class="btn btn-secondary w-100 add-to-cart-btn"
+            disabled>
 
-                    <i class="bi bi-cart-plus"></i>
+        <i class="bi bi-x-circle me-1"></i>
 
-                    <span>Thêm vào giỏ hàng</span>
+        <span>Hết hàng</span>
 
-                </button>
+    </button>
+}
+else
+{
+    <button type="button"
+            class="btn btn-primary w-100 add-to-cart-btn"
+            data-product-id="@item.ProductId">
+
+        <i class="bi bi-cart-plus"></i>
+
+        <span>Thêm vào giỏ hàng</span>
+
+    </button>
+}
 
             </div>
 
@@ -479,7 +509,11 @@
 </div>
 <script>
 
-    document.addEventListener("DOMContentLoaded", function () {
+    /* =========================================================
+       PRICE SLIDER
+    ========================================================= */
+
+    function initPriceSlider() {
 
         const minRange =
             document.getElementById("minPriceRange");
@@ -503,26 +537,21 @@
             document.querySelector(".price-slider-track");
 
 
-        // Không có bộ lọc thì dừng
-        if (!minRange || !maxRange ||
-            !minInput || !maxInput ||
-            !minLabel || !maxLabel || !track) {
+        if (!minRange ||
+            !maxRange ||
+            !minInput ||
+            !maxInput ||
+            !minLabel ||
+            !maxLabel ||
+            !track) {
 
             return;
         }
 
 
-        // =====================================
-        // GIÁ TỐI ĐA LẤY TRỰC TIẾP TỪ HTML
-        // =====================================
-
         const maxProductPrice =
             Number(maxRange.max);
 
-
-        // =====================================
-        // FORMAT GIÁ
-        // =====================================
 
         function formatPrice(value) {
 
@@ -531,10 +560,6 @@
 
         }
 
-
-        // =====================================
-        // CẬP NHẬT THANH SLIDER
-        // =====================================
 
         function updateTrack() {
 
@@ -549,7 +574,6 @@
                 maxProductPrice > 0
                     ? (minValue / maxProductPrice) * 100
                     : 0;
-
 
             const maxPercent =
                 maxProductPrice > 0
@@ -570,71 +594,71 @@
         }
 
 
-        // =====================================
-        // SLIDER MIN
-        // =====================================
+        /* =========================
+           MIN RANGE
+        ========================= */
 
         minRange.addEventListener("input", function () {
 
-            let minValue =
+            let value =
                 Number(this.value);
 
             let maxValue =
                 Number(maxRange.value);
 
 
-            if (minValue > maxValue) {
+            if (value > maxValue) {
 
-                minValue = maxValue;
+                value = maxValue;
 
-                this.value = minValue;
+                this.value = value;
             }
 
 
-            minInput.value =
-                minValue;
+            minInput.value = value;
 
             minLabel.textContent =
-                formatPrice(minValue);
+                formatPrice(value);
 
             updateTrack();
+
         });
 
 
-        // =====================================
-        // SLIDER MAX
-        // =====================================
+        /* =========================
+           MAX RANGE
+        ========================= */
 
         maxRange.addEventListener("input", function () {
 
-            let maxValue =
+            let value =
                 Number(this.value);
 
             let minValue =
                 Number(minRange.value);
 
 
-            if (maxValue < minValue) {
+            if (value < minValue) {
 
-                maxValue = minValue;
+                value = minValue;
 
-                this.value = maxValue;
+                this.value = value;
             }
 
 
-            maxInput.value =
-                maxValue;
+            maxInput.value = value;
 
             maxLabel.textContent =
-                formatPrice(maxValue);
+                formatPrice(value);
 
             updateTrack();
+
         });
 
 
-        // =====================================
-        // NHẬP GIÁ MIN
-        // =====================================
+        /* =========================
+           MIN INPUT
+        ========================= */
 
         minInput.addEventListener("change", function () {
 
@@ -646,12 +670,13 @@
                 value = 0;
 
 
-            if (value < 0)
-                value = 0;
-
-
-            if (value > maxProductPrice)
-                value = maxProductPrice;
+            value = Math.max(
+                0,
+                Math.min(
+                    maxProductPrice,
+                    value
+                )
+            );
 
 
             let maxValue =
@@ -666,22 +691,21 @@
                 value = maxValue;
 
 
-            this.value =
-                value;
+            this.value = value;
 
-            minRange.value =
-                value;
+            minRange.value = value;
 
             minLabel.textContent =
                 formatPrice(value);
 
             updateTrack();
+
         });
 
 
-        // =====================================
-        // NHẬP GIÁ MAX
-        // =====================================
+        /* =========================
+           MAX INPUT
+        ========================= */
 
         maxInput.addEventListener("change", function () {
 
@@ -693,12 +717,13 @@
                 value = maxProductPrice;
 
 
-            if (value < 0)
-                value = 0;
-
-
-            if (value > maxProductPrice)
-                value = maxProductPrice;
+            value = Math.max(
+                0,
+                Math.min(
+                    maxProductPrice,
+                    value
+                )
+            );
 
 
             let minValue =
@@ -713,22 +738,17 @@
                 value = minValue;
 
 
-            this.value =
-                value;
+            this.value = value;
 
-            maxRange.value =
-                value;
+            maxRange.value = value;
 
             maxLabel.textContent =
                 formatPrice(value);
 
             updateTrack();
+
         });
 
-
-        // =====================================
-        // KHỞI TẠO
-        // =====================================
 
         minLabel.textContent =
             formatPrice(minRange.value);
@@ -737,55 +757,443 @@
             formatPrice(maxRange.value);
 
         updateTrack();
+    }
 
-    });
 
-</script>
-<script>
-    // ==========================================
-    // YÊU THÍCH SẢN PHẨM - AJAX
-    // ==========================================
+    /* =========================================================
+       AJAX LOAD PRODUCT PAGE
+    ========================================================= */
 
-    document.querySelectorAll(".favorite-form")
-        .forEach(function (form) {
+    async function loadProductPage(
+        url,
+        updateHistory = true
+    ) {
+
+        const oldContainer =
+            document.querySelector(".container.mt-4");
+
+        if (!oldContainer)
+            return;
+
+
+        oldContainer.style.opacity = "0.5";
+        oldContainer.style.pointerEvents = "none";
+
+
+        try {
+
+            const response =
+                await fetch(url, {
+                    headers: {
+                        "X-Requested-With":
+                            "XMLHttpRequest"
+                    }
+                });
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "HTTP error " +
+                    response.status
+                );
+
+            }
+
+
+            const html =
+                await response.text();
+
+
+            const parser =
+                new DOMParser();
+
+
+            const doc =
+                parser.parseFromString(
+                    html,
+                    "text/html"
+                );
+
+
+            const newContainer =
+                doc.querySelector(
+                    ".container.mt-4"
+                );
+
+
+            if (!newContainer) {
+
+                throw new Error(
+                    "Không tìm thấy nội dung Product."
+                );
+
+            }
+
+
+            /* =========================
+               THAY TOÀN BỘ NỘI DUNG
+            ========================= */
+
+            oldContainer.innerHTML =
+                newContainer.innerHTML;
+
+
+            /* =========================
+               CẬP NHẬT URL
+            ========================= */
+
+            if (updateHistory) {
+
+                window.history.pushState(
+                    {},
+                    "",
+                    url
+                );
+
+            }
+
+
+            /* =========================
+               KHỞI TẠO LẠI SLIDER
+            ========================= */
+
+            initPriceSlider();
+
+        }
+        catch (error) {
+
+            console.error(
+                "Product AJAX error:",
+                error
+            );
+
+            alert(
+                "Không thể tải sản phẩm. Vui lòng thử lại."
+            );
+
+        }
+        finally {
+
+            oldContainer.style.opacity = "1";
+            oldContainer.style.pointerEvents = "auto";
+
+        }
+
+    }
+
+
+    /* =========================================================
+       TẠO URL PRODUCT
+    ========================================================= */
+
+    function getProductUrl(form) {
+
+        const params =
+            new URLSearchParams();
+
+
+        const formData =
+            new FormData(form);
+
+
+        for (
+            const [key, value]
+            of formData.entries()
+        ) {
+
+            if (value !== "") {
+
+                params.set(
+                    key,
+                    value
+                );
+
+            }
+
+        }
+
+
+        params.set(
+            "page",
+            "1"
+        );
+
+
+        return `/Product/Index?${params.toString()}`;
+
+    }
+
+
+    /* =========================================================
+       FORM FILTER
+    ========================================================= */
+
+    document.addEventListener(
+        "submit",
+        function (event) {
+
+            const form =
+                event.target;
+
+
+            if (!form.matches(
+                'form[action*="/Product/Index"], form[action="/Product"], .sort-form'
+            )) {
+
+                return;
+
+            }
+
+
+            event.preventDefault();
+
+
+            const url =
+                getProductUrl(form);
+
+
+            loadProductPage(url);
+
+        }
+    );
+
+
+    /* =========================================================
+       SORT
+    ========================================================= */
+
+    document.addEventListener(
+        "change",
+        function (event) {
+
+            const element =
+                event.target;
+
+
+            if (!element.matches(
+                '.sort-form select[name="sortOrder"]'
+            )) {
+
+                return;
+
+            }
+
+
+            const form =
+                element.closest("form");
+
+
+            if (!form)
+                return;
+
+
+            const url =
+                getProductUrl(form);
+
+
+            loadProductPage(url);
+
+        }
+    );
+
+
+    /* =========================================================
+       CATEGORY
+    ========================================================= */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const link =
+                event.target.closest(
+                    ".category-filter-link"
+                );
+
+
+            if (!link)
+                return;
+
+
+            event.preventDefault();
+
+
+            const url =
+                link.href;
+
+
+            if (!url)
+                return;
+
+
+            loadProductPage(url);
+
+        }
+    );
+
+
+    /* =========================================================
+       PAGINATION
+    ========================================================= */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const link =
+                event.target.closest(
+                    ".product-main .pagination a"
+                );
+
+
+            if (!link)
+                return;
+
+
+            event.preventDefault();
+
+
+            const url =
+                link.href;
+
+
+            if (!url)
+                return;
+
+
+            loadProductPage(url);
+
+        }
+    );
+
+
+    /* =========================================================
+       RESET FILTER
+    ========================================================= */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const link =
+                event.target.closest(
+                    'a[href*="/Product/Index"], a[href="/Product"]'
+                );
+
+
+            if (!link)
+                return;
+
+
+            /*
+             * Không bắt link Product Detail
+             */
+
+            if (
+                link.closest(".product-card") ||
+                link.closest(".product-image-wrapper")
+            ) {
+
+                return;
+
+            }
+
+
+            event.preventDefault();
+
+
+            loadProductPage(
+                link.href
+            );
+
+        }
+    );
+
+
+    /* =========================================================
+       FAVORITE AJAX
+       DÙNG EVENT DELEGATION
+    ========================================================= */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
 
             const button =
-                form.querySelector(".favorite-btn");
+                event.target.closest(
+                    ".favorite-form .favorite-btn"
+                );
+
+
+            if (!button)
+                return;
+
+
+            const form =
+                button.closest(
+                    ".favorite-form"
+                );
+
+
+            if (!form)
+                return;
+
+
+            /*
+             * Nếu là link đăng nhập
+             */
+
+            if (button.tagName === "A") {
+                return;
+            }
+
+
+            if (button.disabled)
+                return;
+
 
             const icon =
                 button.querySelector("i");
 
+
             const productId =
                 form.dataset.productId;
+
 
             const token =
                 form.querySelector(
                     'input[name="__RequestVerificationToken"]'
-                ).value;
+                )?.value;
 
-            button.addEventListener("click", async function () {
 
-                if (button.disabled) {
-                    return;
-                }
+            button.disabled = true;
 
-                button.disabled = true;
 
-                try {
+            try {
 
-                    const formData = new FormData();
+                const formData =
+                    new FormData();
 
-                    formData.append(
-                        "productId",
-                        productId
-                    );
+
+                formData.append(
+                    "productId",
+                    productId
+                );
+
+
+                if (token) {
 
                     formData.append(
                         "__RequestVerificationToken",
                         token
                     );
 
-                    const response = await fetch(
+                }
+
+
+                const response =
+                    await fetch(
                         "/Favorite/ToggleAjax",
                         {
                             method: "POST",
@@ -797,82 +1205,322 @@
                         }
                     );
 
-                    const data = await response.json();
 
-                    if (data.requireLogin) {
+                if (!response.ok) {
 
-                        window.location.href =
-                            "/Identity/Account/Login?returnUrl="
-                            + encodeURIComponent(
-                                window.location.pathname +
-                                window.location.search
+                    throw new Error(
+                        "HTTP error " +
+                        response.status
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (data.requireLogin) {
+
+                    window.location.href =
+                        "/Identity/Account/Login?returnUrl=" +
+                        encodeURIComponent(
+                            window.location.pathname +
+                            window.location.search
+                        );
+
+                    return;
+                }
+
+
+                if (!data.success) {
+
+                    throw new Error(
+                        data.message ||
+                        "Không thể cập nhật yêu thích."
+                    );
+
+                }
+
+
+                if (data.isFavorite) {
+
+                    button.classList.add(
+                        "active"
+                    );
+
+                    icon.classList.remove(
+                        "bi-heart"
+                    );
+
+                    icon.classList.add(
+                        "bi-heart-fill"
+                    );
+
+                    button.title =
+                        "Bỏ yêu thích";
+
+                }
+                else {
+
+                    button.classList.remove(
+                        "active"
+                    );
+
+                    icon.classList.remove(
+                        "bi-heart-fill"
+                    );
+
+                    icon.classList.add(
+                        "bi-heart"
+                    );
+
+                    button.title =
+                        "Thêm vào yêu thích";
+
+                }
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Favorite error:",
+                    error
+                );
+
+                alert(
+                    "Có lỗi xảy ra khi cập nhật yêu thích."
+                );
+
+            }
+            finally {
+
+                button.disabled = false;
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       ADD TO CART AJAX
+       DÙNG EVENT DELEGATION
+    ========================================================= */
+
+    document.addEventListener(
+        "click",
+        async function (event) {
+
+            const button =
+                event.target.closest(
+                    ".add-to-cart-btn"
+                );
+
+
+            if (!button)
+                return;
+
+
+            if (button.disabled)
+                return;
+
+
+            const productId =
+                button.dataset.productId;
+
+
+            const originalHTML =
+                button.innerHTML;
+
+
+            button.disabled = true;
+
+
+            button.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Đang thêm...
+            `;
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/ShoppingCart/AddToCartAjax",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/x-www-form-urlencoded; charset=UTF-8",
+
+                                "X-Requested-With":
+                                    "XMLHttpRequest"
+                            },
+
+                            body:
+                                `productId=${encodeURIComponent(productId)}&quantity=1`
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "HTTP error " +
+                        response.status
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (data.requireLogin) {
+
+                    const currentUrl =
+                        window.location.pathname +
+                        window.location.search;
+
+
+                    window.location.href =
+                        "/Identity/Account/Login?returnUrl=" +
+                        encodeURIComponent(
+                            currentUrl
+                        );
+
+                    return;
+                }
+
+
+                if (data.success) {
+
+                    const cartCount =
+                        document.getElementById(
+                            "cartCount"
+                        );
+
+
+                    if (cartCount) {
+
+                        cartCount.textContent =
+                            data.cartCount;
+
+                    }
+
+
+                    button.classList.remove(
+                        "btn-primary"
+                    );
+
+                    button.classList.add(
+                        "btn-success"
+                    );
+
+
+                    button.innerHTML = `
+                        <i class="bi bi-check-circle-fill"></i>
+                        <span>Đã thêm</span>
+                    `;
+
+
+                    setTimeout(
+                        function () {
+
+                            button.classList.remove(
+                                "btn-success"
                             );
 
-                        return;
-                    }
+                            button.classList.add(
+                                "btn-primary"
+                            );
 
-                    if (!data.success) {
-                        throw new Error(
-                            "Không thể cập nhật yêu thích."
-                        );
-                    }
+                            button.innerHTML =
+                                originalHTML;
 
-                    // ==============================
-                    // ĐÃ YÊU THÍCH
-                    // ==============================
+                            button.disabled =
+                                false;
 
-                    if (data.isFavorite) {
-
-                        button.classList.add("active");
-
-                        icon.classList.remove("bi-heart");
-
-                        icon.classList.add("bi-heart-fill");
-
-                        button.title =
-                            "Bỏ yêu thích";
-                    }
-
-                    // ==============================
-                    // BỎ YÊU THÍCH
-                    // ==============================
-
-                    else {
-
-                        button.classList.remove("active");
-
-                        icon.classList.remove(
-                            "bi-heart-fill"
-                        );
-
-                        icon.classList.add("bi-heart");
-
-                        button.title =
-                            "Thêm vào yêu thích";
-                    }
+                        },
+                        1500
+                    );
 
                 }
-                catch (error) {
-
-                    console.error(
-                        "Favorite error:",
-                        error
-                    );
+                else {
 
                     alert(
-                        "Có lỗi xảy ra khi cập nhật yêu thích."
+                        data.message ||
+                        "Không thể thêm sản phẩm vào giỏ hàng."
                     );
 
+
+                    button.innerHTML =
+                        originalHTML;
+
+                    button.disabled =
+                        false;
+
                 }
-                finally {
 
-                    button.disabled = false;
+            }
+            catch (error) {
 
-                }
+                console.error(
+                    "Add to cart error:",
+                    error
+                );
 
-            });
 
-        });
+                alert(
+                    "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng."
+                );
+
+
+                button.innerHTML =
+                    originalHTML;
+
+                button.disabled =
+                    false;
+
+            }
+
+        }
+    );
+
+
+    /* =========================================================
+       BACK / FORWARD
+    ========================================================= */
+
+    window.addEventListener(
+        "popstate",
+        function () {
+
+            loadProductPage(
+                window.location.href,
+                false
+            );
+
+        }
+    );
+
+
+    /* =========================================================
+       KHỞI TẠO
+    ========================================================= */
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        function () {
+
+            initPriceSlider();
+
+        }
+    );
+
 </script>
 <style>
 
@@ -948,22 +1596,16 @@
 
         /* HOVER */
         .favorite-btn:hover {
-            transform: scale(1.08);
-        }
+    transform: translateY(-2px);
+}
 
-        /* CLICK */
-        .favorite-btn:active {
-            transform: scale(0.92);
-        }
+.favorite-btn:active {
+    transform: translateY(-2px);
+}
 
 
     /* =========================
-           PRODUCT NAME
-           ========================= */
 
-    .product-name {
-        min-height: 42px;
-    }
 
 
     /* =========================
@@ -1023,213 +1665,11 @@
         }
 
 </style>
-<script>
-    document.querySelectorAll(".add-to-cart-btn")
-        .forEach(function (button) {
-
-            button.addEventListener("click", async function () {
-
-                if (button.disabled) {
-                    return;
-                }
-
-                const productId =
-                    button.dataset.productId;
-
-                const originalHTML =
-                    button.innerHTML;
-
-                button.disabled = true;
-
-                // ==========================
-                // ĐANG THÊM
-                // ==========================
-
-                button.innerHTML = `
-                    <span class="spinner-border spinner-border-sm me-1"></span>
-                    Đang thêm...
-                `;
-
-                try {
-
-                    const response =
-                        await fetch(
-                            "/ShoppingCart/AddToCartAjax",
-                            {
-                                method: "POST",
-
-                                headers: {
-                                    "Content-Type":
-                                        "application/x-www-form-urlencoded; charset=UTF-8",
-
-                                    "X-Requested-With":
-                                        "XMLHttpRequest"
-                                },
-
-                                body:
-                                    `productId=${encodeURIComponent(productId)}&quantity=1`
-                            }
-                        );
-
-
-                    // ==========================
-                    // SERVER ERROR
-                    // ==========================
-
-                    if (!response.ok) {
-
-                        throw new Error(
-                            "HTTP error " + response.status
-                        );
-
-                    }
-
-
-                    const data =
-                        await response.json();
-
-
-                    // ==========================
-                    // CHƯA ĐĂNG NHẬP
-                    // ==========================
-
-                    if (data.requireLogin) {
-
-                        const currentUrl =
-                            window.location.pathname +
-                            window.location.search;
-
-                        window.location.href =
-                            "/Identity/Account/Login?returnUrl=" +
-                            encodeURIComponent(currentUrl);
-
-                        return;
-                    }
-
-
-                    // ==========================
-                    // THÀNH CÔNG
-                    // ==========================
-
-                    if (data.success) {
-
-                        const cartCount =
-                            document.getElementById("cartCount");
-
-
-                        // Cập nhật số lượng giỏ hàng
-                        if (cartCount) {
-
-                            cartCount.textContent =
-                                data.cartCount;
-
-                            cartCount.classList.add(
-                                "cart-count-bump"
-                            );
-
-                            setTimeout(function () {
-
-                                cartCount.classList.remove(
-                                    "cart-count-bump"
-                                );
-
-                            }, 400);
-
-                        }
-
-
-                        // Đổi nút thành "Đã thêm"
-                        button.classList.remove(
-                            "btn-primary"
-                        );
-
-                        button.classList.add(
-                            "btn-success",
-                            "cart-added"
-                        );
-
-                        button.innerHTML = `
-                            <i class="bi bi-check-circle-fill"></i>
-                            <span>Đã thêm</span>
-                        `;
-
-
-                        // Trả lại trạng thái ban đầu
-                        setTimeout(function () {
-
-                            button.classList.remove(
-                                "btn-success",
-                                "cart-added"
-                            );
-
-                            button.classList.add(
-                                "btn-primary"
-                            );
-
-                            button.innerHTML =
-                                originalHTML;
-
-                            button.disabled = false;
-
-                        }, 1500);
-
-                    }
-
-
-                    // ==========================
-                    // LỖI THÊM GIỎ HÀNG
-                    // ==========================
-
-                    else {
-
-                        alert(
-                            data.message ||
-                            "Không thể thêm sản phẩm vào giỏ hàng."
-                        );
-
-                        button.innerHTML =
-                            originalHTML;
-
-                        button.disabled = false;
-
-                    }
-
-                }
-                catch (error) {
-
-                    console.error(
-                        "Add to cart error:",
-                        error
-                    );
-
-                    alert(
-                        "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng."
-                    );
-
-                    button.innerHTML =
-                        originalHTML;
-
-                    button.disabled = false;
-
-                }
-
-            });
-
-        });
-</script>
 <style>
-
-    .add-to-cart-btn {
-        transition: all 0.25s ease;
-    }
-
     .add-to-cart-btn:hover {
         transform: translateY(-2px);
     }
 
-    .add-to-cart-btn:active {
-        transform: scale(0.96);
-    }
 
 
     /* =========================
@@ -1313,4 +1753,369 @@
     border-color: #0d6efd;
     color: #fff;
 }
+
+
+/* ========================================
+       PRODUCT NAME
+    ======================================== */
+
+    .product-name {
+    height: 30px;
+    margin-bottom: 8px;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 30px;
+    text-align: center;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+    /* ========================================
+       PRODUCT PRICE
+    ======================================== */
+
+    .product-price-box {
+        min-height: 72px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+
+    /* Giá cũ */
+
+    .price-old {
+        font-size: 16px;
+        color: #888;
+        text-decoration: line-through;
+        line-height: 21px;
+    }
+
+
+    /* Giá mới */
+
+    .price-new {
+        font-size: 23px;
+        font-weight: 700;
+        color: #dc3545;
+        line-height: 29px;
+    }
+
+
+    /* Tiết kiệm */
+
+    .price-saving {
+        font-size: 14px;
+        font-weight: 700;
+        color: #198754;
+        line-height: 20px;
+    }
+
+
+    /* Giá bình thường */
+
+    .price-normal {
+        font-size: 23px;
+        font-weight: 700;
+        color: #0d6efd;
+        line-height: 29px;
+    }
+
+
+    /* ========================================
+       CARD BODY
+    ======================================== */
+
+    .product-card .card-body {
+        padding: 12px 14px 8px;
+    }
+
+
+    /* ========================================
+       ADD TO CART
+    ======================================== */
+
+    .add-to-cart-btn {
+        height: 44px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+    /* =========================
+   OUT OF STOCK
+========================= */
+
+.product-card.out-of-stock .product-image {
+    opacity: 0.6;
+}
+
+.out-of-stock-badge {
+    position: absolute;
+
+    top: 12px;
+    left: 12px;
+
+    z-index: 25;
+
+    display: inline-flex;
+    align-items: center;
+
+    padding: 7px 12px;
+
+    background: #6c757d;
+    color: #fff;
+
+    border-radius: 6px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.add-to-cart-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+</style>
+<style>
+    /* =========================================
+       PRODUCT - MOBILE ONLY
+       Không thay đổi PC
+    ========================================= */
+
+    @@media (max-width: 767.98px) {
+
+        /* =========================
+           CONTAINER
+        ========================= */
+
+        .product-main {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        .product-main > .col-md-3,
+        .product-main > .col-md-9 {
+            width: 100%;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+
+        /* =========================
+           PRODUCT HEADER
+        ========================= */
+
+        .product-header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sort-form {
+            width: 100%;
+        }
+
+        .sort-select {
+            width: 100%;
+        }
+
+
+        /* =========================
+           PRODUCT CARD
+        ========================= */
+
+        .product-card {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+
+        /* =========================
+           FAVORITE BUTTON
+        ========================= */
+
+        .favorite-form {
+            top: 10px;
+            right: 10px;
+        }
+
+        .favorite-btn {
+            width: 42px;
+            height: 42px;
+            border-width: 1px;
+        }
+
+        .favorite-btn i {
+            font-size: 20px;
+        }
+
+
+        /* =========================
+           PRODUCT NAME
+        ========================= */
+
+        .product-name {
+            width: 100%;
+            max-width: 100%;
+
+            font-size: 16px;
+            line-height: 24px;
+            height: 24px;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+
+        /* =========================
+           PRICE
+        ========================= */
+
+        .product-price-box {
+            width: 100%;
+            min-height: 68px;
+        }
+
+        .price-old {
+            font-size: 14px;
+        }
+
+        .price-new,
+        .price-normal {
+            font-size: 20px;
+        }
+
+        .price-saving {
+            font-size: 13px;
+        }
+
+
+        /* =========================
+           ADD TO CART
+        ========================= */
+
+        .add-to-cart-btn {
+            width: 100%;
+            height: 42px;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           SIDEBAR FILTER
+        ========================= */
+
+        .product-filter-form {
+            width: 100%;
+        }
+
+        .product-filter-form .card {
+            width: 100%;
+        }
+
+
+        /* =========================
+           PRICE INPUT
+        ========================= */
+
+        .product-filter-form .input-group {
+            width: 100%;
+        }
+
+        .product-filter-form input[type="number"] {
+            min-width: 0;
+        }
+
+
+        /* =========================
+           PAGINATION
+        ========================= */
+
+        .pagination {
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .pagination .page-link {
+            width: 36px;
+            height: 36px;
+        }
+    }
+
+
+    /* =========================================
+       ĐIỆN THOẠI NHỎ
+    ========================================= */
+
+    @@media (max-width: 575.98px) {
+
+        .product-main > .col-md-3,
+        .product-main > .col-md-9 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        .product-image {
+            height: 200px;
+        }
+
+        .product-card .card-body {
+            padding: 10px 10px 6px;
+        }
+
+        .product-card .card-footer {
+            padding: 8px 10px 12px;
+        }
+
+        .product-name {
+            font-size: 15px;
+        }
+
+        .price-new,
+        .price-normal {
+            font-size: 19px;
+        }
+
+        .price-saving {
+            font-size: 12px;
+        }
+
+        .favorite-btn {
+            width: 40px;
+            height: 40px;
+        }
+
+        .favorite-btn i {
+            font-size: 19px;
+        }
+
+        .add-to-cart-btn {
+            height: 40px;
+            font-size: 13px;
+        }
+
+        /* Không cho filter làm tràn ngang */
+        .product-filter-form .card-body {
+            padding: 12px;
+        }
+
+        .price-slider-container {
+            width: 100%;
+        }
+    }
 </style>

@@ -5,59 +5,67 @@
     ViewData["Title"] = "Đăng ký tài khoản";
 }
 
-
 <div class="container auth-page mt-5 mb-5">
 
-
-    <div class="row justify-content-center align-items-center">
-
+    <div class="row justify-content-center align-items-center g-4">
 
         <!-- LOGO -->
         <div class="col-lg-3 col-md-6 mb-4 d-flex justify-content-center align-items-center">
 
             <img src="~/img/Logo/logo1.png"
                  class="auth-logo"
-                 alt="PetFeast"
-                 style="width:400px !important;">
+                 alt="PetFeast">
 
         </div>
-
-
 
         <!-- REGISTER -->
         <div class="col-md-5">
 
             <div class="policy-content shadow">
 
-
                 <h2 class="text-center text-primary fw-bold mb-4">
                     Tạo tài khoản
                 </h2>
-
-
 
                 <form id="registerForm"
                       asp-route-returnUrl="@Model.ReturnUrl"
                       method="post">
 
-
                     <div asp-validation-summary="ModelOnly"
                          class="text-danger">
                     </div>
 
-
-
+                    <!-- USERNAME -->
                     <div class="mb-3">
 
-                        <label class="fw-bold">
+                        <label asp-for="Input.UserName"
+                               class="fw-bold">
+                            Tên đăng nhập
+                        </label>
+
+                        <input asp-for="Input.UserName"
+                               class="form-control"
+                               placeholder="Nhập tên đăng nhập"
+                               autocomplete="username" />
+
+                        <span asp-validation-for="Input.UserName"
+                              class="text-danger">
+                        </span>
+
+                    </div>
+
+                    <!-- EMAIL -->
+                    <div class="mb-3">
+
+                        <label asp-for="Input.Email"
+                               class="fw-bold">
                             Email
                         </label>
 
-
                         <input asp-for="Input.Email"
                                class="form-control"
-                               placeholder="Nhập email" />
-
+                               placeholder="Nhập email"
+                               autocomplete="email" />
 
                         <span asp-validation-for="Input.Email"
                               class="text-danger">
@@ -65,26 +73,32 @@
 
                     </div>
 
-
-
+                    <!-- PASSWORD -->
                     <div class="mb-3">
 
-                        <label class="fw-bold">
+                        <label asp-for="Input.Password"
+                               class="fw-bold">
                             Mật khẩu
                         </label>
 
                         <div class="input-group">
+
                             <input asp-for="Input.Password"
                                    class="form-control"
                                    placeholder="Nhập mật khẩu"
-                                   id="passwordInput" />
+                                   id="passwordInput"
+                                   autocomplete="new-password" />
 
                             <button type="button"
                                     class="btn btn-outline-secondary"
                                     id="togglePassword"
                                     tabindex="-1">
-                                <i class="bi bi-eye" id="passwordIcon"></i>
+
+                                <i class="bi bi-eye"
+                                   id="passwordIcon"></i>
+
                             </button>
+
                         </div>
 
                         <span asp-validation-for="Input.Password"
@@ -93,27 +107,32 @@
 
                     </div>
 
-
-
-
+                    <!-- CONFIRM PASSWORD -->
                     <div class="mb-4">
 
-                        <label class="fw-bold">
+                        <label asp-for="Input.ConfirmPassword"
+                               class="fw-bold">
                             Nhập lại mật khẩu
                         </label>
 
                         <div class="input-group">
+
                             <input asp-for="Input.ConfirmPassword"
                                    class="form-control"
                                    placeholder="Nhập lại mật khẩu"
-                                   id="confirmPasswordInput" />
+                                   id="confirmPasswordInput"
+                                   autocomplete="new-password" />
 
                             <button type="button"
                                     class="btn btn-outline-secondary"
                                     id="toggleConfirmPassword"
                                     tabindex="-1">
-                                <i class="bi bi-eye" id="confirmPasswordIcon"></i>
+
+                                <i class="bi bi-eye"
+                                   id="confirmPasswordIcon"></i>
+
                             </button>
+
                         </div>
 
                         <span asp-validation-for="Input.ConfirmPassword"
@@ -122,8 +141,7 @@
 
                     </div>
 
-
-
+                    <!-- REGISTER BUTTON -->
                     <button type="submit"
                             class="btn btn-primary w-100 fw-bold">
 
@@ -133,9 +151,7 @@
 
                     </button>
 
-
                 </form>
-
 
                 <div class="text-center mt-3">
 
@@ -143,36 +159,39 @@
                         Đã có tài khoản?
                     </span>
 
-
                     <a asp-page="./Login">
                         Đăng nhập
                     </a>
 
-
                 </div>
-
-
 
             </div>
 
-
         </div>
-
 
     </div>
 
-
 </div>
 
-
 @section Scripts {
+
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        // Mật khẩu
-        const passwordInput = document.getElementById("passwordInput");
-        const togglePassword = document.getElementById("togglePassword");
-        const passwordIcon = document.getElementById("passwordIcon");
+
+        // =========================
+        // MẬT KHẨU
+        // =========================
+
+        const passwordInput =
+            document.getElementById("passwordInput");
+
+        const togglePassword =
+            document.getElementById("togglePassword");
+
+        const passwordIcon =
+            document.getElementById("passwordIcon");
+
 
         togglePassword.addEventListener("click", function () {
 
@@ -183,7 +202,8 @@
                 passwordIcon.classList.remove("bi-eye");
                 passwordIcon.classList.add("bi-eye-slash");
 
-            } else {
+            }
+            else {
 
                 passwordInput.type = "password";
 
@@ -191,13 +211,23 @@
                 passwordIcon.classList.add("bi-eye");
 
             }
+
         });
 
 
-        // Nhập lại mật khẩu
-        const confirmPasswordInput = document.getElementById("confirmPasswordInput");
-        const toggleConfirmPassword = document.getElementById("toggleConfirmPassword");
-        const confirmPasswordIcon = document.getElementById("confirmPasswordIcon");
+        // =========================
+        // NHẬP LẠI MẬT KHẨU
+        // =========================
+
+        const confirmPasswordInput =
+            document.getElementById("confirmPasswordInput");
+
+        const toggleConfirmPassword =
+            document.getElementById("toggleConfirmPassword");
+
+        const confirmPasswordIcon =
+            document.getElementById("confirmPasswordIcon");
+
 
         toggleConfirmPassword.addEventListener("click", function () {
 
@@ -208,7 +238,8 @@
                 confirmPasswordIcon.classList.remove("bi-eye");
                 confirmPasswordIcon.classList.add("bi-eye-slash");
 
-            } else {
+            }
+            else {
 
                 confirmPasswordInput.type = "password";
 
@@ -216,6 +247,81 @@
                 confirmPasswordIcon.classList.add("bi-eye");
 
             }
+
         });
+
     </script>
 }
+<style>
+    /* =========================
+       LOGIN / REGISTER
+       ========================= */
+
+    .auth-page {
+        width: 100%;
+    }
+
+    .auth-wrapper {
+        min-height: 550px;
+    }
+
+    .auth-logo {
+        width: 280px;
+        max-width: 100%;
+        height: auto;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .auth-page .policy-content {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 35px;
+        border-radius: 15px;
+        background: #fff;
+    }
+
+    /* =========================
+       MOBILE
+       ========================= */
+
+    @@media (max-width: 991.98px) {
+
+        .auth-page {
+            margin-top: 30px !important;
+        }
+
+        .auth-logo {
+            width: 220px;
+        }
+
+        .auth-page .policy-content {
+            max-width: 500px;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+
+        .auth-page {
+            margin-top: 20px !important;
+            margin-bottom: 20px !important;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+        .auth-logo {
+            width: 180px;
+        }
+
+        .auth-page .policy-content {
+            padding: 25px 20px;
+            border-radius: 12px;
+        }
+
+        .auth-page h2 {
+            font-size: 24px;
+        }
+    }
+</style>

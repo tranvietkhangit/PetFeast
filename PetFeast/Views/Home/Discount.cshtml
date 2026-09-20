@@ -52,49 +52,41 @@
 
         <!-- SẮP XẾP -->
 
-        <form method="get"
+       <form method="get"
       asp-controller="Home"
       asp-action="Discount"
-      class="sort-form">
+      class="discount-sort-form">
 
-            <input type="hidden"
-       name="minDiscount"
-       value="@selectedMinDiscount" />
+    <input type="hidden"
+           name="minDiscount"
+           value="@(selectedMinDiscount?.ToString() ?? "")" />
 
-            <input type="hidden"
-                   name="minPrice"
-                   value="@minPrice" />
+    <input type="hidden"
+           name="minPrice"
+           value="@minPrice" />
 
-            <input type="hidden"
-                   name="maxPrice"
-                   value="@maxPrice" />
+    <input type="hidden"
+           name="maxPrice"
+           value="@maxPrice" />
 
-            <select name="sortOrder"
-                    class="form-select sort-select"
-                    onchange="this.form.submit()">
+    <select name="sortOrder"
+            class="form-select sort-select">
 
-                <option value="">
-                    Sắp xếp
-                </option>
+        <option value="" selected="@(string.IsNullOrEmpty(sortOrder) ? "selected" : null)">
+            Sắp xếp
+        </option>
 
-                <option value="discount_desc"
-        selected="@(sortOrder == "discount_desc" ? "selected" : null)">
-    Giảm giá nhiều nhất
-</option>
+        <option value="price_asc" selected="@(sortOrder == "price_asc" ? "selected" : null)">
+            Giá thấp → cao
+        </option>
 
-<option value="price_asc"
-        selected="@(sortOrder == "price_asc" ? "selected" : null)">
-    Giá thấp → cao
-</option>
+        <option value="price_desc" selected="@(sortOrder == "price_desc" ? "selected" : null)">
+            Giá cao → thấp
+        </option>
 
-<option value="price_desc"
-        selected="@(sortOrder == "price_desc" ? "selected" : null)">
-    Giá cao → thấp
-</option>
+    </select>
 
-            </select>
-
-        </form>
+</form>
 
     </div>
 
@@ -127,54 +119,63 @@
 
     <div class="list-group list-group-flush">
 
+        <!-- TẤT CẢ -->
         <label class="list-group-item filter-option">
             <input type="radio"
-                   name="minDiscount"
-                   value=""
-                   @(selectedMinDiscount == null ? "checked" : "")
-                   onchange="this.form.submit()" />
+       name="minDiscount"
+       value=""
+       @(selectedMinDiscount == null ? "checked" : "")
+       onchange="applyDiscountFilter(this)" />
 
             <span>Tất cả</span>
         </label>
 
+
+        <!-- 10% - 19% -->
         <label class="list-group-item filter-option">
             <input type="radio"
-                   name="minDiscount"
-                   value="10"
-                   @(selectedMinDiscount == 10 ? "checked" : "")
-                   onchange="this.form.submit()" />
+       name="minDiscount"
+       value="10"
+       @(selectedMinDiscount == 10 ? "checked" : "")
+       onchange="applyDiscountFilter(this)" />
 
-            <span>Từ 10%</span>
+            <span>10% – 19%</span>
         </label>
 
+
+        <!-- 20% - 29% -->
         <label class="list-group-item filter-option">
             <input type="radio"
-                   name="minDiscount"
-                   value="20"
-                   @(selectedMinDiscount == 20 ? "checked" : "")
-                   onchange="this.form.submit()" />
+       name="minDiscount"
+       value="20"
+       @(selectedMinDiscount == 20 ? "checked" : "")
+       onchange="applyDiscountFilter(this)" />
 
-            <span>Từ 20%</span>
+            <span>20% – 29%</span>
         </label>
 
+
+        <!-- 30% - 49% -->
         <label class="list-group-item filter-option">
             <input type="radio"
-                   name="minDiscount"
-                   value="30"
-                   @(selectedMinDiscount == 30 ? "checked" : "")
-                   onchange="this.form.submit()" />
+       name="minDiscount"
+       value="30"
+       @(selectedMinDiscount == 30 ? "checked" : "")
+       onchange="applyDiscountFilter(this)" />
 
-            <span>Từ 30%</span>
+            <span>30% – 49%</span>
         </label>
 
+
+        <!-- 50% TRỞ LÊN -->
         <label class="list-group-item filter-option">
             <input type="radio"
-                   name="minDiscount"
-                   value="50"
-                   @(selectedMinDiscount == 50 ? "checked" : "")
-                   onchange="this.form.submit()" />
+       name="minDiscount"
+       value="50"
+       @(selectedMinDiscount == 50 ? "checked" : "")
+       onchange="applyDiscountFilter(this)" />
 
-            <span>Từ 50%</span>
+            <span>50% trở lên</span>
         </label>
 
     </div>
@@ -366,20 +367,29 @@
 
                     @foreach (var item in Model)
                     {
-                        bool isFavorite =
-                            favoriteProductIds.Contains(
-                                item.ProductId);
+                       bool isFavorite =
+    favoriteProductIds.Contains(
+        item.ProductId);
+
+bool isOutOfStock =
+    item.Quantity <= 0;
 
                         <div class="col-md-4 mb-4">
 
-                            <div class="card h-100 product-card">
+                            <div class="card h-100 product-card @(isOutOfStock ? "out-of-stock" : "")">
 
                                 <!-- =========================
                                      IMAGE
                                 ========================== -->
 
                                 <div class="product-image-wrapper">
-
+                                    @if (isOutOfStock)
+{
+    <span class="out-of-stock-badge">
+        <i class="bi bi-x-circle me-1"></i>
+        Hết hàng
+    </span>
+}
                                     <a asp-controller="Product"
                                        asp-action="Detail"
                                        asp-route-id="@item.ProductId">
@@ -436,9 +446,9 @@
 
                                 <div class="card-body">
 
-                                    <h6>
-                                        @item.ProductName
-                                    </h6>
+                                    <h6 class="product-name">
+    @item.ProductName
+</h6>
 
 
                                     <span class="discount-badge">
@@ -448,25 +458,23 @@
                                     </span>
 
 
-                                    <div class="mb-2">
+                                    <div class="product-price-box">
 
-                                        <div class="price-box">
+    <div class="price-old">
+        @item.Price.ToString("N0") đ
+    </div>
 
-                                            <span class="old-price">
+    <div class="price-new">
+        @item.DiscountPrice.ToString("N0") đ
+    </div>
 
-                                                @item.Price.ToString("N0") đ
+    <div class="price-saving">
+        <i class="bi bi-tag-fill me-1"></i>
+        Tiết kiệm
+        @((item.Price - item.DiscountPrice).ToString("N0")) đ
+    </div>
 
-                                            </span>
-
-                                            <span class="new-price">
-
-                                                @item.DiscountPrice.ToString("N0") đ
-
-                                            </span>
-
-                                        </div>
-
-                                    </div>
+</div>
 
                                 </div>
 
@@ -477,17 +485,34 @@
 
                                 <div class="card-footer bg-white border-0">
 
-                                    <button type="button"
-                                            class="btn btn-primary w-100 add-to-cart-btn"
-                                            data-product-id="@item.ProductId">
+                                    @if (isOutOfStock)
+{
+    <button type="button"
+            class="btn btn-secondary w-100 add-to-cart-btn"
+            disabled>
 
-                                        <i class="bi bi-cart-plus"></i>
+        <i class="bi bi-x-circle me-1"></i>
 
-                                        <span>
-                                            Thêm vào giỏ hàng
-                                        </span>
+        <span>
+            Hết hàng
+        </span>
 
-                                    </button>
+    </button>
+}
+else
+{
+    <button type="button"
+            class="btn btn-primary w-100 add-to-cart-btn"
+            data-product-id="@item.ProductId">
+
+        <i class="bi bi-cart-plus"></i>
+
+        <span>
+            Thêm vào giỏ hàng
+        </span>
+
+    </button>
+}
 
                                 </div>
 
@@ -1031,57 +1056,304 @@
                 });
 
         });
-         function filterDiscount(value) {
+          /* =========================================================
+       AJAX DISCOUNT FILTER
+    ========================================================= */
 
-    const url = new URL(
-        "/Home/Discount",
-        window.location.origin
+    async function loadDiscountPage(url, updateHistory = true) {
+
+        try {
+
+            const productArea =
+                document.querySelector(".col-md-9");
+
+            if (!productArea)
+                return;
+
+
+            // Hiệu ứng loading nhẹ
+            productArea.style.opacity = "0.5";
+            productArea.style.pointerEvents = "none";
+
+
+            const response = await fetch(url, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+
+            if (!response.ok) {
+                throw new Error(
+                    "HTTP error " + response.status
+                );
+            }
+
+
+            const html =
+                await response.text();
+
+
+            // Parse HTML trả về
+            const parser =
+                new DOMParser();
+
+            const doc =
+                parser.parseFromString(
+                    html,
+                    "text/html"
+                );
+
+
+            const newProductArea =
+                doc.querySelector(".col-md-9");
+
+
+            if (!newProductArea) {
+                throw new Error(
+                    "Không tìm thấy khu vực sản phẩm."
+                );
+            }
+
+
+            // Thay phần sản phẩm cũ
+            productArea.innerHTML =
+                newProductArea.innerHTML;
+
+
+            // Cập nhật URL trên trình duyệt
+            if (updateHistory) {
+
+                window.history.pushState(
+                    {},
+                    "",
+                    url
+                );
+
+            }
+
+        }
+        catch (error) {
+
+            console.error(
+                "Discount AJAX error:",
+                error
+            );
+
+            alert(
+                "Không thể tải sản phẩm. Vui lòng thử lại."
+            );
+
+        }
+        finally {
+
+            const productArea =
+                document.querySelector(".col-md-9");
+
+            if (productArea) {
+
+                productArea.style.opacity = "1";
+                productArea.style.pointerEvents = "auto";
+
+            }
+
+        }
+
+    }
+
+
+    /* =========================================================
+       TẠO URL FILTER
+    ========================================================= */
+
+    function getDiscountUrl(form) {
+
+        const params =
+            new URLSearchParams();
+
+
+        const formData =
+            new FormData(form);
+
+
+        for (const [key, value] of formData.entries()) {
+
+            if (value !== "") {
+
+                params.set(
+                    key,
+                    value
+                );
+
+            }
+
+        }
+
+
+        // Khi thay đổi filter luôn quay về trang 1
+        params.set(
+            "page",
+            "1"
+        );
+
+
+        return `/Home/Discount?${params.toString()}`;
+
+    }
+
+
+    /* =========================================================
+       FILTER FORM
+    ========================================================= */
+
+    document.addEventListener(
+        "submit",
+        function (event) {
+
+            const form =
+                event.target;
+
+
+            if (!form.matches(
+                'form[asp-action="Discount"], form[action*="/Home/Discount"], .discount-sort-form'
+            )) {
+
+                return;
+
+            }
+
+
+            event.preventDefault();
+
+
+            const url =
+                getDiscountUrl(form);
+
+
+            loadDiscountPage(url);
+
+        }
     );
 
-    // Chọn mức giảm giá
-    if (value !== "") {
-        url.searchParams.set("minDiscount", value);
-    }
 
-    // Giữ giá hiện tại
-    const minPriceInput =
-        document.getElementById("minPriceInput");
+    /* =========================================================
+       SORT
+    ========================================================= */
 
-    const maxPriceInput =
-        document.getElementById("maxPriceInput");
+    document.addEventListener(
+        "change",
+        function (event) {
 
-    if (minPriceInput && minPriceInput.value) {
-        url.searchParams.set(
-            "minPrice",
-            minPriceInput.value
-        );
-    }
+            const element =
+                event.target;
 
-    if (maxPriceInput && maxPriceInput.value) {
-        url.searchParams.set(
-            "maxPrice",
-            maxPriceInput.value
-        );
-    }
 
-    // Giữ cách sắp xếp
-    const sortSelect =
-        document.querySelector(
-            'select[name="sortOrder"]'
-        );
+            if (!element.matches(
+                '.discount-sort-form select[name="sortOrder"]'
+            )) {
 
-    if (sortSelect && sortSelect.value) {
-        url.searchParams.set(
-            "sortOrder",
-            sortSelect.value
-        );
-    }
+                return;
 
-    // Luôn quay về trang 1
-    url.searchParams.set("page", "1");
+            }
 
-    window.location.href = url.toString();
-}
+
+            const form =
+                element.closest("form");
+
+
+            if (!form)
+                return;
+
+
+            const url =
+                getDiscountUrl(form);
+
+
+            loadDiscountPage(url);
+
+        }
+    );
+
+
+    /* =========================================================
+       PAGINATION
+    ========================================================= */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const link =
+                event.target.closest(
+                    '.col-md-9 .pagination a'
+                );
+
+
+            if (!link)
+                return;
+
+
+            event.preventDefault();
+
+
+            const url =
+                link.href;
+
+
+            if (!url)
+                return;
+
+
+            loadDiscountPage(url);
+
+        }
+    );
+
+
+    /* =========================================================
+       RESET FILTER
+    ========================================================= */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+            const link =
+                event.target.closest(
+                    '.col-md-3 a[href*="/Home/Discount"]'
+                );
+
+
+            if (!link)
+                return;
+
+
+            event.preventDefault();
+
+
+            loadDiscountPage(
+                link.href
+            );
+
+        }
+    );
+
+
+    /* =========================================================
+       BACK / FORWARD TRÌNH DUYỆT
+    ========================================================= */
+
+    window.addEventListener(
+        "popstate",
+        function () {
+
+            loadDiscountPage(
+                window.location.href,
+                false
+            );
+
+        }
+    );
 </script>
 
 
@@ -1278,7 +1550,62 @@
                 });
 
         });
+        async function applyDiscountFilter(radio) {
 
+    const form = radio.closest("form");
+
+    if (!form)
+        return;
+
+    const params = new URLSearchParams();
+
+    // Mức giảm giá
+    if (radio.value !== "") {
+        params.set("minDiscount", radio.value);
+    }
+
+    // Giá hiện tại
+    const minPriceInput =
+        document.getElementById("minPriceInput");
+
+    const maxPriceInput =
+        document.getElementById("maxPriceInput");
+
+    if (minPriceInput && minPriceInput.value) {
+        params.set(
+            "minPrice",
+            minPriceInput.value
+        );
+    }
+
+    if (maxPriceInput && maxPriceInput.value) {
+        params.set(
+            "maxPrice",
+            maxPriceInput.value
+        );
+    }
+
+    // Giữ sort
+    const sortSelect =
+        document.querySelector(
+            '.discount-sort-form select[name="sortOrder"]'
+        );
+
+    if (sortSelect && sortSelect.value) {
+        params.set(
+            "sortOrder",
+            sortSelect.value
+        );
+    }
+
+    // Luôn về trang 1
+    params.set("page", "1");
+
+    const url =
+        `/Home/Discount?${params.toString()}`;
+
+    await loadDiscountPage(url);
+}
 </script>
 
 
@@ -1288,154 +1615,91 @@
 
 <style>
 
-    /* =========================================================
-       PRODUCT CARD
-    ========================================================= */
-
-    .product-card {
-
-        overflow: hidden;
-
-        border-radius: 12px;
-
-    }
-
+    /* =========================
+       PRODUCT IMAGE
+    ========================= */
 
     .product-image-wrapper {
-
         position: relative;
-
     }
-
 
     .product-image {
-
         width: 100%;
-
         height: 250px;
-
         object-fit: cover;
-
         display: block;
-
     }
 
 
-    /* =========================================================
+    /* =========================
        FAVORITE
-    ========================================================= */
+    ========================= */
 
     .favorite-form {
-
         position: absolute;
-
         top: 12px;
-
         right: 12px;
-
         z-index: 20;
-
         margin: 0;
-
     }
 
-
     .favorite-btn {
-
         width: 58px;
-
         height: 58px;
-
         padding: 0;
 
         border-radius: 50%;
-
         border: 2px solid #222;
 
         background: #fff;
 
         display: flex;
-
         align-items: center;
-
         justify-content: center;
 
         cursor: pointer;
-
         text-decoration: none;
 
-        box-shadow:
-            0 3px 10px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
 
-        transition:
-            all 0.25s ease;
-
+        transition: all 0.25s ease;
     }
-
 
     .favorite-btn i {
-
         font-size: 28px;
-
         color: #222;
 
-        transition:
-            all 0.25s ease;
-
+        transition: all 0.25s ease;
     }
-
 
     .favorite-btn.active {
-
         border-color: #ff416c;
-
     }
-
 
     .favorite-btn.active i {
-
         color: #ff416c;
-
     }
-
 
     .favorite-btn:hover {
-
-        transform: scale(1.08);
-
-    }
+    transform: translateY(-2px);
+}
 
 
-    .favorite-btn:active {
-
-        transform: scale(0.92);
-
-    }
-
-
-    /* =========================================================
+    /* =========================
        PRICE SLIDER
-    ========================================================= */
+    ========================= */
 
     .price-slider-container {
-
         position: relative;
-
         height: 30px;
-
         margin-top: 10px;
-
     }
 
-
     .price-slider-track {
-
         position: absolute;
 
         top: 50%;
-
         left: 0;
-
         right: 0;
 
         height: 5px;
@@ -1445,12 +1709,9 @@
         transform: translateY(-50%);
 
         background: #dbeafe;
-
     }
 
-
     .price-range {
-
         position: absolute;
 
         width: 100%;
@@ -1466,16 +1727,12 @@
         transform: translateY(-50%);
 
         margin: 0;
-
     }
 
-
     .price-range::-webkit-slider-thumb {
-
         appearance: none;
 
         width: 18px;
-
         height: 18px;
 
         border-radius: 50%;
@@ -1485,14 +1742,10 @@
         cursor: pointer;
 
         pointer-events: auto;
-
     }
 
-
     .price-range::-moz-range-thumb {
-
         width: 18px;
-
         height: 18px;
 
         border-radius: 50%;
@@ -1504,113 +1757,48 @@
         pointer-events: auto;
 
         border: none;
-
     }
 
 
-    /* =========================================================
+    /* =========================
        ADD TO CART
-    ========================================================= */
+    ========================= */
 
     .add-to-cart-btn {
+        height: 44px;
+
+        font-size: 16px;
+
+        font-weight: 600;
 
         transition:
-            all 0.25s ease;
-
+            transform 0.2s ease,
+            background-color 0.2s ease;
     }
-
 
     .add-to-cart-btn:hover {
-
-        transform:
-            translateY(-2px);
-
+        transform: translateY(-2px);
     }
 
 
-    .add-to-cart-btn:active {
-
-        transform:
-            scale(0.96);
-
-    }
+   
 
 
-    /* =========================================================
-       CART ADDED
-    ========================================================= */
-
-    .cart-added {
-
-        animation:
-            cartAddedAnimation 0.4s ease;
-
-    }
-
-
-    @@keyframes cartAddedAnimation {
-
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.08);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-
-    }
-
-
-    .cart-count-bump {
-
-        animation:
-            cartCountBump 0.4s ease;
-
-    }
-
-
-    @@keyframes cartCountBump {
-
-        0% {
-            transform: scale(1);
-        }
-
-        50% {
-            transform: scale(1.4);
-        }
-
-        100% {
-            transform: scale(1);
-        }
-
-    }
-
-
-    /* =========================================================
+    /* =========================
        PAGINATION
-    ========================================================= */
+    ========================= */
 
     .pagination {
-
         gap: 6px;
-
     }
 
-
     .pagination .page-link {
-
         width: 40px;
-
         height: 40px;
 
         display: flex;
 
         align-items: center;
-
         justify-content: center;
 
         border-radius: 8px !important;
@@ -1621,29 +1809,413 @@
 
         font-weight: 600;
 
-        transition:
-            all 0.2s ease;
-
+        transition: all 0.2s ease;
     }
 
-
     .pagination .page-link:hover {
-
         background: #eef5ff;
 
         border-color: #0d6efd;
-
     }
 
-
     .pagination .page-item.active .page-link {
-
         background: #0d6efd;
 
         border-color: #0d6efd;
 
         color: #fff;
-
     }
 
+
+    /* =========================
+       PRODUCT NAME
+    ========================= */
+
+    .product-name {
+    height: 30px;
+    margin-bottom: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+    /* =========================
+       PRODUCT PRICE
+    ========================= */
+
+    .product-price-box {
+        min-height: 72px;
+
+        margin-bottom: 8px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        justify-content: center;
+
+        align-items: center;
+    }
+
+    .price-old {
+        font-size: 16px;
+
+        color: #888;
+
+        text-decoration: line-through;
+
+        line-height: 21px;
+    }
+
+    .price-new {
+        font-size: 23px;
+
+        font-weight: 700;
+
+        color: #dc3545;
+
+        line-height: 29px;
+    }
+
+    .price-saving {
+        font-size: 14px;
+
+        font-weight: 700;
+
+        color: #198754;
+
+        line-height: 20px;
+    }
+
+    .price-normal {
+        font-size: 23px;
+
+        font-weight: 700;
+
+        color: #0d6efd;
+
+        line-height: 29px;
+    }
+
+
+    /* =========================
+       DISCOUNT BADGE
+    ========================= */
+
+    .discount-badge {
+        display: inline-block;
+
+        margin-bottom: 6px;
+
+        padding: 5px 9px;
+
+        background: #dc3545;
+
+        color: #fff;
+
+        border-radius: 6px;
+
+        font-size: 13px;
+
+        font-weight: 700;
+    }
+
+
+    /* =========================
+       CARD BODY
+    ========================= */
+
+    .product-card {
+        overflow: hidden;
+
+        border-radius: 12px;
+    }
+
+    .product-card .card-body {
+        padding: 12px 14px 8px;
+    }
+    /* =========================
+   OUT OF STOCK
+========================= */
+
+.product-card.out-of-stock .product-image {
+    opacity: 0.6;
+}
+
+.out-of-stock-badge {
+    position: absolute;
+
+    top: 12px;
+    left: 12px;
+
+    z-index: 25;
+
+    display: inline-flex;
+    align-items: center;
+
+    padding: 7px 12px;
+
+    background: #6c757d;
+    color: #fff;
+
+    border-radius: 6px;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.add-to-cart-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+</style>
+<style>
+    /* =========================================
+       PRODUCT - MOBILE ONLY
+       Không thay đổi PC
+    ========================================= */
+
+    @@media (max-width: 767.98px) {
+
+        /* =========================
+           CONTAINER
+        ========================= */
+
+        .product-main {
+            margin-left: 0;
+            margin-right: 0;
+        }
+
+        .product-main > .col-md-3,
+        .product-main > .col-md-9 {
+            width: 100%;
+            padding-left: 12px;
+            padding-right: 12px;
+        }
+
+
+        /* =========================
+           PRODUCT HEADER
+        ========================= */
+
+        .product-header {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sort-form {
+            width: 100%;
+        }
+
+        .sort-select {
+            width: 100%;
+        }
+
+
+        /* =========================
+           PRODUCT CARD
+        ========================= */
+
+        .product-card {
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+
+        /* =========================
+           FAVORITE BUTTON
+        ========================= */
+
+        .favorite-form {
+            top: 10px;
+            right: 10px;
+        }
+
+        .favorite-btn {
+            width: 42px;
+            height: 42px;
+            border-width: 1px;
+        }
+
+        .favorite-btn i {
+            font-size: 20px;
+        }
+
+
+        /* =========================
+           PRODUCT NAME
+        ========================= */
+
+        .product-name {
+            width: 100%;
+            max-width: 100%;
+
+            font-size: 16px;
+            line-height: 24px;
+            height: 24px;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+
+        /* =========================
+           PRICE
+        ========================= */
+
+        .product-price-box {
+            width: 100%;
+            min-height: 68px;
+        }
+
+        .price-old {
+            font-size: 14px;
+        }
+
+        .price-new,
+        .price-normal {
+            font-size: 20px;
+        }
+
+        .price-saving {
+            font-size: 13px;
+        }
+
+
+        /* =========================
+           ADD TO CART
+        ========================= */
+
+        .add-to-cart-btn {
+            width: 100%;
+            height: 42px;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           SIDEBAR FILTER
+        ========================= */
+
+        .product-filter-form {
+            width: 100%;
+        }
+
+        .product-filter-form .card {
+            width: 100%;
+        }
+
+
+        /* =========================
+           PRICE INPUT
+        ========================= */
+
+        .product-filter-form .input-group {
+            width: 100%;
+        }
+
+        .product-filter-form input[type="number"] {
+            min-width: 0;
+        }
+
+
+        /* =========================
+           PAGINATION
+        ========================= */
+
+        .pagination {
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .pagination .page-link {
+            width: 36px;
+            height: 36px;
+        }
+    }
+
+
+    /* =========================================
+       ĐIỆN THOẠI NHỎ
+    ========================================= */
+
+    @@media (max-width: 575.98px) {
+
+        .product-main > .col-md-3,
+        .product-main > .col-md-9 {
+            padding-left: 8px;
+            padding-right: 8px;
+        }
+
+        .product-image {
+            height: 200px;
+        }
+
+        .product-card .card-body {
+            padding: 10px 10px 6px;
+        }
+
+        .product-card .card-footer {
+            padding: 8px 10px 12px;
+        }
+
+        .product-name {
+            font-size: 15px;
+        }
+
+        .price-new,
+        .price-normal {
+            font-size: 19px;
+        }
+
+        .price-saving {
+            font-size: 12px;
+        }
+
+        .favorite-btn {
+            width: 40px;
+            height: 40px;
+        }
+
+        .favorite-btn i {
+            font-size: 19px;
+        }
+
+        .add-to-cart-btn {
+            height: 40px;
+            font-size: 13px;
+        }
+
+        /* Không cho filter làm tràn ngang */
+        .product-filter-form .card-body {
+            padding: 12px;
+        }
+
+        .price-slider-container {
+            width: 100%;
+        }
+    }
 </style>

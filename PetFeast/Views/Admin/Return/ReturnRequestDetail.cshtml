@@ -1,0 +1,1573 @@
+﻿@model PetFeast.Models.Orders.ReturnRequest
+
+@{
+    ViewData["Title"] = "Chi tiết yêu cầu trả hàng";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+
+    var order = Model.Order;
+    var user = Model.User;
+}
+
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+                <a asp-controller="Admin"
+                   asp-action="ReturnRequestList"
+                   class="back-link">
+                    <i class="bi bi-arrow-left"></i>
+                </a>
+
+                <h3 class="fw-bold mb-0">
+                    Chi tiết yêu cầu trả hàng
+                </h3>
+            </div>
+
+            <p class="text-muted mb-0">
+                Yêu cầu #@Model.ReturnRequestId
+            </p>
+        </div>
+
+        <div>
+            @switch (Model.Status)
+            {
+                case "Chờ xử lý":
+                    <span class="status-badge status-pending">
+                        <i class="bi bi-clock me-1"></i>
+                        Chờ xử lý
+                    </span>
+                    break;
+
+                case "Đã duyệt":
+                    <span class="status-badge status-approved">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Đã duyệt
+                    </span>
+                    break;
+
+                case "Đang chờ nhận hàng":
+                    <span class="status-badge status-shipping">
+                        <i class="bi bi-box-seam me-1"></i>
+                        Đang chờ nhận hàng
+                    </span>
+                    break;
+
+                case "Đã nhận hàng":
+                    <span class="status-badge status-received">
+                        <i class="bi bi-box2-heart me-1"></i>
+                        Đã nhận hàng
+                    </span>
+                    break;
+
+                case "Đang kiểm tra":
+                    <span class="status-badge status-inspecting">
+                        <i class="bi bi-search me-1"></i>
+                        Đang kiểm tra
+                    </span>
+                    break;
+
+                case "Đã hoàn tiền":
+                    <span class="status-badge status-completed">
+                        <i class="bi bi-cash-coin me-1"></i>
+                        Đã hoàn tiền
+                    </span>
+                    break;
+
+                case "Từ chối":
+                    <span class="status-badge status-rejected">
+                        <i class="bi bi-x-circle me-1"></i>
+                        Từ chối
+                    </span>
+                    break;
+
+                default:
+                    <span class="status-badge status-default">
+                        @Model.Status
+                    </span>
+                    break;
+            }
+        </div>
+
+    </div>
+
+    <!-- ALERT -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm"
+             role="alert">
+
+            <i class="bi bi-check-circle-fill me-2"></i>
+            @TempData["Success"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm"
+             role="alert">
+
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            @TempData["Error"]
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert">
+            </button>
+        </div>
+    }
+
+
+    <div class="row g-4">
+
+        <!-- =========================
+             LEFT
+        ========================== -->
+
+        <div class="col-lg-8">
+
+            <!-- CUSTOMER -->
+            <div class="card detail-card mb-4">
+
+                <div class="card-header">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-person me-2 text-primary"></i>
+                        Thông tin khách hàng
+                    </h5>
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+
+                            <div class="info-label">
+                                Họ tên
+                            </div>
+
+                            <div class="info-value">
+                                @(user?.FullName ?? "Không xác định")
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-label">
+                                Email
+                            </div>
+
+                            <div class="info-value">
+                                @(user?.Email ?? "Không xác định")
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-label">
+                                Số điện thoại
+                            </div>
+
+                            <div class="info-value">
+                                @(order?.Phone ?? user?.PhoneNumber ?? "Không xác định")
+                            </div>
+
+                        </div>
+
+                        <div class="col-md-6">
+
+                            <div class="info-label">
+                                Ngày gửi yêu cầu
+                            </div>
+
+                            <div class="info-value">
+                                @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ORDER -->
+            <div class="card detail-card mb-4">
+
+                <div class="card-header d-flex justify-content-between align-items-center">
+
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-receipt me-2 text-primary"></i>
+                        Thông tin đơn hàng
+                    </h5>
+
+                    @if (order != null)
+                    {
+                        <span class="order-number">
+                            Đơn #@order.OrderId
+                        </span>
+                    }
+
+                </div>
+
+                <div class="card-body">
+
+                    @if (order != null)
+                    {
+                        <div class="row g-3 mb-4">
+
+                            <div class="col-md-6">
+                                <div class="info-label">
+                                    Người nhận
+                                </div>
+                                <div class="info-value">
+                                    @order.CustomerName
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="info-label">
+                                    Số điện thoại
+                                </div>
+                                <div class="info-value">
+                                    @order.Phone
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="info-label">
+                                    Hình thức nhận hàng
+                                </div>
+                                <div class="info-value">
+                                    @if (order.DeliveryMethod == "Ship")
+                                    {
+                                        <span>
+                                            <i class="bi bi-truck me-1"></i>
+                                            Giao hàng
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            <i class="bi bi-shop me-1"></i>
+                                            Nhận tại cửa hàng
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="info-label">
+                                    Phương thức thanh toán
+                                </div>
+                                <div class="info-value">
+                                    @if (order.PaymentMethod == "BankTransfer")
+                                    {
+                                        <span>
+                                            <i class="bi bi-qr-code me-1"></i>
+                                            Chuyển khoản
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            <i class="bi bi-cash-coin me-1"></i>
+                                            COD
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="info-label">
+                                    Địa chỉ
+                                </div>
+                                <div class="info-value">
+                                    @order.Address
+                                </div>
+                            </div>
+
+                        </div>
+
+
+                        <!-- PRODUCTS -->
+                        <h6 class="fw-bold mb-3">
+                            Sản phẩm trong đơn hàng
+                        </h6>
+
+                        @if (order.OrderDetails != null &&
+                                            order.OrderDetails.Any())
+                        {
+                            <div class="table-responsive">
+
+                                <table class="table align-middle product-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Sản phẩm</th>
+                                            <th class="text-center">SL</th>
+                                            <th class="text-end">Đơn giá</th>
+                                            <th class="text-end">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        @foreach (var detail in order.OrderDetails)
+                                        {
+                                            <tr>
+
+                                                <td>
+                                                    <div class="product-info">
+
+                                                        @if (!string.IsNullOrEmpty(detail.Product?.ImageUrl))
+                                                        {
+                                                            <img src="@detail.Product.ImageUrl"
+                                                                 alt="@detail.Product.ProductName"
+                                                                 class="product-image" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="product-placeholder">
+                                                                <i class="bi bi-image"></i>
+                                                            </div>
+                                                        }
+
+                                                        <div>
+                                                            <div class="fw-semibold">
+                                                                @detail.Product?.ProductName
+                                                            </div>
+
+                                                            <div class="text-muted small">
+                                                                Mã SP:
+                                                                @detail.ProductId
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </td>
+
+                                                <td class="text-center">
+                                                    @detail.Quantity
+                                                </td>
+
+                                                <td class="text-end">
+                                                    @detail.Price.ToString("N0") đ
+                                                </td>
+
+                                                <td class="text-end fw-semibold">
+                                                    @((detail.Price * detail.Quantity).ToString("N0")) đ
+                                                </td>
+
+                                            </tr>
+                                        }
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+                        }
+
+
+                    <!-- ORDER TOTAL -->
+                    <div class="order-summary">
+
+                        <div class="summary-row">
+                            <span>Tạm tính</span>
+                            <strong>
+                                @(
+                                                                order.OrderDetails?
+                                                                .Sum(x => x.Price * x.Quantity)
+                                                                .ToString("N0")
+                                                                ) đ
+                            </strong>
+                        </div>
+
+                            <div class="summary-row">
+                                <span>Phí vận chuyển</span>
+                                <strong>
+                                    @order.ShippingFee.ToString("N0") đ
+                                </strong>
+                            </div>
+
+                        @if (order.VoucherDiscount > 0)
+                            {
+                                <div class="summary-row discount-row">
+                                    <span>
+                                        Giảm giá voucher
+                                    </span>
+
+                                    <strong>
+                                        -@order.VoucherDiscount.ToString("N0") đ
+                                    </strong>
+                                </div>
+                            }
+
+                            @if (order.PointDiscount > 0)
+                            {
+                                <div class="summary-row discount-row">
+                                    <span>
+                                        Giảm bằng điểm
+                                        (@order.UsedPoints điểm)
+                                    </span>
+
+                                    <strong>
+                                        -@order.PointDiscount.ToString("N0") đ
+                                    </strong>
+                                </div>
+                            }
+
+                            <div class="summary-total">
+                                <span>Tổng tiền đơn hàng</span>
+
+                                <strong>
+                                    @order.TotalAmount.ToString("N0") đ
+                                </strong>
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- RETURN REASON -->
+            <div class="card detail-card mb-4">
+
+                <div class="card-header">
+
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-chat-left-text me-2 text-primary"></i>
+                        Nội dung yêu cầu
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="mb-4">
+
+                        <div class="info-label">
+                            Lý do trả hàng
+                        </div>
+
+                        <div class="reason-box">
+                            @Model.Reason
+                        </div>
+
+                    </div>
+
+                    <div>
+
+                        <div class="info-label">
+                            Mô tả chi tiết
+                        </div>
+
+                        <div class="description-box">
+
+                            @if (!string.IsNullOrWhiteSpace(Model.Description))
+                            {
+                                @Model.Description
+                            }
+                            else
+                            {
+                                <span class="text-muted">
+                                    Khách hàng không cung cấp mô tả.
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- EVIDENCE -->
+            <div class="card detail-card mb-4">
+
+                <div class="card-header">
+
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-paperclip me-2 text-primary"></i>
+                        Bằng chứng
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row g-4">
+
+                        <!-- IMAGE -->
+                        @if (!string.IsNullOrEmpty(Model.EvidenceImageUrl))
+                        {
+                            <div class="col-md-6">
+
+                                <div class="evidence-label">
+                                    <i class="bi bi-image me-1"></i>
+                                    Hình ảnh
+                                </div>
+
+                                <a href="@Model.EvidenceImageUrl"
+                                   target="_blank"
+                                   class="evidence-image-link">
+
+                                    <img src="@Model.EvidenceImageUrl"
+                                         class="evidence-image"
+                                         alt="Bằng chứng trả hàng" />
+
+                                </a>
+
+                                <div class="text-muted small mt-2">
+                                    Nhấn vào hình để xem kích thước đầy đủ.
+                                </div>
+
+                            </div>
+                        }
+
+                        <!-- VIDEO -->
+                        @if (!string.IsNullOrEmpty(Model.EvidenceVideoUrl))
+                        {
+                            <div class="col-md-6">
+
+                                <div class="evidence-label">
+                                    <i class="bi bi-camera-video me-1"></i>
+                                    Video
+                                </div>
+
+                                <video controls
+                                       class="evidence-video">
+
+                                    <source src="@Model.EvidenceVideoUrl" />
+
+                                    Trình duyệt không hỗ trợ video.
+                                </video>
+
+                            </div>
+                        }
+
+                        @if (string.IsNullOrEmpty(Model.EvidenceImageUrl) &&
+                                                string.IsNullOrEmpty(Model.EvidenceVideoUrl))
+                        {
+                            <div class="col-12">
+
+                                <div class="no-evidence">
+                                    <i class="bi bi-file-earmark-x"></i>
+
+                                    <span>
+                                        Không có bằng chứng được cung cấp.
+                                    </span>
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+             RIGHT
+        ========================== -->
+
+        <div class="col-lg-4">
+
+            <!-- PROCESS -->
+            <div class="card detail-card mb-4">
+
+                <div class="card-header">
+
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-diagram-3 me-2 text-primary"></i>
+                        Tiến trình xử lý
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="timeline">
+
+                        <div class="timeline-item
+                             @(Model.Status == "Chờ xử lý" ? "active" : "")">
+
+                            <div class="timeline-dot"></div>
+
+                            <div>
+                                <div class="fw-semibold">
+                                    Chờ xử lý
+                                </div>
+
+                                <small class="text-muted">
+                                    Khách hàng gửi yêu cầu
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="timeline-item
+                             @(Model.Status == "Đã duyệt" ||
+                                                            Model.Status == "Đang chờ nhận hàng" ||
+                                                            Model.Status == "Đã nhận hàng" ||
+                                                            Model.Status == "Đang kiểm tra" ||
+                                                            Model.Status == "Đã hoàn tiền"
+                                                            ? "active" : "")">
+
+                            <div class="timeline-dot"></div>
+
+                            <div>
+                                <div class="fw-semibold">
+                                    Đã duyệt
+                                </div>
+
+                                <small class="text-muted">
+                                    PetFeast chấp nhận yêu cầu
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="timeline-item
+                             @(Model.Status == "Đang chờ nhận hàng" ||
+                                                            Model.Status == "Đã nhận hàng" ||
+                                                            Model.Status == "Đang kiểm tra" ||
+                                                            Model.Status == "Đã hoàn tiền"
+                                                            ? "active" : "")">
+
+                            <div class="timeline-dot"></div>
+
+                            <div>
+                                <div class="fw-semibold">
+                                    Đang chờ nhận hàng
+                                </div>
+
+                                <small class="text-muted">
+                                    Chờ khách gửi sản phẩm
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="timeline-item
+                             @(Model.Status == "Đã nhận hàng" ||
+                                                            Model.Status == "Đang kiểm tra" ||
+                                                            Model.Status == "Đã hoàn tiền"
+                                                            ? "active" : "")">
+
+                            <div class="timeline-dot"></div>
+
+                            <div>
+                                <div class="fw-semibold">
+                                    Đã nhận hàng
+                                </div>
+
+                                <small class="text-muted">
+                                    PetFeast đã nhận sản phẩm
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="timeline-item
+                             @(Model.Status == "Đang kiểm tra" ||
+                                                            Model.Status == "Đã hoàn tiền"
+                                                            ? "active" : "")">
+
+                            <div class="timeline-dot"></div>
+
+                            <div>
+                                <div class="fw-semibold">
+                                    Đang kiểm tra
+                                </div>
+
+                                <small class="text-muted">
+                                    Kiểm tra tình trạng sản phẩm
+                                </small>
+                            </div>
+
+                        </div>
+
+
+                        <div class="timeline-item
+                             @(Model.Status == "Đã hoàn tiền"
+                                                            ? "active" : "")">
+
+                            <div class="timeline-dot"></div>
+
+                            <div>
+                                <div class="fw-semibold">
+                                    Đã hoàn tiền
+                                </div>
+
+                                <small class="text-muted">
+                                    Hoàn tất yêu cầu
+                                </small>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    @if (Model.Status == "Từ chối")
+                    {
+                        <div class="rejected-process">
+
+                            <i class="bi bi-x-circle-fill"></i>
+
+                            <div>
+                                <strong>Yêu cầu đã bị từ chối</strong>
+
+                                <div class="small mt-1">
+                                    Vui lòng xem lý do bên dưới.
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- ACTION -->
+            <div class="card detail-card mb-4">
+
+                <div class="card-header">
+
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-gear me-2 text-primary"></i>
+                        Xử lý yêu cầu
+                    </h5>
+
+                </div>
+
+                <div class="card-body">
+
+                    @if (Model.Status == "Chờ xử lý")
+                    {
+                        <!-- APPROVE -->
+                        <form asp-controller="Admin"
+                              asp-action="ApproveReturnRequest"
+                              asp-route-id="@Model.ReturnRequestId"
+                              method="post"
+                              class="mb-3">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-approve w-100"
+                                    onclick="return confirm('Bạn có chắc muốn duyệt yêu cầu trả hàng này?');">
+
+                                <i class="bi bi-check-circle me-2"></i>
+                                Duyệt yêu cầu
+
+                            </button>
+
+                        </form>
+
+
+                        <!-- REJECT -->
+                        <form asp-controller="Admin"
+                              asp-action="RejectReturnRequest"
+                              asp-route-id="@Model.ReturnRequestId"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <label class="form-label fw-semibold">
+                                Lý do từ chối
+                            </label>
+
+                            <textarea name="adminNote"
+                                  class="form-control mb-3"
+                                  rows="4"
+                                  placeholder="Nhập lý do từ chối..."
+                                  required></textarea>
+
+                            <button type="submit"
+                                    class="btn btn-reject w-100"
+                                    onclick="return confirm('Bạn có chắc muốn từ chối yêu cầu này?');">
+
+                                <i class="bi bi-x-circle me-2"></i>
+                                Từ chối yêu cầu
+
+                            </button>
+
+                        </form>
+                    }
+
+                    else if (Model.Status == "Đã duyệt")
+                    {
+                        <form asp-controller="Admin"
+                              asp-action="SetReturnWaitingForProduct"
+                              asp-route-id="@Model.ReturnRequestId"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-primary-action w-100">
+
+                                <i class="bi bi-box-seam me-2"></i>
+                                Chuyển sang chờ nhận hàng
+
+                            </button>
+
+                        </form>
+                    }
+
+                    else if (Model.Status == "Đang chờ nhận hàng")
+                    {
+                        <form asp-controller="Admin"
+                              asp-action="SetReturnReceived"
+                              asp-route-id="@Model.ReturnRequestId"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-primary-action w-100">
+
+                                <i class="bi bi-box2-heart me-2"></i>
+                                Xác nhận đã nhận hàng
+
+                            </button>
+
+                        </form>
+                    }
+
+                    else if (Model.Status == "Đã nhận hàng")
+                    {
+                        <form asp-controller="Admin"
+                              asp-action="SetReturnInspecting"
+                              asp-route-id="@Model.ReturnRequestId"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-primary-action w-100">
+
+                                <i class="bi bi-search me-2"></i>
+                                Bắt đầu kiểm tra
+
+                            </button>
+
+                        </form>
+                    }
+
+                    else if (Model.Status == "Đang kiểm tra")
+                    {
+                        <div class="inspection-note mb-3">
+                            <i class="bi bi-search me-2"></i>
+
+                            Sản phẩm đã được nhận về và đang được kiểm tra.
+                            Nếu sản phẩm đạt điều kiện trả hàng, Admin có thể
+                            xác nhận hoàn tiền cho khách hàng.
+                        </div>
+
+                        <div class="refund-summary mb-3">
+
+                            <div class="refund-summary-title">
+                                <i class="bi bi-cash-coin me-2"></i>
+                                Thông tin hoàn trả
+                            </div>
+
+                            <div class="refund-row">
+                                <span>Tổng tiền đơn hàng</span>
+                                <strong>
+                                    @Model.Order.TotalAmount.ToString("N0") đ
+                                </strong>
+                            </div>
+
+                            <div class="refund-row">
+                                <span>Phí vận chuyển không hoàn</span>
+                                <strong>
+                                    @Model.Order.ShippingFee.ToString("N0") đ
+                                </strong>
+                            </div>
+
+                            <div class="refund-row refund-total">
+                                <span>Số tiền hoàn lại</span>
+                                <strong>
+                                    @Math.Max(0, Model.Order.TotalAmount - Model.Order.ShippingFee).ToString("N0") đ
+                                </strong>
+                        </div>
+
+                        @if (Model.Order.UsedPoints > 0)
+                            {
+                                <div class="refund-extra">
+                                    <i class="bi bi-coin me-2"></i>
+                                    Hoàn lại
+                                    <strong>@Model.Order.UsedPoints điểm</strong>
+                                    cho khách hàng
+                                </div>
+                            }
+
+                            @if (Model.Order.UserVoucherId.HasValue)
+                            {
+                                <div class="refund-extra">
+                                    <i class="bi bi-ticket-perforated me-2"></i>
+                                    Voucher đã sử dụng sẽ được
+                                    <strong>kích hoạt lại</strong>
+                                </div>
+                            }
+
+                        </div>
+
+                        <form asp-controller="Admin"
+                              asp-action="SetReturnRefunded"
+                              asp-route-id="@Model.ReturnRequestId"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <button type="submit"
+                                    class="btn btn-primary-action w-100"
+                                    onclick="return confirm(
+                        'Bạn xác nhận sản phẩm đạt điều kiện và muốn hoàn tiền? Hệ thống sẽ hoàn lại điểm, kích hoạt lại voucher và cộng lại tồn kho.'
+                    );">
+
+                                <i class="bi bi-cash-coin me-2"></i>
+
+                                Xác nhận hoàn tiền
+                            </button>
+
+                        </form>
+                                        }
+
+                    else if (Model.Status == "Đã hoàn tiền")
+                    {
+                        <div class="completed-box">
+
+                            <i class="bi bi-check-circle-fill"></i>
+
+                            <div>
+                                <strong>
+                                    Yêu cầu đã hoàn tất
+                                </strong>
+
+                                <div class="small text-muted mt-1">
+                                    Sản phẩm đã được kiểm tra và tiền đã được hoàn trả.
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+
+                    else if (Model.Status == "Từ chối")
+                    {
+                        <div class="rejected-box">
+
+                            <i class="bi bi-x-circle-fill"></i>
+
+                            <div>
+                                <strong>
+                                    Yêu cầu đã bị từ chối
+                                </strong>
+
+                                <div class="small mt-1">
+                                    Không thể thực hiện thêm thao tác.
+                                </div>
+                            </div>
+
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+
+            <!-- ADMIN NOTE -->
+            @if (Model.Status == "Từ chối" &&
+                        !string.IsNullOrWhiteSpace(Model.AdminNote))
+            {
+                <div class="card detail-card">
+
+                    <div class="card-header">
+
+                        <h5 class="mb-0 fw-bold">
+                            <i class="bi bi-chat-square-text me-2 text-danger"></i>
+                            Lý do từ chối
+                        </h5>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="admin-note">
+                            @Model.AdminNote
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    /* =========================
+           GENERAL
+        ========================= */
+
+    .detail-card {
+        border: 0;
+        border-radius: 14px;
+        box-shadow: 0 3px 15px rgba(0,0,0,.06);
+        overflow: hidden;
+    }
+
+        .detail-card .card-header {
+            background: #fff;
+            border-bottom: 1px solid #edf0f3;
+            padding: 17px 20px;
+        }
+
+        .detail-card .card-body {
+            padding: 20px;
+        }
+
+
+    /* =========================
+           BACK
+        ========================= */
+
+    .back-link {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #e7f1ff;
+        color: #0d6efd;
+        text-decoration: none;
+        transition: all .2s ease;
+    }
+
+        .back-link:hover {
+            background: #0d6efd;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+
+    /* =========================
+           STATUS
+        ========================= */
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .status-pending {
+        background: #fff8e1;
+        color: #b78103;
+    }
+
+    .status-approved {
+        background: #e8f5e9;
+        color: #198754;
+    }
+
+    .status-shipping {
+        background: #e7f1ff;
+        color: #0d6efd;
+    }
+
+    .status-received {
+        background: #e8f0fe;
+        color: #1769aa;
+    }
+
+    .status-inspecting {
+        background: #f0eafd;
+        color: #6f42c1;
+    }
+
+    .status-completed {
+        background: #dff6e8;
+        color: #157347;
+    }
+
+    .status-rejected {
+        background: #fdecec;
+        color: #dc3545;
+    }
+
+    .status-default {
+        background: #f1f3f5;
+        color: #495057;
+    }
+
+
+    /* =========================
+           INFO
+        ========================= */
+
+    .info-label {
+        color: #6c757d;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .info-value {
+        color: #212529;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    .order-number {
+        background: #e7f1ff;
+        color: #0d6efd;
+        padding: 6px 10px;
+        border-radius: 7px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+
+    /* =========================
+           PRODUCT TABLE
+        ========================= */
+
+    .product-table {
+        margin-bottom: 0;
+    }
+
+        .product-table thead th {
+            background: #f8f9fa;
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: 700;
+            border-bottom: 1px solid #e9ecef;
+            white-space: nowrap;
+        }
+
+        .product-table tbody td {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .product-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+    .product-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 230px;
+    }
+
+    .product-image,
+    .product-placeholder {
+        width: 55px;
+        height: 55px;
+        border-radius: 8px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .product-placeholder {
+        background: #f1f3f5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 20px;
+    }
+
+
+    /* =========================
+           ORDER SUMMARY
+        ========================= */
+
+    .order-summary {
+        margin-top: 20px;
+        border-top: 1px solid #edf0f3;
+        padding-top: 15px;
+    }
+
+    .summary-row,
+    .summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 7px 0;
+    }
+
+    .summary-row {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+        .summary-row strong {
+            color: #212529;
+        }
+
+    .discount-row {
+        color: #dc3545;
+    }
+
+        .discount-row strong {
+            color: #dc3545;
+        }
+
+    .summary-total {
+        border-top: 1px solid #edf0f3;
+        margin-top: 8px;
+        padding-top: 14px;
+        font-size: 16px;
+        font-weight: 700;
+    }
+
+        .summary-total strong {
+            color: #198754;
+            font-size: 19px;
+        }
+
+
+    /* =========================
+           REASON
+        ========================= */
+
+    .reason-box {
+        background: #f8f9fa;
+        border-radius: 9px;
+        padding: 13px 15px;
+        font-weight: 600;
+        color: #212529;
+    }
+
+    .description-box {
+        background: #f8f9fa;
+        border-radius: 9px;
+        padding: 15px;
+        min-height: 80px;
+        white-space: pre-line;
+        line-height: 1.6;
+    }
+
+
+    /* =========================
+           EVIDENCE
+        ========================= */
+
+    .evidence-label {
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .evidence-image-link {
+        display: block;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+
+    .evidence-image {
+        width: 100%;
+        max-height: 350px;
+        object-fit: contain;
+        display: block;
+    }
+
+    .evidence-video {
+        width: 100%;
+        max-height: 350px;
+        border-radius: 10px;
+        background: #000;
+    }
+
+    .no-evidence {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        color: #6c757d;
+    }
+
+
+    /* =========================
+           TIMELINE
+        ========================= */
+
+    .timeline {
+        position: relative;
+        padding-left: 8px;
+    }
+
+        .timeline::before {
+            content: "";
+            position: absolute;
+            left: 8px;
+            top: 8px;
+            bottom: 8px;
+            width: 2px;
+            background: #e9ecef;
+        }
+
+    .timeline-item {
+        position: relative;
+        display: flex;
+        gap: 14px;
+        padding-bottom: 22px;
+        color: #adb5bd;
+    }
+
+        .timeline-item:last-child {
+            padding-bottom: 0;
+        }
+
+    .timeline-dot {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #e9ecef;
+        border: 4px solid #fff;
+        box-shadow: 0 0 0 1px #e9ecef;
+        flex-shrink: 0;
+        position: relative;
+        z-index: 1;
+    }
+
+    .timeline-item.active {
+        color: #212529;
+    }
+
+        .timeline-item.active .timeline-dot {
+            background: #0d6efd;
+            box-shadow: 0 0 0 1px #0d6efd;
+        }
+
+
+    /* =========================
+           ACTION BUTTONS
+        ========================= */
+
+    .btn-approve {
+        background: #198754;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        transition: all .2s ease;
+    }
+
+        .btn-approve:hover {
+            background: #157347;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .btn-reject {
+        background: #dc3545;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 15px;
+        font-weight: 600;
+        transition: all .2s ease;
+    }
+
+        .btn-reject:hover {
+            background: #bb2d3b;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+    .btn-primary-action {
+        background: #0d6efd;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 11px 15px;
+        font-weight: 600;
+        transition: all .2s ease;
+    }
+
+        .btn-primary-action:hover {
+            background: #0a58ca;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+
+    /* =========================
+           PROCESS BOXES
+        ========================= */
+
+    .inspection-note {
+        display: flex;
+        gap: 10px;
+        background: #fff8e1;
+        color: #856404;
+        border-radius: 9px;
+        padding: 13px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .completed-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: #e8f5e9;
+        color: #198754;
+        border-radius: 9px;
+        padding: 14px;
+    }
+
+        .completed-box > i {
+            font-size: 20px;
+        }
+
+    .rejected-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: #fdecec;
+        color: #dc3545;
+        border-radius: 9px;
+        padding: 14px;
+    }
+
+        .rejected-box > i {
+            font-size: 20px;
+        }
+
+    .rejected-process {
+        display: flex;
+        gap: 10px;
+        background: #fdecec;
+        color: #dc3545;
+        border-radius: 9px;
+        padding: 13px;
+        margin-top: 5px;
+    }
+
+
+    /* =========================
+           ADMIN NOTE
+        ========================= */
+
+    .admin-note {
+        background: #fff5f5;
+        border-left: 4px solid #dc3545;
+        padding: 13px 15px;
+        border-radius: 6px;
+        white-space: pre-line;
+        line-height: 1.6;
+    }
+
+
+    /* =========================
+           RESPONSIVE
+        ========================= */
+
+    @@media (max-width: 991px) {
+
+        .product-table {
+            min-width: 700px;
+        }
+    }
+    /* =========================
+       REFUND
+    ========================= */
+
+    
+
+      
+
+    .refund-summary {
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+        padding: 18px;
+        background: #f8fbff;
+    }
+
+    .refund-summary-title {
+        font-weight: 700;
+        color: #0d6efd;
+        margin-bottom: 15px;
+    }
+
+    .refund-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        color: #555;
+    }
+
+    .refund-total {
+        border-top: 1px solid #dbeafe;
+        margin-top: 8px;
+        padding-top: 14px;
+        color: #198754;
+        font-size: 17px;
+    }
+
+        .refund-total strong {
+            color: #198754;
+            font-size: 19px;
+        }
+
+    .refund-extra {
+        margin-top: 10px;
+        padding: 10px 12px;
+        background: #e7f1ff;
+        border-radius: 8px;
+        color: #0d6efd;
+        font-size: 13px;
+    }
+
+        .refund-extra strong {
+            color: #0a58ca;
+        }
+</style>

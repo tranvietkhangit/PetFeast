@@ -1,0 +1,785 @@
+﻿@model PetFeast.Models.Orders.Order
+
+@{
+    var order = ViewBag.Order as PetFeast.Models.Orders.Order;
+}
+
+<div class="container mt-5 mb-5">
+
+    <!-- HEADER -->
+    <div class="return-header mb-4">
+        <a asp-controller="Order"
+           asp-action="UserOrderDetail"
+           asp-route-id="@order?.OrderId"
+           class="back-link">
+            <i class="bi bi-arrow-left"></i>
+            Quay lại đơn hàng
+        </a>
+
+        <h2 class="mt-3">
+            <i class="bi bi-arrow-return-left"></i>
+            Yêu cầu trả hàng
+        </h2>
+
+        <p class="text-muted">
+            Vui lòng cung cấp đầy đủ thông tin và bằng chứng để PetFeast
+            kiểm tra yêu cầu của bạn.
+        </p>
+    </div>
+
+
+    <!-- THÔNG TIN ĐƠN HÀNG -->
+    @if (order != null)
+    {
+        <div class="order-info-card mb-4">
+
+            <div class="order-info-header">
+                <strong>
+                    <i class="bi bi-receipt"></i>
+                    Đơn hàng #@order.OrderId
+                </strong>
+
+                <span class="completed-badge">
+                    @order.Status
+                </span>
+            </div>
+
+            <div class="order-info-body">
+
+                <div>
+                    <span>Ngày đặt:</span>
+                    <strong>
+                        @order.OrderDate.ToString("dd/MM/yyyy HH:mm")
+                    </strong>
+                </div>
+
+                @if (order.CompletedDate.HasValue)
+                {
+                    <div>
+                        <span>Ngày hoàn thành:</span>
+                        <strong>
+                            @order.CompletedDate.Value.ToString("dd/MM/yyyy HH:mm")
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Hạn trả hàng:</span>
+                        <strong class="deadline-text">
+                            @order.CompletedDate.Value.AddDays(7).ToString("dd/MM/yyyy HH:mm")
+                        </strong>
+                    </div>
+                }
+
+            </div>
+        </div>
+    }
+
+
+    <!-- SẢN PHẨM -->
+    @if (order?.OrderDetails != null && order.OrderDetails.Any())
+    {
+        <div class="return-card mb-4">
+
+            <div class="card-title">
+                <i class="bi bi-box-seam"></i>
+                Sản phẩm trong đơn hàng
+            </div>
+
+            @foreach (var item in order.OrderDetails)
+            {
+                <div class="product-row">
+
+                    <div class="product-image">
+                        @if (!string.IsNullOrEmpty(item.Product?.ImageUrl))
+                        {
+                            <img src="@item.Product.ImageUrl"
+                                 alt="@item.Product.ProductName" />
+                        }
+                        else
+                        {
+                            <div class="no-image">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="product-info">
+                        <strong>
+                            @item.Product?.ProductName
+                        </strong>
+
+                        <div class="product-detail">
+                            Số lượng: @item.Quantity
+                        </div>
+
+                        <div class="product-price">
+                            @item.Price.ToString("N0")đ
+                        </div>
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+
+    <!-- FORM -->
+    <div class="return-card">
+
+        <div class="card-title mb-4">
+            <i class="bi bi-file-earmark-text"></i>
+            Thông tin yêu cầu trả hàng
+        </div>
+
+        <form asp-controller="Order"
+              asp-action="ReturnRequest"
+              asp-route-id="@order?.OrderId"
+              method="post"
+              enctype="multipart/form-data">
+
+            @Html.AntiForgeryToken()
+
+
+            <!-- LÝ DO -->
+            <div class="mb-4">
+
+                <label class="form-label">
+                    Lý do trả hàng
+                    <span class="required">*</span>
+                </label>
+
+                <select name="reason"
+                        class="form-select"
+                        required>
+
+                    <option value="">
+                        -- Chọn lý do trả hàng --
+                    </option>
+
+                    <option value="Sản phẩm bị lỗi từ nhà sản xuất">
+                        Sản phẩm bị lỗi từ nhà sản xuất
+                    </option>
+
+                    <option value="Giao sai sản phẩm">
+                        Giao sai sản phẩm
+                    </option>
+
+                    <option value="Sản phẩm bị hư hỏng khi vận chuyển">
+                        Sản phẩm bị hư hỏng khi vận chuyển
+                    </option>
+
+                    <option value="Lý do khác">
+                        Lý do khác
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- MÔ TẢ -->
+            <div class="mb-4">
+
+                <label class="form-label">
+                    Mô tả chi tiết
+                </label>
+
+                <textarea name="description"
+                          class="form-control"
+                          rows="5"
+                          maxlength="1000"
+                          placeholder="Hãy mô tả tình trạng sản phẩm hoặc vấn đề bạn gặp phải..."></textarea>
+
+                <div class="form-text">
+                    Tối đa 1000 ký tự.
+                </div>
+
+            </div>
+
+
+            <!-- BẰNG CHỨNG -->
+            <div class="evidence-section">
+
+                <label class="form-label">
+                    Bằng chứng
+                    <span class="required">*</span>
+                </label>
+
+                <p class="evidence-description">
+                    Vui lòng cung cấp ít nhất một hình ảnh hoặc video
+                    để PetFeast có thể kiểm tra yêu cầu.
+                </p>
+
+
+                <div class="upload-grid">
+
+                    <!-- IMAGE -->
+                    <div class="upload-box">
+
+                        <div class="upload-icon">
+                            <i class="bi bi-image"></i>
+                        </div>
+
+                        <h6>Hình ảnh</h6>
+
+                        <p>
+                            JPG, JPEG, PNG, WEBP
+                            <br />
+                            Tối đa <strong>5 MB</strong>
+                        </p>
+
+                        <label for="evidenceImage"
+                               class="upload-button">
+                            <i class="bi bi-upload"></i>
+                            Chọn hình ảnh
+                        </label>
+
+                        <input type="file"
+                               id="evidenceImage"
+                               name="evidenceImage"
+                               accept=".jpg,.jpeg,.png,.webp"
+                               hidden />
+
+                        <div id="imagePreview"
+                             class="image-preview">
+                        </div>
+
+                    </div>
+
+
+                    <!-- VIDEO -->
+                    <div class="upload-box">
+
+                        <div class="upload-icon">
+                            <i class="bi bi-camera-video"></i>
+                        </div>
+
+                        <h6>Video</h6>
+
+                        <p>
+                            MP4, MOV, AVI, WEBM
+                            <br />
+                            Tối đa <strong>50 MB</strong>
+                        </p>
+
+                        <label for="evidenceVideo"
+                               class="upload-button">
+                            <i class="bi bi-upload"></i>
+                            Chọn video
+                        </label>
+
+                        <input type="file"
+                               id="evidenceVideo"
+                               name="evidenceVideo"
+                               accept=".mp4,.mov,.avi,.webm"
+                               hidden />
+
+                        <div id="videoName"
+                             class="video-name">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- LƯU Ý -->
+            <div class="return-note mt-4">
+
+                <div class="note-icon">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+
+                <div>
+                    <strong>Lưu ý về trả hàng</strong>
+
+                    <ul>
+                        <li>
+                            Yêu cầu chỉ được gửi trong vòng
+                            <strong>7 ngày</strong> kể từ khi đơn hàng hoàn thành.
+                        </li>
+
+                        <li>
+                            Sản phẩm nên còn nguyên vẹn, chưa qua sử dụng
+                            và đầy đủ phụ kiện.
+                        </li>
+
+                        <li>
+                            PetFeast sẽ kiểm tra thông tin và bằng chứng
+                            trước khi quyết định chấp nhận yêu cầu.
+                        </li>
+
+                        <li>
+                            Việc gửi yêu cầu không đồng nghĩa với việc
+                            yêu cầu đã được chấp nhận.
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+
+
+            <!-- BUTTON -->
+            <div class="form-actions mt-4">
+
+                <a asp-controller="Order"
+                   asp-action="UserOrderDetail"
+                   asp-route-id="@order?.OrderId"
+                   class="btn-cancel">
+                    Hủy
+                </a>
+
+                <button type="submit"
+                        class="btn-submit"
+                        id="submitButton">
+
+                    <i class="bi bi-send"></i>
+                    Gửi yêu cầu trả hàng
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    .return-header h2 {
+        font-weight: 700;
+        color: #212529;
+    }
+
+        .return-header h2 i {
+            color: #0d6efd;
+        }
+
+    .back-link {
+        color: #0d6efd;
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+        .back-link:hover {
+            color: #0a58ca;
+        }
+
+    .order-info-card,
+    .return-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .order-info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 18px;
+        border-bottom: 1px solid #eee;
+    }
+
+        .order-info-header i {
+            color: #0d6efd;
+            margin-right: 6px;
+        }
+
+    .completed-badge {
+        background: #e8f5e9;
+        color: #198754;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .order-info-body {
+        display: flex;
+        gap: 40px;
+        padding-top: 18px;
+        flex-wrap: wrap;
+    }
+
+        .order-info-body span {
+            color: #6c757d;
+            margin-right: 6px;
+        }
+
+    .deadline-text {
+        color: #dc3545;
+    }
+
+    .card-title {
+        font-size: 19px;
+        font-weight: 700;
+        color: #212529;
+    }
+
+        .card-title i {
+            color: #0d6efd;
+            margin-right: 7px;
+        }
+
+    .product-row {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 16px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+        .product-row:last-child {
+            border-bottom: none;
+        }
+
+    .product-image {
+        width: 90px;
+        height: 90px;
+        flex-shrink: 0;
+    }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 1px solid #eee;
+        }
+
+    .no-image {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 10px;
+        color: #adb5bd;
+        font-size: 25px;
+    }
+
+    .product-info strong {
+        display: block;
+        margin-bottom: 7px;
+    }
+
+    .product-detail {
+        color: #6c757d;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+
+    .product-price {
+        color: #0d6efd;
+        font-weight: 600;
+    }
+
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .required {
+        color: #dc3545;
+    }
+
+    .form-select,
+    .form-control {
+        border-radius: 9px;
+        padding: 11px 13px;
+    }
+
+        .form-select:focus,
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
+        }
+
+    .evidence-section {
+        border-top: 1px solid #eee;
+        padding-top: 25px;
+    }
+
+    .evidence-description {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .upload-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-top: 20px;
+    }
+
+    .upload-box {
+        border: 2px dashed #ced4da;
+        border-radius: 12px;
+        padding: 25px;
+        text-align: center;
+        transition: 0.2s ease;
+    }
+
+        .upload-box:hover {
+            border-color: #0d6efd;
+            background: #f8fbff;
+        }
+
+    .upload-icon {
+        font-size: 35px;
+        color: #0d6efd;
+        margin-bottom: 8px;
+    }
+
+    .upload-box h6 {
+        font-weight: 700;
+        margin-bottom: 7px;
+    }
+
+    .upload-box p {
+        color: #6c757d;
+        font-size: 13px;
+        margin-bottom: 15px;
+    }
+
+    .upload-button {
+        display: inline-block;
+        background: #0d6efd;
+        color: white;
+        padding: 9px 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: 0.2s ease;
+    }
+
+        .upload-button:hover {
+            background: #0a58ca;
+            transform: translateY(-1px);
+        }
+
+    .image-preview {
+        margin-top: 15px;
+    }
+
+        .image-preview img {
+            max-width: 180px;
+            max-height: 180px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+    .video-name {
+        margin-top: 12px;
+        color: #198754;
+        font-size: 14px;
+        word-break: break-word;
+    }
+
+    .return-note {
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        color: #495057;
+        font-size: 14px;
+    }
+
+    .note-icon {
+        color: #0d6efd;
+        font-size: 20px;
+    }
+
+    .return-note ul {
+        margin: 8px 0 0;
+        padding-left: 20px;
+    }
+
+    .return-note li {
+        margin-bottom: 5px;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .btn-cancel,
+    .btn-submit {
+        border: none;
+        border-radius: 9px;
+        padding: 11px 20px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.2s ease;
+        cursor: pointer;
+    }
+
+    .btn-cancel {
+        background: #e9ecef;
+        color: #495057;
+    }
+
+        .btn-cancel:hover {
+            background: #dee2e6;
+            color: #212529;
+            transform: translateY(-1px);
+        }
+
+    .btn-submit {
+        background: #0d6efd;
+        color: white;
+    }
+
+        .btn-submit:hover {
+            background: #0a58ca;
+            transform: translateY(-1px);
+        }
+
+        /* Không có hiệu ứng thu nhỏ khi click */
+        .btn-submit:active,
+        .btn-cancel:active,
+        .upload-button:active {
+            transform: none;
+        }
+
+    @@media (max-width: 768px) {
+        .upload-grid
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    .order-info-body {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .btn-cancel,
+    .btn-submit {
+        width: 100%;
+        text-align: center;
+    }
+
+    }
+</style>
+
+
+<script>
+
+    // =========================
+    // PREVIEW HÌNH ẢNH
+    // =========================
+
+    document.getElementById("evidenceImage")
+        .addEventListener("change", function () {
+
+            const file = this.files[0];
+            const preview = document.getElementById("imagePreview");
+
+            preview.innerHTML = "";
+
+            if (!file) {
+                return;
+            }
+
+            const maxSize = 5 * 1024 * 1024;
+
+            if (file.size > maxSize) {
+
+                alert("Hình ảnh không được vượt quá 5 MB.");
+
+                this.value = "";
+                return;
+            }
+
+            const allowedTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ];
+
+            if (!allowedTypes.includes(file.type)) {
+
+                alert("Vui lòng chọn JPG, JPEG, PNG hoặc WEBP.");
+
+                this.value = "";
+                return;
+            }
+
+            const img = document.createElement("img");
+
+            img.src = URL.createObjectURL(file);
+
+            preview.appendChild(img);
+        });
+
+
+    // =========================
+    // KIỂM TRA VIDEO
+    // =========================
+
+    document.getElementById("evidenceVideo")
+        .addEventListener("change", function () {
+
+            const file = this.files[0];
+            const videoName = document.getElementById("videoName");
+
+            videoName.innerHTML = "";
+
+            if (!file) {
+                return;
+            }
+
+            const maxSize = 50 * 1024 * 1024;
+
+            if (file.size > maxSize) {
+
+                alert("Video không được vượt quá 50 MB.");
+
+                this.value = "";
+                return;
+            }
+
+            videoName.innerHTML =
+                `<i class="bi bi-check-circle"></i>
+                 ${file.name}
+                 (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        });
+
+
+    // =========================
+    // CHỐNG BẤM GỬI NHIỀU LẦN
+    // =========================
+
+    document.querySelector("form")
+        .addEventListener("submit", function () {
+
+            const button =
+                document.getElementById("submitButton");
+
+            button.disabled = true;
+
+            button.innerHTML =
+                `<i class="bi bi-hourglass-split"></i>
+                 Đang gửi...`;
+        });
+
+</script>

@@ -1,0 +1,395 @@
+﻿@page
+@model PetFeast.Areas.Identity.Pages.Account.VerifyRegisterOtpModel
+
+@{
+    ViewData["Title"] = "Xác nhận đăng ký";
+}
+
+<div class="otp-page">
+
+    <div class="otp-card">
+
+        <!-- LOGO -->
+        <div class="text-center mb-4">
+            <img src="~/img/Logo/logo1.png"
+                 alt="PetFeast"
+                 class="otp-logo" />
+        </div>
+
+        <!-- TITLE -->
+        <div class="text-center">
+
+            <div class="otp-icon">
+                <i class="bi bi-envelope-check"></i>
+            </div>
+
+            <h2 class="fw-bold mt-3">
+                Xác nhận email
+            </h2>
+
+            <p class="text-muted mb-1">
+                Chúng tôi đã gửi mã OTP đến
+            </p>
+
+            <strong class="otp-email">
+                @Model.Email
+            </strong>
+
+        </div>
+
+        <!-- SUCCESS -->
+        @if (TempData["RegisterSuccess"] != null)
+        {
+            <div class="alert alert-success mt-4">
+                <i class="bi bi-check-circle me-2"></i>
+                @TempData["RegisterSuccess"]
+            </div>
+        }
+
+        <!-- ERROR -->
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger mt-4">
+                <i class="bi bi-exclamation-circle me-2"></i>
+                @TempData["Error"]
+            </div>
+        }
+
+        <!-- VALIDATION -->
+        <div asp-validation-summary="All"
+             class="text-danger mt-3">
+        </div>
+
+        <!-- OTP FORM -->
+        <form method="post" class="mt-4">
+
+            <input type="hidden"
+                   name="returnUrl"
+                   value="@Model.ReturnUrl" />
+
+            <div class="mb-4">
+
+                <label asp-for="Otp"
+                       class="form-label fw-semibold">
+                    Nhập mã OTP
+                </label>
+
+                <input asp-for="Otp"
+                       id="otpInput"
+                       class="form-control otp-input"
+                       maxlength="6"
+                       minlength="6"
+                       inputmode="numeric"
+                       autocomplete="one-time-code"
+                       placeholder="••••••"
+                       required />
+
+                <div class="form-text text-center mt-2">
+                    Mã OTP có hiệu lực trong
+                    <strong>5 phút</strong>.
+                </div>
+
+            </div>
+
+            <button type="submit"
+                    class="btn btn-primary w-100 otp-confirm-btn">
+
+                <i class="bi bi-shield-check me-2"></i>
+                Xác nhận OTP
+
+            </button>
+
+        </form>
+
+        <!-- RESEND -->
+        <div class="text-center mt-4">
+
+            <p class="text-muted mb-2">
+                Không nhận được mã?
+            </p>
+
+            <form method="post"
+                  asp-page-handler="Resend">
+
+                <input type="hidden"
+                       name="returnUrl"
+                       value="@Model.ReturnUrl" />
+
+                <button type="submit"
+                        id="resendBtn"
+                        class="btn btn-link resend-btn">
+
+                    Gửi lại OTP
+
+                </button>
+
+            </form>
+
+            <div id="countdown"
+                 class="text-muted small mt-1">
+            </div>
+
+        </div>
+
+        <!-- BACK -->
+        <div class="text-center mt-3">
+
+            <a asp-page="./Register"
+               class="back-register">
+
+                <i class="bi bi-arrow-left me-1"></i>
+                Quay lại đăng ký
+
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        // ==========================================
+        // CHỈ CHO NHẬP SỐ
+        // ==========================================
+
+        const otpInput =
+            document.getElementById("otpInput");
+
+        otpInput.addEventListener("input", function () {
+
+            this.value =
+                this.value
+                    .replace(/\D/g, "")
+                    .substring(0, 6);
+
+        });
+
+
+        // ==========================================
+        // COUNTDOWN 60 GIÂY
+        // ==========================================
+
+        const resendBtn =
+            document.getElementById("resendBtn");
+
+        const countdown =
+            document.getElementById("countdown");
+
+        const cooldownSeconds = 60;
+
+        let countdownTimer;
+
+
+        function startCountdown(seconds) {
+
+            resendBtn.disabled = true;
+
+            resendBtn.classList.add("disabled");
+
+            let remaining = seconds;
+
+            countdown.innerHTML =
+                `Bạn có thể gửi lại mã sau <strong>${remaining}</strong> giây`;
+
+            countdownTimer =
+                setInterval(function () {
+
+                    remaining--;
+
+                    if (remaining <= 0) {
+
+                        clearInterval(countdownTimer);
+
+                        resendBtn.disabled = false;
+
+                        resendBtn.classList.remove("disabled");
+
+                        countdown.innerHTML =
+                            "Bạn có thể gửi lại mã.";
+
+                        return;
+                    }
+
+                    countdown.innerHTML =
+                        `Bạn có thể gửi lại mã sau <strong>${remaining}</strong> giây`;
+
+                }, 1000);
+        }
+
+
+        // ==========================================
+        // KIỂM TRA SESSION STORAGE
+        // ==========================================
+
+        const resendCooldownKey =
+            "petfeast_register_otp_cooldown";
+
+        const savedCooldown =
+            localStorage.getItem(resendCooldownKey);
+
+
+        if (savedCooldown) {
+
+            const remaining =
+                Math.ceil(
+                    (parseInt(savedCooldown) - Date.now()) / 1000
+                );
+
+            if (remaining > 0) {
+
+                startCountdown(remaining);
+
+            }
+            else {
+
+                localStorage.removeItem(
+                    resendCooldownKey
+                );
+
+            }
+        }
+
+
+        // ==========================================
+        // KHI BẤM GỬI LẠI OTP
+        // ==========================================
+
+        const resendForm =
+            resendBtn.closest("form");
+
+        resendForm.addEventListener(
+            "submit",
+            function () {
+
+                const cooldownEnd =
+                    Date.now() +
+                    cooldownSeconds * 1000;
+
+                localStorage.setItem(
+                    resendCooldownKey,
+                    cooldownEnd
+                );
+
+            }
+        );
+
+    </script>
+}
+
+<style>
+
+    .otp-page {
+        min-height: calc(100vh - 110px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+        background: #f8f9fa;
+    }
+
+    .otp-card {
+        width: 100%;
+        max-width: 460px;
+        background: white;
+        border-radius: 18px;
+        padding: 40px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .otp-logo {
+        height: 90px;
+        width: auto;
+        object-fit: contain;
+    }
+
+    .otp-icon {
+        width: 65px;
+        height: 65px;
+        margin: 0 auto;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e7f1ff;
+        color: #0d6efd;
+        font-size: 30px;
+    }
+
+    .otp-email {
+        color: #0d6efd;
+        word-break: break-word;
+    }
+
+    .otp-input {
+        height: 58px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: 10px;
+        border-radius: 10px;
+    }
+
+        .otp-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        }
+
+    .otp-confirm-btn {
+        height: 50px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+        .otp-confirm-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .otp-confirm-btn:active {
+            transform: none;
+        }
+
+    .resend-btn {
+        color: #0d6efd;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+        .resend-btn:hover {
+            text-decoration: underline;
+        }
+
+        .resend-btn.disabled {
+            color: #999;
+            pointer-events: none;
+        }
+
+    .back-register {
+        color: #6c757d;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+        .back-register:hover {
+            color: #0d6efd;
+        }
+
+    @@media (max-width: 576px) {
+
+        .otp-card {
+            padding: 30px 20px;
+        }
+
+        .otp-input {
+            font-size: 24px;
+            letter-spacing: 7px;
+        }
+    }
+
+</style>

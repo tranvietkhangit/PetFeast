@@ -2,125 +2,185 @@
     ViewData["Title"] = "Xác thực OTP";
 }
 
-<div class="container py-5">
+<div class="otp-page">
 
-    <div class="row justify-content-center">
+    <div class="otp-card">
 
-        <div class="col-md-6 col-lg-5">
+        <!-- LOGO -->
+        <div class="text-center mb-4">
 
-            <div class="card border-0 shadow-sm rounded-4">
+            <img src="~/img/Logo/logo1.png"
+                 alt="PetFeast"
+                 class="otp-logo" />
 
-                <div class="card-body p-4 p-md-5">
+        </div>
 
-                    <div class="text-center mb-4">
 
-                        <div class="mb-3">
-                            <i class="bi bi-envelope-check-fill text-primary"
-                               style="font-size: 50px;"></i>
-                        </div>
+        <!-- TITLE -->
+        <div class="text-center">
 
-                        <h3 class="fw-bold">
-                            Xác thực OTP
-                        </h3>
+            <div class="otp-icon">
+                <i class="bi bi-envelope-check"></i>
+            </div>
 
-                        <p class="text-muted">
-                            Mã OTP gồm 6 chữ số đã được gửi đến email của bạn.
-                        </p>
+            <h2 class="fw-bold mt-3">
+                Xác thực OTP
+            </h2>
 
-                    </div>
+            <p class="text-muted mb-1">
+                Chúng tôi đã gửi mã OTP đến email của bạn
+            </p>
 
-                    @* Chỉ hiện thông báo gửi lại OTP *@
-                    @if (TempData["OtpSuccess"] != null)
-                    {
-                        <div class="alert alert-success">
-                            <i class="bi bi-check-circle me-2"></i>
-                            @TempData["OtpSuccess"]
-                        </div>
-                    }
+            @if (ViewBag.Email != null)
+            {
+                <strong class="otp-email">
+                    @ViewBag.Email
+                </strong>
+            }
 
-                    @if (TempData["OtpError"] != null)
-                    {
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-circle me-2"></i>
-                            @TempData["OtpError"]
-                        </div>
-                    }
+        </div>
 
-                    <form asp-controller="Account"
-                          asp-action="VerifyOtp"
-                          method="post">
 
-                        @Html.AntiForgeryToken()
+        <!-- SUCCESS -->
+        @if (TempData["OtpSuccess"] != null)
+        {
+            <div class="alert alert-success mt-4">
 
-                        <input type="hidden"
-                               name="userId"
-                               value="@ViewBag.UserId" />
+                <i class="bi bi-check-circle me-2"></i>
 
-                        <div asp-validation-summary="ModelOnly"
-                             class="text-danger mb-3">
-                        </div>
+                @TempData["OtpSuccess"]
 
-                        <div class="mb-4">
+            </div>
+        }
 
-                            <label for="otp"
-                                   class="form-label fw-semibold">
-                                Mã OTP
-                            </label>
 
-                            <input type="text"
-                                   id="otp"
-                                   name="otp"
-                                   class="form-control text-center"
-                                   maxlength="6"
-                                   minlength="6"
-                                   pattern="[0-9]{6}"
-                                   inputmode="numeric"
-                                   autocomplete="one-time-code"
-                                   placeholder="Nhập 6 số OTP"
-                                   style="
-                                       font-size: 25px;
-                                       letter-spacing: 8px;
-                                   "
-                                   required />
+        <!-- ERROR -->
+        @if (TempData["OtpError"] != null)
+        {
+            <div class="alert alert-danger mt-4">
 
-                        </div>
+                <i class="bi bi-exclamation-circle me-2"></i>
 
-                        <button type="submit"
-                                class="btn btn-primary w-100">
+                @TempData["OtpError"]
 
-                            <i class="bi bi-check-circle me-2"></i>
+            </div>
+        }
 
-                            Xác nhận OTP
 
-                        </button>
+        <!-- VALIDATION -->
+        <div asp-validation-summary="All"
+             class="text-danger mt-3">
+        </div>
 
-                    </form>
 
-                    <div class="text-center mt-4">
+        <!-- OTP FORM -->
+        <form asp-controller="Account"
+              asp-action="VerifyOtp"
+              method="post"
+              class="mt-4">
 
-                        <span class="text-muted">
-                            Không nhận được mã?
-                        </span>
+            @Html.AntiForgeryToken()
 
-                        <form asp-controller="Account"
-                              asp-action="ResendOtp"
-                              method="post"
-                              class="d-inline">
+            <!-- USER ID -->
+            <input type="hidden"
+                   name="userId"
+                   value="@ViewBag.UserId" />
 
-                            @Html.AntiForgeryToken()
 
-                            <button type="submit"
-                                    class="btn btn-link p-0 ms-1">
-                                Gửi lại OTP
-                            </button>
+            <div class="mb-4">
 
-                        </form>
+                <label for="otpInput"
+                       class="form-label fw-semibold">
 
-                    </div>
+                    Nhập mã OTP
+
+                </label>
+
+
+                <input type="text"
+                       id="otpInput"
+                       name="otp"
+                       class="form-control otp-input"
+                       maxlength="6"
+                       minlength="6"
+                       inputmode="numeric"
+                       autocomplete="one-time-code"
+                       placeholder="••••••"
+                       required />
+
+
+                <div class="form-text text-center mt-2">
+
+                    Mã OTP có hiệu lực trong
+                    <strong>5 phút</strong>.
 
                 </div>
 
             </div>
+
+
+            <!-- CONFIRM -->
+            <button type="submit"
+                    class="btn btn-primary w-100 otp-confirm-btn">
+
+                <i class="bi bi-shield-check me-2"></i>
+
+                Xác nhận OTP
+
+            </button>
+
+        </form>
+
+
+        <!-- RESEND -->
+        <div class="text-center mt-4">
+
+            <p class="text-muted mb-2">
+
+                Không nhận được mã?
+
+            </p>
+
+
+            <form asp-controller="Account"
+                  asp-action="ResendOtp"
+                  method="post"
+                  id="resendForm">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        id="resendBtn"
+                        class="btn btn-link resend-btn">
+
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+
+                    Gửi lại OTP
+
+                </button>
+
+            </form>
+
+
+            <div id="countdown"
+                 class="text-muted small mt-1">
+            </div>
+
+        </div>
+
+
+        <!-- BACK -->
+        <div class="text-center mt-3">
+
+            <a asp-controller="Account"
+               asp-action="ForgotPassword"
+               class="back-register">
+
+                <i class="bi bi-arrow-left me-1"></i>
+
+                Quay lại quên mật khẩu
+
+            </a>
 
         </div>
 
@@ -128,6 +188,344 @@
 
 </div>
 
+
 @section Scripts {
+
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        // ==========================================
+        // CHỈ CHO NHẬP SỐ
+        // ==========================================
+
+        const otpInput =
+            document.getElementById("otpInput");
+
+        if (otpInput) {
+
+            otpInput.addEventListener("input", function () {
+
+                this.value =
+                    this.value
+                        .replace(/\D/g, "")
+                        .substring(0, 6);
+
+            });
+
+        }
+
+
+        // ==========================================
+        // COUNTDOWN 60 GIÂY
+        // ==========================================
+
+        const resendBtn =
+            document.getElementById("resendBtn");
+
+        const countdown =
+            document.getElementById("countdown");
+
+        const resendForm =
+            document.getElementById("resendForm");
+
+        const cooldownSeconds = 60;
+
+        const resendCooldownKey =
+            "petfeast_reset_otp_cooldown";
+
+        let countdownTimer;
+
+
+        function startCountdown(seconds) {
+
+            if (!resendBtn || !countdown) {
+                return;
+            }
+
+            resendBtn.disabled = true;
+
+            resendBtn.classList.add("disabled");
+
+            let remaining = seconds;
+
+
+            countdown.innerHTML =
+                `Bạn có thể gửi lại mã sau <strong>${remaining}</strong> giây`;
+
+
+            countdownTimer =
+                setInterval(function () {
+
+                    remaining--;
+
+
+                    if (remaining <= 0) {
+
+                        clearInterval(countdownTimer);
+
+                        resendBtn.disabled = false;
+
+                        resendBtn.classList.remove("disabled");
+
+                        countdown.innerHTML =
+                            "Bạn có thể gửi lại mã.";
+
+                        localStorage.removeItem(
+                            resendCooldownKey
+                        );
+
+                        return;
+                    }
+
+
+                    countdown.innerHTML =
+                        `Bạn có thể gửi lại mã sau <strong>${remaining}</strong> giây`;
+
+                }, 1000);
+
+        }
+
+
+        // ==========================================
+        // KIỂM TRA COOLDOWN
+        // ==========================================
+
+        const savedCooldown =
+            localStorage.getItem(
+                resendCooldownKey
+            );
+
+
+        if (savedCooldown) {
+
+            const remaining =
+                Math.ceil(
+                    (
+                        parseInt(savedCooldown)
+                        - Date.now()
+                    ) / 1000
+                );
+
+
+            if (remaining > 0) {
+
+                startCountdown(remaining);
+
+            }
+            else {
+
+                localStorage.removeItem(
+                    resendCooldownKey
+                );
+
+            }
+
+        }
+
+
+        // ==========================================
+        // KHI BẤM GỬI LẠI
+        // ==========================================
+
+        if (resendForm) {
+
+            resendForm.addEventListener(
+                "submit",
+                function () {
+
+                    const cooldownEnd =
+                        Date.now()
+                        + cooldownSeconds * 1000;
+
+
+                    localStorage.setItem(
+                        resendCooldownKey,
+                        cooldownEnd
+                    );
+
+                }
+            );
+
+        }
+
+    </script>
+
 }
+
+
+<style>
+
+    /* ==========================================
+           PAGE
+           ========================================== */
+
+    .otp-page {
+        min-height: calc(100vh - 110px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 20px;
+        background: #f8f9fa;
+    }
+
+
+    /* ==========================================
+           CARD
+           ========================================== */
+
+    .otp-card {
+        width: 100%;
+        max-width: 460px;
+        background: white;
+        border-radius: 18px;
+        padding: 40px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    }
+
+
+    /* ==========================================
+           LOGO
+           ========================================== */
+
+    .otp-logo {
+        height: 90px;
+        width: auto;
+        object-fit: contain;
+    }
+
+
+    /* ==========================================
+           ICON
+           ========================================== */
+
+    .otp-icon {
+        width: 65px;
+        height: 65px;
+        margin: 0 auto;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #e7f1ff;
+        color: #0d6efd;
+        font-size: 30px;
+    }
+
+
+    /* ==========================================
+           EMAIL
+           ========================================== */
+
+    .otp-email {
+        color: #0d6efd;
+        word-break: break-word;
+    }
+
+
+    /* ==========================================
+           OTP INPUT
+           ========================================== */
+
+    .otp-input {
+        height: 58px;
+        text-align: center;
+        font-size: 28px;
+        font-weight: 600;
+        letter-spacing: 10px;
+        border-radius: 10px;
+    }
+
+
+        .otp-input:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+        }
+
+
+        .otp-input::placeholder {
+            color: #adb5bd;
+            opacity: 1;
+            letter-spacing: 10px;
+        }
+
+
+    /* ==========================================
+           CONFIRM BUTTON
+           ========================================== */
+
+    .otp-confirm-btn {
+        height: 50px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+
+        .otp-confirm-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, 0.25);
+        }
+
+
+        .otp-confirm-btn:active {
+            transform: none !important;
+        }
+
+
+    /* ==========================================
+           RESEND
+           ========================================== */
+
+    .resend-btn {
+        color: #0d6efd;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+
+        .resend-btn:hover {
+            text-decoration: underline;
+        }
+
+
+        .resend-btn.disabled {
+            color: #999;
+            pointer-events: none;
+        }
+
+
+    /* ==========================================
+           BACK
+           ========================================== */
+
+    .back-register {
+        color: #6c757d;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+
+        .back-register:hover {
+            color: #0d6efd;
+        }
+
+
+    /* ==========================================
+           MOBILE
+           ========================================== */
+
+    @@media (max-width: 576px) {
+
+        .otp-card {
+            padding: 30px 20px;
+        }
+
+
+        .otp-input {
+            font-size: 24px;
+            letter-spacing: 7px;
+        }
+    }
+
+</style>

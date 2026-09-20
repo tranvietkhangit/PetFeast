@@ -16,17 +16,43 @@ namespace PetFeast.Controllers
             _context = context;
         }
 
-        // Danh sách sản phẩm yêu thích
-        public IActionResult Index()
+        // =========================
+        // DANH SÁCH SẢN PHẨM YÊU THÍCH
+        // =========================
+        [Authorize]
+        public async Task<IActionResult> Index(int page = 1)
         {
-            string userId =
-                User.FindFirstValue(
-                    ClaimTypes.NameIdentifier)!;
+            const int pageSize = 6;
 
-            var favorites = _context.Favorites
+            var userId = User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var query = _context.Favorites
                 .Include(f => f.Product)
                 .Where(f => f.UserId == userId)
-                .ToList();
+                .OrderByDescending(f => f.FavoriteId);
+
+            int totalFavorites = await query.CountAsync();
+
+            int totalPages = (int)Math.Ceiling(
+                totalFavorites / (double)pageSize);
+
+            if (page < 1)
+                page = 1;
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
+
+            var favorites = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            ViewBag.CurrentPage = page;
+            ViewBag.TotalPages = totalPages;
 
             return View(favorites);
         }
@@ -60,10 +86,7 @@ namespace PetFeast.Controllers
 
             if (favorite == null)
             {
-                // =========================
-                // THÊM YÊU THÍCH
-                // =========================
-
+                // Thêm yêu thích
                 _context.Favorites.Add(
                     new Favorite
                     {
@@ -75,10 +98,7 @@ namespace PetFeast.Controllers
             }
             else
             {
-                // =========================
-                // BỎ YÊU THÍCH
-                // =========================
-
+                // Bỏ yêu thích
                 _context.Favorites.Remove(favorite);
 
                 isFavorite = false;

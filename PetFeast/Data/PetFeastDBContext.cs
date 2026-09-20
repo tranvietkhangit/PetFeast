@@ -27,40 +27,68 @@ namespace PetFeast.Data
         {
             base.OnModelCreating(builder);
 
-
             builder.Entity<Product>()
                 .Property(p => p.Price)
                 .HasPrecision(18, 2);
-
 
             builder.Entity<Order>()
                 .Property(o => o.TotalAmount)
                 .HasPrecision(18, 2);
 
-
             builder.Entity<Order>()
                 .Property(o => o.ShippingFee)
                 .HasPrecision(18, 2);
 
+            builder.Entity<Order>()
+                .Property(o => o.PointDiscount)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Order>()
+                .Property(o => o.VoucherDiscount)
+                .HasPrecision(18, 2);
 
             builder.Entity<OrderDetail>()
                 .Property(o => o.Price)
                 .HasPrecision(18, 2);
 
-            builder.Entity<Order>()
-    .Property(o => o.PointDiscount)
-    .HasPrecision(18, 2);
+            builder.Entity<Voucher>()
+                .Property(v => v.DiscountAmount)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Voucher>()
+                .Property(v => v.MinimumOrderAmount)
+                .HasPrecision(18, 2);
+
             builder.Entity<UserVoucher>()
-    .HasOne(x => x.User)
-    .WithMany(x => x.UserVouchers)
-    .HasForeignKey(x => x.UserId)
-    .OnDelete(DeleteBehavior.Cascade);
+                .HasOne(x => x.User)
+                .WithMany(x => x.UserVouchers)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<UserVoucher>()
                 .HasOne(x => x.Voucher)
                 .WithMany(x => x.UserVouchers)
                 .HasForeignKey(x => x.VoucherId)
                 .OnDelete(DeleteBehavior.Restrict);
+            builder.Entity<ReturnRequest>()
+    .HasOne(x => x.Order)
+    .WithOne(x => x.ReturnRequest)
+    .HasForeignKey<ReturnRequest>(x => x.OrderId)
+    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<ReturnRequest>()
+                .HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ReturnRequest>()
+                .Property(x => x.ReturnFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<ReturnRequest>()
+                .Property(x => x.RefundAmount)
+                .HasPrecision(18, 2);
         }
         public DbSet<PointTransaction> PointTransactions { get; set; }
         public DbSet<Cart> Carts { get; set; }
@@ -69,5 +97,6 @@ namespace PetFeast.Data
         public DbSet<Voucher> Vouchers { get; set; }
 
         public DbSet<UserVoucher> UserVouchers { get; set; }
+        public DbSet<ReturnRequest> ReturnRequests { get; set; }
     }
 }
