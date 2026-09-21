@@ -1,0 +1,123 @@
+﻿@model IEnumerable<PetFeast.Models.Notifications.Notification>
+
+<div class="notification-content">
+
+    <!-- TIÊU ĐỀ -->
+    <div class="notification-header px-3 py-3 border-bottom">
+        <h6 class="mb-0 fw-bold">
+            <i class="bi bi-bell me-2"></i>
+            Thông báo
+        </h6>
+    </div>
+
+    <!-- DANH SÁCH CÓ THANH CUỘN -->
+    <div class="notification-list">
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="text-center text-muted py-4">
+                <i class="bi bi-bell-slash fs-3 d-block mb-2"></i>
+                <p class="mb-0">Chưa có thông báo nào.</p>
+            </div>
+        }
+        else
+        {
+            foreach (var notification in Model)
+            {
+                <div class="notification-item border-bottom px-3 py-3
+                                    @(notification.IsRead ? "" : "bg-light")">
+
+                    <div class="d-flex align-items-start gap-2">
+
+                        <i class="bi bi-info-circle text-primary mt-1"></i>
+
+                        <div class="flex-grow-1">
+
+                            <div class="fw-semibold">
+                                @notification.Title
+                            </div>
+
+                            <div class="small text-muted mt-1">
+                                @notification.Message
+                            </div>
+
+                            <small class="text-secondary">
+                                @notification.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </small>
+
+                            @if (!notification.IsRead)
+                            {
+                                <span class="badge bg-primary ms-2">
+                                    Mới
+                                </span>
+                            }
+
+                        </div>
+                    </div>
+
+                </div>
+            }
+        }
+
+    </div>
+
+    <!-- XEM TẤT CẢ -->
+    <div class="notification-footer p-2 border-top">
+        <a asp-controller="Notification"
+           asp-action="Index"
+           class="btn btn-sm btn-outline-primary w-100">
+
+            <i class="bi bi-list-ul me-1"></i>
+            Xem tất cả thông báo
+
+        </a>
+    </div>
+
+</div>
+<style>
+    /* Khung dropdown thông báo */
+    .notification-dropdown {
+        padding: 0;
+        width: 380px;
+        max-width: 90vw;
+    }
+
+    /* Nội dung dropdown */
+    .notification-content {
+        width: 100%;
+    }
+
+    /* Danh sách thông báo */
+    .notification-list {
+        max-height: 230px;
+        overflow-y: auto;
+    }
+
+        /* Thanh cuộn */
+        .notification-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .notification-list::-webkit-scrollbar-thumb {
+            background-color: #bdbdbd;
+            border-radius: 10px;
+        }
+
+        .notification-list::-webkit-scrollbar-track {
+            background-color: #f5f5f5;
+        }
+
+    /* Mỗi thông báo */
+    .notification-item {
+        transition: background-color 0.2s ease;
+    }
+
+        .notification-item:hover {
+            background-color: #f0f6ff;
+        }
+
+    /* Phần cuối dropdown */
+    .notification-footer {
+        background-color: white;
+    }
+</style>

@@ -8,6 +8,7 @@ using PetFeast.Models.Products;
 using PetFeast.Models.ShoppingCart;
 using PetFeast.Models.Voucher;
 using System.Reflection.Emit;
+using PetFeast.Models.Notifications;
 namespace PetFeast.Data
 {
     public class PetFeastDBContext : IdentityDbContext<ApplicationUser>
@@ -98,5 +99,6 @@ namespace PetFeast.Data
 
         public DbSet<UserVoucher> UserVouchers { get; set; }
         public DbSet<ReturnRequest> ReturnRequests { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
     }
 }

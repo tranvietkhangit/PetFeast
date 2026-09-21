@@ -163,7 +163,7 @@ namespace PetFeast.Areas.Identity.Pages.Account
             // ==========================================
 
             var user = CreateUser();
-
+            user.FullName = Input.UserName.Trim();
             await _userStore.SetUserNameAsync(
                 user,
                 Input.UserName,

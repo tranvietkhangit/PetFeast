@@ -81,8 +81,32 @@
 
                     <ul class="navbar-nav flex-row justify-content-end align-items-center w-100">
 
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item dropdown">
 
-                        <partial name="_LoginPartial"></partial>
+                                <a href="#"
+                                   class="header-notification"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false"
+                                   title="Thông báo">
+
+                                    <i class="bi bi-bell"></i>
+
+                                    <span class="notification-count">
+                                        @await Component.InvokeAsync("NotificationCount")
+                                    </span>
+
+                                </a>
+
+                                <div class="dropdown-menu dropdown-menu-end notification-dropdown">
+                                    @await Component.InvokeAsync("NotificationDropdown")
+                                </div>
+
+                            </li>
+                        }
+
+                        <partial name="_LoginPartial" />
 
                         <li class="nav-item ms-3">
 
@@ -100,9 +124,8 @@
 
                         </li>
 
-
                     </ul>
-
+                    
                 </div>
 
 
@@ -1057,4 +1080,73 @@
                 border-top-color: #ffffff;
             }
             }
+/*  THÔNG BÁO */
+    /* NÚT THÔNG BÁO */
+    .header-notification {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        color: #0d6efd;
+        text-decoration: none;
+        font-size: 22px;
+    }
+
+        /* SỐ THÔNG BÁO CHƯA ĐỌC */
+        .header-notification .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -7px;
+            min-width: 20px;
+            height: 20px;
+            padding: 0 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #dc3545;
+            color: white;
+            border: 2px solid white;
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+    .header-notification {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        color: #0d6efd;
+        text-decoration: none;
+        font-size: 25px;
+    }
+
+        .header-notification:hover {
+            color: #0a58ca;
+        }
+
+    .notification-count {
+        position: absolute;
+        top: 0;
+        right: -4px;
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #dc3545;
+        color: white;
+        border-radius: 50%;
+        border: 2px solid white;
+        font-size: 10px;
+        font-weight: bold;
+        line-height: 1;
+    }
+    
 </style>

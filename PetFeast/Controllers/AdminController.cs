@@ -6,6 +6,7 @@ using PetFeast.Data;
 using PetFeast.Models.Contacts;
 using PetFeast.Models.Identity;
 using PetFeast.Models.Interfaces;
+using PetFeast.Models.Notifications;
 using PetFeast.Models.Orders;
 using PetFeast.Models.Points;
 using PetFeast.Models.Products;
@@ -21,21 +22,44 @@ namespace PetFeast.Controllers
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly PetFeastDBContext _context;
         private readonly PointsRepository _pointsRepository;
+        private readonly INotificationRepository _notificationRepository;
 
         public AdminController(
-            IProductRepository productRepo,
-            CategoryIRepository categoryRepo,
-            PetFeastDBContext context,
-            UserManager<ApplicationUser> userManager,
-            PointsRepository pointsRepository)
+    IProductRepository productRepo,
+    CategoryIRepository categoryRepo,
+    PetFeastDBContext context,
+    UserManager<ApplicationUser> userManager,
+    PointsRepository pointsRepository,
+    INotificationRepository notificationRepository)
         {
             _productRepo = productRepo;
             _categoryRepo = categoryRepo;
             _context = context;
             _userManager = userManager;
             _pointsRepository = pointsRepository;
+            _notificationRepository = notificationRepository;
         }
+        private async Task CreateNotificationAsync(
+    string? userId,
+    int? orderId,
+    string title,
+    string message)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+                return;
 
+            var notification = new Notification
+            {
+                UserId = userId,
+                OrderId = orderId,
+                Title = title,
+                Message = message,
+                CreatedAt = DateTime.Now,
+                IsRead = false
+            };
+
+            await _notificationRepository.AddAsync(notification);
+        }
         public async Task<IActionResult> Dashboard()
         {
             var currentYear = DateTime.Now.Year;
@@ -200,7 +224,7 @@ namespace PetFeast.Controllers
 
             return Json(new
             {
-                totalRevenue = monthRevenue,
+                monthRevenue = monthRevenue,
                 totalOrders = totalOrders,
                 completedOrders = completedOrders,
                 completionRate = completionRate,
@@ -557,11 +581,12 @@ namespace PetFeast.Controllers
             }
 
             order.Status = "Đang giao";
-
             await _context.SaveChangesAsync();
-
-            TempData["Success"] =
-                $"Đã xác nhận đơn hàng #{order.OrderId}. Đơn hàng đang được giao.";
+            await CreateNotificationAsync(
+     order.UserId,
+     order.OrderId,
+     "Đơn hàng đã được xác nhận",
+     $"Đơn hàng #{order.OrderId} đã được xác nhận và đang được giao.");
 
             return RedirectToAction(nameof(OrderList));
         }
@@ -614,6 +639,12 @@ namespace PetFeast.Controllers
             order.PaymentStatus = "Đã thanh toán";
 
             await _context.SaveChangesAsync();
+
+            await CreateNotificationAsync(
+                order.UserId,
+                order.OrderId,
+                "Thanh toán thành công",
+                $"Đơn hàng #{order.OrderId} của bạn đã được thanh toán thành công.");
 
             TempData["Success"] =
                 $"Đã xác nhận thanh toán cho đơn hàng #{order.OrderId}.";
@@ -684,8 +715,12 @@ namespace PetFeast.Controllers
             // ==========================================
 
             int points = await _pointsRepository.AddPointsForOrderAsync(order);
-
             await _context.SaveChangesAsync();
+            await CreateNotificationAsync(
+     order.UserId,
+     order.OrderId,
+     "Đơn hàng đã hoàn thành",
+     $"Đơn hàng #{order.OrderId} đã được giao thành công. Cảm ơn bạn đã mua sắm tại PetFeast!");
 
             TempData["Success"] =
                 $"Đơn hàng #{order.OrderId} đã hoàn thành. " +
@@ -793,7 +828,14 @@ namespace PetFeast.Controllers
                 order.Status = "Đã hủy";
 
                 await _context.SaveChangesAsync();
+                await CreateNotificationAsync(
+   order.UserId,
+   order.OrderId,
+   "Đơn hàng đã bị hủy",
+   $"Đơn hàng #{order.OrderId} đã được hủy.");
                 await transaction.CommitAsync();
+
+               
                 TempData["Success"] =
                     $"Đã hủy đơn hàng #{order.OrderId}. Điểm và voucher đã được hoàn lại.";
 
@@ -1095,6 +1137,11 @@ namespace PetFeast.Controllers
             request.ApprovedAt = DateTime.Now;
 
             await _context.SaveChangesAsync();
+            await CreateNotificationAsync(
+    request.Order?.UserId,
+    request.OrderId,
+    "Yêu cầu đổi trả đã được duyệt",
+    $"Yêu cầu đổi trả của đơn hàng #{request.OrderId} đã được duyệt.");
 
             TempData["Success"] =
                 $"Đã duyệt yêu cầu trả hàng #{request.ReturnRequestId}.";
@@ -1109,7 +1156,8 @@ namespace PetFeast.Controllers
     string adminNote)
         {
             var request = await _context.ReturnRequests
-                .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
+    .Include(r => r.Order)
+    .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
 
             if (request == null)
             {
@@ -1141,6 +1189,12 @@ namespace PetFeast.Controllers
             request.AdminNote = adminNote.Trim();
 
             await _context.SaveChangesAsync();
+            await CreateNotificationAsync(
+    request.Order?.UserId,
+    request.OrderId,
+    "Yêu cầu đổi trả bị từ chối",
+    $"Yêu cầu đổi trả của đơn hàng #{request.OrderId} đã bị từ chối. " +
+    $"Lý do: {request.AdminNote}");
 
             TempData["Success"] =
                 $"Đã từ chối yêu cầu trả hàng #{request.ReturnRequestId}.";
@@ -1153,7 +1207,8 @@ namespace PetFeast.Controllers
         public async Task<IActionResult> SetReturnWaitingForProduct(int id)
         {
             var request = await _context.ReturnRequests
-                .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
+    .Include(r => r.Order)
+    .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
 
             if (request == null)
             {
@@ -1175,6 +1230,12 @@ namespace PetFeast.Controllers
             request.Status = "Đang chờ nhận hàng";
 
             await _context.SaveChangesAsync();
+            await CreateNotificationAsync(
+    request.Order?.UserId,
+    request.OrderId,
+    "Đang chờ nhận hàng đổi trả",
+    $"Yêu cầu đổi trả đơn hàng #{request.OrderId} đã được duyệt. " +
+    "Vui lòng gửi sản phẩm về cho PetFeast.");
 
             TempData["Success"] =
                 "Đã chuyển yêu cầu sang trạng thái đang chờ nhận hàng.";
@@ -1187,7 +1248,8 @@ namespace PetFeast.Controllers
         public async Task<IActionResult> SetReturnReceived(int id)
         {
             var request = await _context.ReturnRequests
-                .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
+     .Include(r => r.Order)
+     .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
 
             if (request == null)
             {
@@ -1209,7 +1271,11 @@ namespace PetFeast.Controllers
             request.Status = "Đã nhận hàng";
 
             await _context.SaveChangesAsync();
-
+            await CreateNotificationAsync(
+    request.Order?.UserId,
+    request.OrderId,
+    "PetFeast đã nhận sản phẩm đổi trả",
+    $"PetFeast đã nhận sản phẩm đổi trả của đơn hàng #{request.OrderId}.");
             TempData["Success"] =
                 "Đã xác nhận PetFeast nhận được sản phẩm.";
 
@@ -1221,7 +1287,8 @@ namespace PetFeast.Controllers
         public async Task<IActionResult> SetReturnInspecting(int id)
         {
             var request = await _context.ReturnRequests
-                .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
+    .Include(r => r.Order)
+    .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
 
             if (request == null)
             {
@@ -1243,6 +1310,11 @@ namespace PetFeast.Controllers
             request.Status = "Đang kiểm tra";
 
             await _context.SaveChangesAsync();
+            await CreateNotificationAsync(
+    request.Order?.UserId,
+    request.OrderId,
+    "Sản phẩm đang được kiểm tra",
+    $"Sản phẩm đổi trả của đơn hàng #{request.OrderId} đang được PetFeast kiểm tra.");
 
             TempData["Success"] =
                 "Đã chuyển sản phẩm sang trạng thái đang kiểm tra.";
@@ -1466,8 +1538,15 @@ namespace PetFeast.Controllers
                 // =====================================================
                 // 13. COMMIT
                 // =====================================================
+                await CreateNotificationAsync(
+     request.Order?.UserId,
+     request.OrderId,
+     "Đổi trả và hoàn tiền thành công",
+     $"Đơn hàng #{request.OrderId} đã được hoàn tiền thành công. " +
+     $"Số tiền hoàn: {refundAmount:N0}đ.");
 
                 await transaction.CommitAsync();
+
 
                 TempData["Success"] =
                     $"Đã hoàn tiền {refundAmount:N0}đ. " +
@@ -1621,7 +1700,8 @@ namespace PetFeast.Controllers
     string adminNote)
         {
             var returnRequest = await _context.ReturnRequests
-                .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
+    .Include(r => r.Order)
+    .FirstOrDefaultAsync(r => r.ReturnRequestId == id);
 
             if (returnRequest == null)
             {
@@ -1654,7 +1734,12 @@ namespace PetFeast.Controllers
             returnRequest.AdminNote = adminNote.Trim();
 
             await _context.SaveChangesAsync();
-
+            await CreateNotificationAsync(
+    returnRequest.Order?.UserId,
+    returnRequest.OrderId,
+    "Yêu cầu đổi trả bị từ chối",
+    $"Yêu cầu đổi trả đơn hàng #{returnRequest.OrderId} bị từ chối " +
+    $"sau quá trình kiểm tra. Lý do: {returnRequest.AdminNote}");
             TempData["Success"] =
                 "Đã từ chối yêu cầu hoàn trả sau khi kiểm tra.";
 
@@ -1662,6 +1747,8 @@ namespace PetFeast.Controllers
                 nameof(ReturnRequestDetail),
                 new { id }
             );
+
         }
+
     }
 }

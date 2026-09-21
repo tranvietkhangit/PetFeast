@@ -55,7 +55,7 @@ builder.Services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IContactRepository, ContactRepository>();
 builder.Services.AddScoped<PointsRepository>();
-
+builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 // Session
 builder.Services.AddDistributedMemoryCache();
 

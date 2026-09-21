@@ -6,6 +6,9 @@
 
 @{
     var user = await UserManager.GetUserAsync(User);
+    var displayName = !string.IsNullOrWhiteSpace(user?.FullName)
+                ? user.FullName
+                : user?.UserName ?? "bạn";
 }
 
 <li class="nav-item dropdown">
@@ -20,8 +23,8 @@
 
         @if (SignInManager.IsSignedIn(User))
         {
-            <span>
-                Xin chào, @(user?.FullName ?? user?.UserName ?? "bạn")
+            <span class="account-name" title="@displayName">
+                Xin chào, @displayName
             </span>
         }
 
@@ -127,3 +130,13 @@
     </ul>
 
 </li>
+<style>
+    .account-name {
+        display: inline-block;
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+</style>
