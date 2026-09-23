@@ -45,7 +45,12 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Identity/Account/Login";
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+
+    options.Events.OnRedirectToAccessDenied = context =>
+    {
+        context.Response.Redirect("/Error/403");
+        return Task.CompletedTask;
+    };
 });
 
 // Repositories
@@ -70,15 +75,16 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+app.UseExceptionHandler("/Error");
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
 app.UseSession();
 
 app.UseAuthentication();
@@ -107,8 +113,6 @@ using (var scope = app.Services.CreateScope())
             new IdentityRole("Admin"));
     }
 
-    string email = "admin@gmail.com";
-    string password = "Admin@123";
 
     var admin =
         await userManager.FindByEmailAsync(email);
