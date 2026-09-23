@@ -280,7 +280,15 @@
         </div>
 
     </nav>
+    <!-- Back to Top Button -->
+    <button id="backToTop"
+            class="back-to-top"
+            type="button"
+            aria-label="Quay lại đầu trang">
 
+        <i class="bi bi-arrow-up"></i>
+
+    </button>
     <!-- BODY -->
     <main>
 
@@ -591,6 +599,35 @@
 
                     slider.scrollLeft = scrollLeft - walk;
 
+                });
+
+            });
+
+        });
+        //Back to top
+                document.addEventListener("DOMContentLoaded", function () {
+
+            const backToTop = document.getElementById("backToTop");
+
+            if (!backToTop) return;
+
+            // Hiển thị / ẩn nút khi cuộn
+            window.addEventListener("scroll", function () {
+
+                if (window.scrollY > 300) {
+                    backToTop.classList.add("show");
+                } else {
+                    backToTop.classList.remove("show");
+                }
+
+            });
+
+            // Cuộn về đầu trang
+            backToTop.addEventListener("click", function () {
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
                 });
 
             });
@@ -1148,5 +1185,50 @@
         font-weight: bold;
         line-height: 1;
     }
-    
+    /* Back to Top */
+    .back-to-top {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 45px;
+        height: 45px;
+        border: none;
+        border-radius: 50%;
+        background-color: #0d6efd;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease, background-color 0.3s ease;
+        z-index: 1000;
+    }
+
+        /* Khi nút được hiển thị */
+        .back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Hiệu ứng hover */
+        .back-to-top:hover {
+            background-color: #0a58ca;
+        }
+
+    /* Responsive cho điện thoại */
+    @@media (max-width: 576px) {
+        .back-to-top
+
+    {
+        bottom: 20px;
+        right: 20px;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    }
 </style>
