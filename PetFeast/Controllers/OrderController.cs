@@ -664,26 +664,72 @@ namespace PetFeast.Controllers
         [Authorize]
         public async Task<IActionResult> UserOrderDetail(int id)
         {
+            // ==========================================
+            // 1. LẤY USER HIỆN TẠI
+            // ==========================================
+
             var userId = User.FindFirstValue(
                 ClaimTypes.NameIdentifier);
 
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
+
+            // ==========================================
+            // 2. LẤY ĐƠN HÀNG
+            // ==========================================
+
             var order = await _context.Orders
-    .Include(x => x.OrderDetails)
-        .ThenInclude(x => x.Product)
-    .Include(x => x.UserVoucher)
-        .ThenInclude(x => x.Voucher)
-    .Include(x => x.ReturnRequest)
-    .FirstOrDefaultAsync(x =>
-        x.OrderId == id &&
-        x.UserId == userId);
+                .Include(x => x.OrderDetails)
+                    .ThenInclude(x => x.Product)
+
+                .Include(x => x.UserVoucher)
+                    .ThenInclude(x => x.Voucher)
+
+                .Include(x => x.ReturnRequest)
+
+                .FirstOrDefaultAsync(x =>
+                    x.OrderId == id &&
+                    x.UserId == userId);
+
+
+            // ==========================================
+            // 3. KHÔNG TÌM THẤY ĐƠN HÀNG
+            // ==========================================
 
             if (order == null)
             {
                 return NotFound();
             }
+
+
+            // ==========================================
+            // 4. LẤY DANH SÁCH SẢN PHẨM ĐÃ ĐÁNH GIÁ
+            // ==========================================
+
+            var reviewedOrderDetailIds =
+     await _context.ProductReviews
+         .Where(r =>
+             r.UserId == userId &&
+             order.OrderDetails
+                 .Select(od => od.OrderDetailId)
+                 .Contains(r.OrderDetailId))
+         .Select(r => r.OrderDetailId)
+         .ToListAsync();
+
+
+
+
+            // ==========================================
+            // 5. GỬI DANH SÁCH SANG VIEW
+            // ==========================================
+            ViewBag.ReviewedOrderDetailIds =
+                            reviewedOrderDetailIds;
+
+
+            // ==========================================
+            // 6. HIỂN THỊ VIEW
+            // ==========================================
 
             return View(order);
         }

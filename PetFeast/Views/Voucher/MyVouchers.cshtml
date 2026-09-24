@@ -134,18 +134,33 @@
 </div>
 
 
-@section Scripts {
-
+@section Scripts
+{
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
 
-        function copyVoucher(code) {
+            document.addEventListener("click", function (event) {
 
-            navigator.clipboard.writeText(code);
+                const button =
+                    event.target.closest(".redeem-voucher-btn");
 
-            alert("Đã sao chép mã voucher!");
+                if (!button) return;
 
-        }
+                const form = button.closest("form");
 
+                if (!form) return;
+
+                const points =
+                    button.dataset.voucherPoints;
+
+                showConfirmModal(
+                    `Bạn có chắc muốn đổi ${points} điểm lấy voucher này?`,
+                    function () {
+                        form.submit();
+                    }
+                );
+            });
+
+        });
     </script>
-
 }

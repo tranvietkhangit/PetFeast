@@ -24,29 +24,6 @@
             Thêm Voucher
         </a>
     </div>
-
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show">
-            <i class="bi bi-check-circle me-2"></i>
-            @TempData["Success"]
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert"></button>
-        </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show">
-            <i class="bi bi-exclamation-circle me-2"></i>
-            @TempData["Error"]
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert"></button>
-        </div>
-    }
-
     <div class="card shadow-sm border-0">
         <div class="card-body">
 
@@ -189,8 +166,7 @@
                                                   asp-action="DeleteVoucher"
                                                   asp-route-id="@voucher.VoucherId"
                                                   method="post"
-                                                  class="d-inline"
-                                                  onsubmit="return confirm('Bạn có chắc muốn xóa voucher này không?');">
+                                                  class="d-inline delete-voucher-form">
 
                                                 @Html.AntiForgeryToken()
 
@@ -222,3 +198,28 @@
     </div>
 
 </div>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.addEventListener("submit", function (event) {
+
+                const form = event.target;
+
+                if (!form.classList.contains("delete-voucher-form")) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                showConfirmModal(
+                    "Bạn có chắc muốn xóa voucher này không?",
+                    function () {
+                        form.submit();
+                    }
+                );
+            });
+
+        });
+    </script>
+}

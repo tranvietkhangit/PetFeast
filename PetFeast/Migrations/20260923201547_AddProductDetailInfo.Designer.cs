@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetFeast.Data;
 
@@ -11,9 +12,11 @@ using PetFeast.Data;
 namespace PetFeast.Migrations
 {
     [DbContext(typeof(PetFeastDBContext))]
-    partial class PetFeastDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260923201547_AddProductDetailInfo")]
+    partial class AddProductDetailInfo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -320,9 +323,6 @@ namespace PetFeast.Migrations
                     b.Property<int?>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ReviewReportId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -334,8 +334,6 @@ namespace PetFeast.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
-
-                    b.HasIndex("ReviewReportId");
 
                     b.HasIndex("UserId");
 
@@ -661,97 +659,6 @@ namespace PetFeast.Migrations
                     b.ToTable("Products");
                 });
 
-            modelBuilder.Entity("PetFeast.Models.Products.ProductReview", b =>
-                {
-                    b.Property<int>("ProductReviewId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductReviewId"));
-
-                    b.Property<string>("Comment")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("OrderDetailId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Rating")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("ProductReviewId");
-
-                    b.HasIndex("OrderDetailId")
-                        .IsUnique();
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("ProductReviews");
-                });
-
-            modelBuilder.Entity("PetFeast.Models.Reviews.ReviewReport", b =>
-                {
-                    b.Property<int>("ReviewReportId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ReviewReportId"));
-
-                    b.Property<string>("AdminNote")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<int>("ProductReviewId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("ReporterUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime?>("ResolvedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("ReviewReportId");
-
-                    b.HasIndex("ProductReviewId");
-
-                    b.HasIndex("ReporterUserId");
-
-                    b.ToTable("ReviewReports");
-                });
-
             modelBuilder.Entity("PetFeast.Models.ShoppingCart.Cart", b =>
                 {
                     b.Property<int>("CartId")
@@ -946,11 +853,6 @@ namespace PetFeast.Migrations
                         .WithMany()
                         .HasForeignKey("OrderId");
 
-                    b.HasOne("PetFeast.Models.Reviews.ReviewReport", "ReviewReport")
-                        .WithMany()
-                        .HasForeignKey("ReviewReportId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("PetFeast.Models.Identity.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -958,8 +860,6 @@ namespace PetFeast.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
-
-                    b.Navigation("ReviewReport");
 
                     b.Navigation("User");
                 });
@@ -990,7 +890,7 @@ namespace PetFeast.Migrations
                     b.HasOne("PetFeast.Models.Products.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Order");
@@ -1062,52 +962,6 @@ namespace PetFeast.Migrations
                         .IsRequired();
 
                     b.Navigation("Category");
-                });
-
-            modelBuilder.Entity("PetFeast.Models.Products.ProductReview", b =>
-                {
-                    b.HasOne("PetFeast.Models.Orders.OrderDetail", "OrderDetail")
-                        .WithOne()
-                        .HasForeignKey("PetFeast.Models.Products.ProductReview", "OrderDetailId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("PetFeast.Models.Products.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("PetFeast.Models.Identity.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("OrderDetail");
-
-                    b.Navigation("Product");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("PetFeast.Models.Reviews.ReviewReport", b =>
-                {
-                    b.HasOne("PetFeast.Models.Products.ProductReview", "ProductReview")
-                        .WithMany()
-                        .HasForeignKey("ProductReviewId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("PetFeast.Models.Identity.ApplicationUser", "ReporterUser")
-                        .WithMany()
-                        .HasForeignKey("ReporterUserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("ProductReview");
-
-                    b.Navigation("ReporterUser");
                 });
 
             modelBuilder.Entity("PetFeast.Models.ShoppingCart.Cart", b =>

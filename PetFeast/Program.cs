@@ -113,6 +113,8 @@ using (var scope = app.Services.CreateScope())
             new IdentityRole("Admin"));
     }
 
+    string email = "admin@gmail.com";
+    string password = "Admin@123";
 
     var admin =
         await userManager.FindByEmailAsync(email);

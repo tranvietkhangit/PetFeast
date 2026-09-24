@@ -1,10 +1,18 @@
 ﻿@model IEnumerable<PetFeast.Models.Products.Product>
-
+@using PetFeast.Models.ViewModels
 @{
     var favoriteProductIds =
         ViewBag.FavoriteProductIds
         as HashSet<int>
         ?? new HashSet<int>();
+
+    // =========================
+    // PRODUCT RATINGS
+    // =========================
+    var productRatings =
+        ViewBag.ProductRatings
+        as Dictionary<int, ProductRatingViewModel>
+        ?? new Dictionary<int, ProductRatingViewModel>();
 
     int currentPage =
         ViewBag.CurrentPage ?? 1;
@@ -14,7 +22,8 @@
 
     int? selectedMinDiscount =
         ViewBag.MinDiscount;
-
+        double? selectedMinRating =
+    ViewBag.MinRating;
     // GIÁ CAO NHẤT CỦA SẢN PHẨM KHUYẾN MÃI
     int maxDiscountPrice =
         ViewBag.MaxDiscountPrice ?? 0;
@@ -60,6 +69,9 @@
     <input type="hidden"
            name="minDiscount"
            value="@(selectedMinDiscount?.ToString() ?? "")" />
+           <input type="hidden"
+       name="minRating"
+       value="@(selectedMinRating?.ToString() ?? "")" />
 
     <input type="hidden"
            name="minPrice"
@@ -182,7 +194,164 @@
 
 </div>
 
+<!-- =========================
+     LỌC THEO ĐÁNH GIÁ
+========================= -->
 
+<div class="card mt-3">
+
+    <div class="card-header bg-primary text-white">
+        ĐÁNH GIÁ
+    </div>
+
+    <div class="card-body">
+
+        <div class="rating-filter">
+
+            <!-- 5 SAO -->
+            <label class="rating-filter-item">
+
+                <input type="radio"
+                       name="minRating"
+                       value="5"
+                       @(selectedMinRating == 5
+                           ? "checked"
+                           : "")
+                       onchange="applyRatingFilter(this)" />
+
+                <span class="rating-stars">
+
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+
+                </span>
+
+                <span class="rating-filter-text">
+                    5 sao
+                </span>
+
+            </label>
+
+
+            <!-- 4 SAO -->
+            <label class="rating-filter-item">
+
+                <input type="radio"
+                       name="minRating"
+                       value="4"
+                       @(selectedMinRating == 4
+                           ? "checked"
+                           : "")
+                       onchange="applyRatingFilter(this)" />
+
+                <span class="rating-stars">
+
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star"></i>
+
+                </span>
+
+                <span class="rating-filter-text">
+                    4 sao trở lên
+                </span>
+
+            </label>
+
+
+            <!-- 3 SAO -->
+            <label class="rating-filter-item">
+
+                <input type="radio"
+                       name="minRating"
+                       value="3"
+                       @(selectedMinRating == 3
+                           ? "checked"
+                           : "")
+                       onchange="applyRatingFilter(this)" />
+
+                <span class="rating-stars">
+
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+
+                </span>
+
+                <span class="rating-filter-text">
+                    3 sao trở lên
+                </span>
+
+            </label>
+
+
+            <!-- 2 SAO -->
+            <label class="rating-filter-item">
+
+                <input type="radio"
+                       name="minRating"
+                       value="2"
+                       @(selectedMinRating == 2
+                           ? "checked"
+                           : "")
+                       onchange="applyRatingFilter(this)" />
+
+                <span class="rating-stars">
+
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+
+                </span>
+
+                <span class="rating-filter-text">
+                    2 sao trở lên
+                </span>
+
+            </label>
+
+
+            <!-- 1 SAO -->
+            <label class="rating-filter-item">
+
+                <input type="radio"
+                       name="minRating"
+                       value="1"
+                       @(selectedMinRating == 1
+                           ? "checked"
+                           : "")
+                       onchange="applyRatingFilter(this)" />
+
+                <span class="rating-stars">
+
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+
+                </span>
+
+                <span class="rating-filter-text">
+                    1 sao trở lên
+                </span>
+
+            </label>
+
+        </div>
+
+    </div>
+
+</div>
                 <!-- =========================
                      GIÁ SAU KHI GIẢM
                 ========================== -->
@@ -294,6 +463,9 @@
                         <input type="hidden"
                                name="sortOrder"
                                value="@sortOrder" />
+                               <input type="hidden"
+       name="minRating"
+       value="@(selectedMinRating?.ToString() ?? "")" />
 
 
                         <!-- BUTTON -->
@@ -368,11 +540,17 @@
                     @foreach (var item in Model)
                     {
                        bool isFavorite =
-    favoriteProductIds.Contains(
-        item.ProductId);
+        favoriteProductIds.Contains(
+            item.ProductId);
 
-bool isOutOfStock =
-    item.Quantity <= 0;
+    bool isOutOfStock =
+        item.Quantity <= 0;
+
+    ProductRatingViewModel? rating = null;
+
+    productRatings.TryGetValue(
+        item.ProductId,
+        out rating);
 
                         <div class="col-md-4 mb-4">
 
@@ -450,12 +628,71 @@ bool isOutOfStock =
     @item.ProductName
 </h6>
 
+<!-- =========================
+     RATING
+========================= -->
 
-                                    <span class="discount-badge">
+<div class="product-rating">
 
-                                        -@item.DiscountPercent%
+    @if (rating != null && rating.ReviewCount > 0)
+    {
+        <span class="rating-stars">
 
-                                    </span>
+            @for (int i = 1; i <= 5; i++)
+            {
+                if (rating.AverageRating >= i)
+                {
+                    <i class="bi bi-star-fill"></i>
+                }
+                else if (rating.AverageRating >= i - 0.5)
+                {
+                    <i class="bi bi-star-half"></i>
+                }
+                else
+                {
+                    <i class="bi bi-star"></i>
+                }
+            }
+
+        </span>
+
+        <span class="rating-score">
+            @rating.AverageRating.ToString("0.0")
+        </span>
+
+        <span class="rating-divider">
+            ·
+        </span>
+
+        <span class="rating-count">
+            @rating.ReviewCount đánh giá
+        </span>
+    }
+    else
+    {
+        <span class="rating-stars">
+
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+
+        </span>
+
+        <span class="rating-count">
+            Chưa có đánh giá
+        </span>
+    }
+
+</div>
+
+
+<span class="discount-badge">
+
+    -@item.DiscountPercent%
+
+</span>
 
 
                                     <div class="product-price-box">
@@ -544,6 +781,7 @@ else
                                        href="@Url.Action("Discount", new {
                                            page = currentPage - 1,
                                            minDiscount = selectedMinDiscount,
+minRating = selectedMinRating,
                                            minPrice = minPrice,
                                            maxPrice = maxPrice,
                                            sortOrder = sortOrder
@@ -567,6 +805,7 @@ else
                                        href="@Url.Action("Discount", new {
                                            page = i,
                                            minDiscount = selectedMinDiscount,
+minRating = selectedMinRating,
                                            minPrice = minPrice,
                                            maxPrice = maxPrice,
                                            sortOrder = sortOrder
@@ -590,6 +829,7 @@ else
                                        href="@Url.Action("Discount", new {
                                            page = currentPage + 1,
                                            minDiscount = selectedMinDiscount,
+minRating = selectedMinRating,
                                            minPrice = minPrice,
                                            maxPrice = maxPrice,
                                            sortOrder = sortOrder
@@ -1042,7 +1282,7 @@ else
                             error
                         );
 
-                        alert(
+                        showErrorModal(
                             "Có lỗi xảy ra khi cập nhật yêu thích."
                         );
 
@@ -1140,7 +1380,7 @@ else
                 error
             );
 
-            alert(
+            showErrorModal(
                 "Không thể tải sản phẩm. Vui lòng thử lại."
             );
 
@@ -1514,7 +1754,7 @@ else
                         }
                         else {
 
-                            alert(
+                            showErrorModal(
                                 data.message ||
                                 "Không thể thêm sản phẩm vào giỏ hàng."
                             );
@@ -1535,7 +1775,7 @@ else
                             error
                         );
 
-                        alert(
+                        showErrorModal(
                             "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng."
                         );
 
@@ -1550,7 +1790,7 @@ else
                 });
 
         });
-        async function applyDiscountFilter(radio) {
+       async function applyDiscountFilter(radio) {
 
     const form = radio.closest("form");
 
@@ -1559,50 +1799,225 @@ else
 
     const params = new URLSearchParams();
 
-    // Mức giảm giá
-    if (radio.value !== "") {
-        params.set("minDiscount", radio.value);
+
+    // =========================
+    // MỨC GIẢM GIÁ
+    // =========================
+
+    const discountRadio =
+        form.querySelector(
+            'input[name="minDiscount"]:checked'
+        );
+
+    if (discountRadio &&
+        discountRadio.value !== "") {
+
+        params.set(
+            "minDiscount",
+            discountRadio.value
+        );
     }
 
-    // Giá hiện tại
+
+    // =========================
+    // ĐÁNH GIÁ
+    // =========================
+
+    const ratingRadio =
+        form.querySelector(
+            'input[name="minRating"]:checked'
+        );
+
+    if (ratingRadio &&
+        ratingRadio.value !== "") {
+
+        params.set(
+            "minRating",
+            ratingRadio.value
+        );
+    }
+
+
+    // =========================
+    // GIÁ HIỆN TẠI
+    // =========================
+
     const minPriceInput =
         document.getElementById("minPriceInput");
 
     const maxPriceInput =
         document.getElementById("maxPriceInput");
 
-    if (minPriceInput && minPriceInput.value) {
+
+    if (minPriceInput &&
+        minPriceInput.value) {
+
         params.set(
             "minPrice",
             minPriceInput.value
         );
     }
 
-    if (maxPriceInput && maxPriceInput.value) {
+
+    if (maxPriceInput &&
+        maxPriceInput.value) {
+
         params.set(
             "maxPrice",
             maxPriceInput.value
         );
     }
 
-    // Giữ sort
+
+    // =========================
+    // GIỮ SORT
+    // =========================
+
     const sortSelect =
         document.querySelector(
             '.discount-sort-form select[name="sortOrder"]'
         );
 
-    if (sortSelect && sortSelect.value) {
+    if (sortSelect &&
+        sortSelect.value) {
+
         params.set(
             "sortOrder",
             sortSelect.value
         );
     }
 
-    // Luôn về trang 1
-    params.set("page", "1");
+
+    // =========================
+    // LUÔN VỀ TRANG 1
+    // =========================
+
+    params.set(
+        "page",
+        "1"
+    );
+
 
     const url =
         `/Home/Discount?${params.toString()}`;
+
+
+    await loadDiscountPage(url);
+}
+async function applyRatingFilter(radio) {
+
+    const form =
+        radio.closest("form");
+
+    if (!form)
+        return;
+
+
+    const params =
+        new URLSearchParams();
+
+
+    // =========================
+    // MỨC GIẢM GIÁ
+    // =========================
+
+    const discountRadio =
+        form.querySelector(
+            'input[name="minDiscount"]:checked'
+        );
+
+    if (discountRadio &&
+        discountRadio.value !== "") {
+
+        params.set(
+            "minDiscount",
+            discountRadio.value
+        );
+    }
+
+
+    // =========================
+    // ĐÁNH GIÁ
+    // =========================
+
+    if (radio.value !== "") {
+
+        params.set(
+            "minRating",
+            radio.value
+        );
+
+    }
+
+
+    // =========================
+    // GIÁ
+    // =========================
+
+    const minPriceInput =
+        document.getElementById(
+            "minPriceInput"
+        );
+
+    const maxPriceInput =
+        document.getElementById(
+            "maxPriceInput"
+        );
+
+
+    if (minPriceInput &&
+        minPriceInput.value) {
+
+        params.set(
+            "minPrice",
+            minPriceInput.value
+        );
+    }
+
+
+    if (maxPriceInput &&
+        maxPriceInput.value) {
+
+        params.set(
+            "maxPrice",
+            maxPriceInput.value
+        );
+    }
+
+
+    // =========================
+    // SORT
+    // =========================
+
+    const sortSelect =
+        document.querySelector(
+            '.discount-sort-form select[name="sortOrder"]'
+        );
+
+
+    if (sortSelect &&
+        sortSelect.value) {
+
+        params.set(
+            "sortOrder",
+            sortSelect.value
+        );
+    }
+
+
+    // =========================
+    // TRANG 1
+    // =========================
+
+    params.set(
+        "page",
+        "1"
+    );
+
+
+    const url =
+        `/Home/Discount?${params.toString()}`;
+
 
     await loadDiscountPage(url);
 }
@@ -2218,4 +2633,93 @@ else
             width: 100%;
         }
     }
+    /* =========================
+   PRODUCT RATING
+========================= */
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    min-height: 24px;
+
+    margin-bottom: 7px;
+
+    font-size: 13px;
+}
+
+.rating-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.rating-stars i {
+    color: #ffc107;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.rating-score {
+    color: #343a40;
+    font-weight: 600;
+}
+
+.rating-divider {
+    color: #adb5bd;
+    margin: 0 1px;
+}
+
+.rating-count {
+    color: #6c757d;
+}
+/* =========================
+   RATING FILTER
+========================= */
+
+.rating-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rating-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    cursor: pointer;
+
+    padding: 6px 8px;
+
+    border-radius: 6px;
+
+    transition: background 0.2s ease;
+}
+
+.rating-filter-item:hover {
+    background: #f1f6ff;
+}
+
+.rating-filter-item input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.rating-filter-item .rating-stars {
+    display: inline-flex;
+    gap: 1px;
+}
+
+.rating-filter-item .rating-stars i {
+    color: #ffc107;
+    font-size: 15px;
+}
+
+.rating-filter-text {
+    font-size: 14px;
+    color: #343a40;
+}
 </style>

@@ -7,171 +7,402 @@
 
 <div class="container-fluid admin-list-page">
 
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- =========================================
+         HEADER
+    ========================================== -->
+
+    <div class="admin-page-header">
+
         <div>
-            <h3 class="fw-bold mb-1">
+            <h3 class="admin-page-title">
                 Yêu cầu trả hàng
             </h3>
 
-            <p class="text-muted mb-0">
-                Quản lý và xử lý các yêu cầu trả hàng của khách hàng.
+            <p class="text-muted mb-0 mt-1">
+                Quản lý và xử lý các yêu cầu trả hàng của khách hàng
             </p>
         </div>
+
     </div>
 
-    <!-- THÔNG BÁO -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm"
-             role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            @TempData["Success"]
 
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
-        </div>
-    }
+    <!-- =========================================
+         THỐNG KÊ
+    ========================================== -->
 
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm"
-             role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            @TempData["Error"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
-        </div>
-    }
-
-    <!-- THỐNG KÊ -->
     <div class="row g-3 mb-4">
 
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon pending">
+        <!-- CHỜ XỬ LÝ -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="return-stat-card">
+
+                <div class="return-stat-icon pending">
                     <i class="bi bi-clock-history"></i>
                 </div>
 
-                <div>
-                    <div class="stat-title">Chờ xử lý</div>
-                    <div class="stat-number">
+                <div class="return-stat-content">
+
+                    <div class="return-stat-title">
+                        Chờ xử lý
+                    </div>
+
+                    <div class="return-stat-number">
                         @Model.Count(x => x.Status == "Chờ xử lý")
                     </div>
+
                 </div>
+
             </div>
+
         </div>
 
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon approved">
-                    <i class="bi bi-check-circle"></i>
+
+        <!-- ĐANG XỬ LÝ -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="return-stat-card">
+
+                <div class="return-stat-icon processing">
+                    <i class="bi bi-arrow-repeat"></i>
                 </div>
 
-                <div>
-                    <div class="stat-title">Đã duyệt</div>
-                    <div class="stat-number">
+                <div class="return-stat-content">
+
+                    <div class="return-stat-title">
+                        Đang xử lý
+                    </div>
+
+                    <div class="return-stat-number">
+
                         @Model.Count(x =>
                         x.Status == "Đã duyệt" ||
                         x.Status == "Đang chờ nhận hàng" ||
                         x.Status == "Đã nhận hàng" ||
                         x.Status == "Đang kiểm tra")
+
                     </div>
+
                 </div>
+
             </div>
+
         </div>
 
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon completed">
+
+        <!-- ĐÃ HOÀN TIỀN -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="return-stat-card">
+
+                <div class="return-stat-icon completed">
                     <i class="bi bi-check2-all"></i>
                 </div>
 
-                <div>
-                    <div class="stat-title">Đã hoàn tiền</div>
-                    <div class="stat-number">
+                <div class="return-stat-content">
+
+                    <div class="return-stat-title">
+                        Đã hoàn tiền
+                    </div>
+
+                    <div class="return-stat-number">
                         @Model.Count(x => x.Status == "Đã hoàn tiền")
                     </div>
+
                 </div>
+
             </div>
+
         </div>
 
-        <div class="col-md-3">
-            <div class="stat-card">
-                <div class="stat-icon rejected">
+
+        <!-- TỪ CHỐI -->
+
+        <div class="col-xl-3 col-md-6">
+
+            <div class="return-stat-card">
+
+                <div class="return-stat-icon rejected">
                     <i class="bi bi-x-circle"></i>
                 </div>
 
-                <div>
-                    <div class="stat-title">Từ chối</div>
-                    <div class="stat-number">
+                <div class="return-stat-content">
+
+                    <div class="return-stat-title">
+                        Từ chối
+                    </div>
+
+                    <div class="return-stat-number">
                         @Model.Count(x => x.Status == "Từ chối")
                     </div>
+
                 </div>
+
             </div>
+
         </div>
 
     </div>
 
-    <!-- DANH SÁCH -->
-    <div class="card border-0 shadow-sm return-list-card">
 
-        <div class="card-header bg-white border-0 py-3">
-            <div class="d-flex justify-content-between align-items-center">
+    <!-- =========================================
+         TÌM KIẾM
+    ========================================== -->
 
-                <div>
-                    <h5 class="fw-bold mb-1">
-                        Danh sách yêu cầu
-                    </h5>
+    <div class="admin-search-card mb-4">
 
-                    <span class="text-muted small">
-                        Tổng cộng @Model.Count() yêu cầu
-                    </span>
+        <form asp-controller="Admin"
+              asp-action="ReturnRequestList"
+              method="get">
+
+            <div class="admin-search-row">
+
+
+                <!-- INPUT -->
+
+                <div class="admin-search-input">
+
+                    <i class="bi bi-search"></i>
+
+                    <input type="text"
+                           name="keyword"
+                           value="@ViewBag.Keyword"
+                           placeholder="Tìm mã yêu cầu, mã đơn, tên khách hàng hoặc email..." />
+
                 </div>
 
+
+                <!-- STATUS -->
+
+                <div class="admin-search-select-wrapper">
+
+                    <select name="status"
+                            class="admin-search-select">
+
+                        <option value="">
+                            Tất cả trạng thái
+                        </option>
+
+                        @if (ViewBag.Status == "Chờ xử lý")
+                        {
+                            <option value="Chờ xử lý" selected>
+                                Chờ xử lý
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="Chờ xử lý">
+                                Chờ xử lý
+                            </option>
+                        }
+
+                        @if (ViewBag.Status == "Đã duyệt")
+                        {
+                            <option value="Đã duyệt" selected>
+                                Đã duyệt
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="Đã duyệt">
+                                Đã duyệt
+                            </option>
+                        }
+
+                        @if (ViewBag.Status == "Đang chờ nhận hàng")
+                        {
+                            <option value="Đang chờ nhận hàng" selected>
+                                Đang chờ nhận hàng
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="Đang chờ nhận hàng">
+                                Đang chờ nhận hàng
+                            </option>
+                        }
+
+                        @if (ViewBag.Status == "Đã nhận hàng")
+                        {
+                            <option value="Đã nhận hàng" selected>
+                                Đã nhận hàng
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="Đã nhận hàng">
+                                Đã nhận hàng
+                            </option>
+                        }
+
+                        @if (ViewBag.Status == "Đang kiểm tra")
+                        {
+                            <option value="Đang kiểm tra" selected>
+                                Đang kiểm tra
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="Đang kiểm tra">
+                                Đang kiểm tra
+                            </option>
+                        }
+
+                        @if (ViewBag.Status == "Đã hoàn tiền")
+                        {
+                            <option value="Đã hoàn tiền" selected>
+                                Đã hoàn tiền
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="Đã hoàn tiền">
+                                Đã hoàn tiền
+                            </option>
+                        }
+
+                        @if (ViewBag.Status == "Từ chối")
+                        {
+                            <option value="Từ chối" selected>
+                                Từ chối
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="Từ chối">
+                                Từ chối
+                            </option>
+                        }
+
+                    </select>
+
+                </div>
+
+
+                <!-- SEARCH -->
+
+                <button type="submit"
+                        class="admin-search-btn">
+
+                    <i class="bi bi-search me-1"></i>
+                    Tìm kiếm
+
+                </button>
+
+
+                <!-- RESET -->
+
+                <a asp-controller="Admin"
+                   asp-action="ReturnRequestList"
+                   class="admin-reset-btn">
+
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Làm mới
+
+                </a>
+
             </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- =========================================
+         DANH SÁCH
+    ========================================== -->
+
+    <div class="admin-card">
+
+        <!-- CARD HEADER -->
+
+        <div class="admin-card-header">
+
+            <div>
+
+                <h4>
+                    <i class="bi bi-arrow-return-left me-2"></i>
+                    Danh sách yêu cầu
+                </h4>
+
+                <span class="admin-list-count">
+                    Tổng cộng @Model.Count() yêu cầu
+                </span>
+
+            </div>
+
         </div>
 
-        <div class="card-body p-0">
+
+        <!-- CARD BODY -->
+
+        <div class="admin-card-body p-0">
 
             @if (!Model.Any())
             {
-                <div class="empty-state">
-                    <div class="empty-icon">
+                <!-- EMPTY -->
+
+                <div class="return-empty-state">
+
+                    <div class="return-empty-icon">
                         <i class="bi bi-inbox"></i>
                     </div>
 
-                    <h5 class="fw-bold mt-3">
-                        Chưa có yêu cầu trả hàng
+                    <h5>
+                        Không tìm thấy yêu cầu trả hàng
                     </h5>
 
-                    <p class="text-muted mb-0">
-                        Hiện tại chưa có khách hàng nào gửi yêu cầu trả hàng.
+                    <p>
+                        Không có yêu cầu nào phù hợp với điều kiện tìm kiếm.
                     </p>
+
                 </div>
             }
             else
             {
-                <div class="table-responsive">
+                <div class="admin-table-wrapper">
 
-                    <table class="table align-middle mb-0 return-table">
+                    <table class="table admin-table return-table">
 
                         <thead>
+
                             <tr>
-                                <th class="ps-4">#</th>
-                                <th>Đơn hàng</th>
-                                <th>Khách hàng</th>
-                                <th>Lý do</th>
-                                <th>Ngày gửi</th>
-                                <th>Trạng thái</th>
-                                <th class="text-center pe-4">Thao tác</th>
+
+                                <th>
+                                    Mã yêu cầu
+                                </th>
+
+                                <th>
+                                    Đơn hàng
+                                </th>
+
+                                <th>
+                                    Khách hàng
+                                </th>
+
+                                <th>
+                                    Lý do
+                                </th>
+
+                                <th>
+                                    Ngày gửi
+                                </th>
+
+                                <th>
+                                    Trạng thái
+                                </th>
+
+                                <th class="text-center">
+                                    Thao tác
+                                </th>
+
                             </tr>
+
                         </thead>
+
 
                         <tbody>
 
@@ -179,15 +410,26 @@
                             {
                                 <tr>
 
-                                    <!-- ID -->
-                                    <td class="ps-4">
-                                        <span class="fw-bold text-muted">
+
+                                    <!-- =================================
+                                         REQUEST ID
+                                    ================================== -->
+
+                                    <td>
+
+                                        <span class="return-id">
                                             #@item.ReturnRequestId
                                         </span>
+
                                     </td>
 
-                                    <!-- ORDER -->
+
+                                    <!-- =================================
+                                         ORDER
+                                    ================================== -->
+
                                     <td>
+
                                         @if (item.Order != null)
                                         {
                                             <a asp-controller="Admin"
@@ -196,6 +438,7 @@
                                                class="order-link">
 
                                                 #@item.Order.OrderId
+
                                             </a>
                                         }
                                         else
@@ -204,118 +447,206 @@
                                                 Không xác định
                                             </span>
                                         }
+
+                                </td>
+
+
+                                <!-- =================================
+                                     CUSTOMER
+                                ================================== -->
+
+                                <td>
+
+                                    <div class="return-customer">
+
+                                        <div class="return-customer-avatar">
+
+                                            <i class="bi bi-person-fill"></i>
+
+                                        </div>
+
+                                        <div class="return-customer-info">
+
+                                            <div class="return-customer-name">
+
+                                                @(item.User?.FullName
+                                                                                            ?? item.Order?.CustomerName
+                                                                                            ?? "Không xác định")
+
+                                            </div>
+
+                                            <div class="return-customer-email">
+
+                                                @(item.User?.Email
+                                                                                            ?? "Không có email")
+
+                                        </div>
+
+                                            </div>
+
+                                        </div>
+
                                     </td>
 
-                                    <!-- CUSTOMER -->
-                                    <td>
-                                        <div class="customer-info">
 
-                                            <div class="customer-avatar">
-                                                <i class="bi bi-person-fill"></i>
-                                            </div>
+                                    <!-- =================================
+                                         REASON
+                                    ================================== -->
+
+                                    <td>
+
+                                        <span class="return-reason"
+                                              title="@item.Reason">
+
+                                            @item.Reason
+
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- =================================
+                                         DATE
+                                    ================================== -->
+
+                                    <td>
+
+                                        <div class="return-date">
 
                                             <div>
-                                                <div class="fw-semibold">
-                                                    @item.User?.FullName
-                                                </div>
-
-                                                <div class="text-muted small">
-                                                    @item.User?.Email
-                                                </div>
+                                                @item.CreatedAt.ToString("dd/MM/yyyy")
                                             </div>
 
-                                        </div>
-                                    </td>
+                                            <span>
+                                                @item.CreatedAt.ToString("HH:mm")
+                                            </span>
 
-                                    <!-- REASON -->
-                                    <td>
-                                        <span class="reason-text">
-                                            @item.Reason
-                                        </span>
-                                    </td>
-
-                                    <!-- DATE -->
-                                    <td>
-                                        <div class="fw-semibold">
-                                            @item.CreatedAt.ToString("dd/MM/yyyy")
                                         </div>
 
-                                        <div class="text-muted small">
-                                            @item.CreatedAt.ToString("HH:mm")
-                                        </div>
                                     </td>
 
-                                    <!-- STATUS -->
+
+                                    <!-- =================================
+                                         STATUS
+                                    ================================== -->
+
                                     <td>
-                                        @switch (item.Status)
+
+                                @switch (item.Status)
                                         {
+
                                             case "Chờ xử lý":
+
                                                 <span class="status-badge status-pending">
+
                                                     <i class="bi bi-clock me-1"></i>
                                                     Chờ xử lý
+
                                                 </span>
+
                                                 break;
+
 
                                             case "Đã duyệt":
+
                                                 <span class="status-badge status-approved">
+
                                                     <i class="bi bi-check-circle me-1"></i>
                                                     Đã duyệt
+
                                                 </span>
+
                                                 break;
+
 
                                             case "Đang chờ nhận hàng":
+
                                                 <span class="status-badge status-shipping">
+
                                                     <i class="bi bi-box-seam me-1"></i>
                                                     Đang chờ nhận hàng
+
                                                 </span>
+
                                                 break;
+
 
                                             case "Đã nhận hàng":
+
                                                 <span class="status-badge status-received">
+
                                                     <i class="bi bi-box2-heart me-1"></i>
                                                     Đã nhận hàng
+
                                                 </span>
+
                                                 break;
+
 
                                             case "Đang kiểm tra":
+
                                                 <span class="status-badge status-inspecting">
+
                                                     <i class="bi bi-search me-1"></i>
                                                     Đang kiểm tra
+
                                                 </span>
+
                                                 break;
+
 
                                             case "Đã hoàn tiền":
+
                                                 <span class="status-badge status-completed">
+
                                                     <i class="bi bi-cash-coin me-1"></i>
                                                     Đã hoàn tiền
+
                                                 </span>
+
                                                 break;
+
 
                                             case "Từ chối":
+
                                                 <span class="status-badge status-rejected">
+
                                                     <i class="bi bi-x-circle me-1"></i>
                                                     Từ chối
+
                                                 </span>
+
                                                 break;
+
 
                                             default:
+
                                                 <span class="status-badge status-default">
+
                                                     @item.Status
+
                                                 </span>
+
                                                 break;
                                         }
+
                                     </td>
 
-                                    <!-- ACTION -->
-                                    <td class="text-center pe-4">
+
+                                    <!-- =================================
+                                         ACTION
+                                    ================================== -->
+
+                                    <td class="text-center">
 
                                         <a asp-controller="Admin"
                                            asp-action="ReturnRequestDetail"
                                            asp-route-id="@item.ReturnRequestId"
-                                           class="btn btn-detail">
+                                           class="admin-btn-detail">
 
                                             <i class="bi bi-eye me-1"></i>
                                             Chi tiết
+
                                         </a>
 
                                     </td>
@@ -331,127 +662,256 @@
             }
 
         </div>
+
     </div>
 
 </div>
 
+
+<!-- =========================================
+     CSS
+========================================== -->
+
 <style>
 
-    /* =========================
-           GENERAL
-        ========================= */
-
-    .return-list-card {
-        border-radius: 14px;
-        overflow: hidden;
-    }
-
-    /* =========================
+    /* =========================================
            STAT CARD
-        ========================= */
+        ========================================= */
 
-    .stat-card {
-        background: #fff;
-        border-radius: 14px;
+    .return-stat-card {
+        background: #ffffff;
+        border-radius: 12px;
         padding: 18px;
         display: flex;
         align-items: center;
-        gap: 15px;
-        box-shadow: 0 3px 15px rgba(0,0,0,.06);
-        transition: all .2s ease;
+        gap: 14px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
     }
 
-        .stat-card:hover {
+        .return-stat-card:hover {
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         }
 
-    .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
+
+    .return-stat-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 21px;
+        font-size: 20px;
         flex-shrink: 0;
     }
 
-        .stat-icon.pending {
+
+        .return-stat-icon.pending {
             background: #fff8e1;
-            color: #f0ad00;
+            color: #b78103;
         }
 
-        .stat-icon.approved {
-            background: #e8f5e9;
-            color: #198754;
-        }
 
-        .stat-icon.completed {
+        .return-stat-icon.processing {
             background: #e7f1ff;
             color: #0d6efd;
         }
 
-        .stat-icon.rejected {
+
+        .return-stat-icon.completed {
+            background: #e8f5e9;
+            color: #198754;
+        }
+
+
+        .return-stat-icon.rejected {
             background: #fdecec;
             color: #dc3545;
         }
 
-    .stat-title {
+
+    .return-stat-title {
         color: #6c757d;
         font-size: 13px;
         margin-bottom: 2px;
     }
 
-    .stat-number {
+
+    .return-stat-number {
+        color: #212529;
         font-size: 22px;
         font-weight: 700;
-        color: #212529;
     }
 
-    /* =========================
-           TABLE
-        ========================= */
 
-    .return-table thead th {
-        background: #f8f9fa;
-        color: #495057;
-        font-size: 13px;
-        font-weight: 700;
-        padding-top: 14px;
-        padding-bottom: 14px;
-        border-bottom: 1px solid #e9ecef;
-        white-space: nowrap;
+    /* =========================================
+           SEARCH
+        ========================================= */
+
+    .admin-search-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
 
-    .return-table tbody td {
-        padding-top: 15px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #f0f0f0;
-    }
 
-    .return-table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    .return-table tbody tr {
-        transition: background-color .2s ease;
-    }
-
-        .return-table tbody tr:hover {
-            background: #f8fbff;
-        }
-
-    /* =========================
-           CUSTOMER
-        ========================= */
-
-    .customer-info {
+    .admin-search-row {
         display: flex;
         align-items: center;
         gap: 10px;
     }
 
-    .customer-avatar {
+
+    .admin-search-input {
+        position: relative;
+        flex: 1;
+    }
+
+
+        .admin-search-input i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+
+        .admin-search-input input {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0 14px 0 40px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+
+            .admin-search-input input:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+            }
+
+
+            .admin-search-input input::placeholder {
+                color: #adb5bd;
+            }
+
+
+    .admin-search-select-wrapper {
+        min-width: 190px;
+    }
+
+
+    .admin-search-select {
+        width: 100%;
+        height: 42px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 0 12px;
+        font-size: 14px;
+        color: #495057;
+        background: #ffffff;
+        outline: none;
+        cursor: pointer;
+    }
+
+
+        .admin-search-select:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+        }
+
+
+    .admin-search-btn {
+        height: 42px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 8px;
+        background: #0d6efd;
+        color: #ffffff;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+
+        .admin-search-btn:hover {
+            background: #0a58ca;
+        }
+
+
+    .admin-reset-btn {
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        color: #495057;
+        background: #ffffff;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+
+        .admin-reset-btn:hover {
+            background: #f8f9fa;
+            color: #212529;
+        }
+
+
+    /* =========================================
+           CARD HEADER
+        ========================================= */
+
+    .admin-list-count {
+        display: block;
+        color: #6c757d;
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+
+    /* =========================================
+           TABLE
+        ========================================= */
+
+    .return-table {
+        margin-bottom: 0;
+    }
+
+
+        .return-table thead th {
+            white-space: nowrap;
+        }
+
+
+    .return-id {
+        color: #495057;
+        font-weight: 600;
+    }
+
+
+    .return-customer {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 190px;
+    }
+
+
+    .return-customer-avatar {
         width: 38px;
         height: 38px;
         border-radius: 50%;
@@ -463,28 +923,61 @@
         flex-shrink: 0;
     }
 
-    .order-link {
-        color: #0d6efd;
-        font-weight: 700;
-        text-decoration: none;
+
+    .return-customer-info {
+        min-width: 0;
     }
 
-        .order-link:hover {
-            color: #0a58ca;
-            text-decoration: underline;
-        }
 
-    .reason-text {
-        display: inline-block;
-        max-width: 210px;
+    .return-customer-name {
+        font-weight: 600;
+        color: #212529;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        max-width: 180px;
     }
 
-    /* =========================
+
+    .return-customer-email {
+        color: #6c757d;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+
+
+    .return-reason {
+        display: inline-block;
+        max-width: 220px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: #495057;
+    }
+
+
+    .return-date {
+        white-space: nowrap;
+        font-weight: 500;
+        color: #212529;
+    }
+
+
+        .return-date span {
+            display: block;
+            color: #6c757d;
+            font-size: 12px;
+            font-weight: 400;
+            margin-top: 2px;
+        }
+
+
+    /* =========================================
            STATUS
-        ========================= */
+        ========================================= */
 
     .status-badge {
         display: inline-flex;
@@ -496,81 +989,97 @@
         white-space: nowrap;
     }
 
+
     .status-pending {
         background: #fff8e1;
         color: #b78103;
     }
+
 
     .status-approved {
         background: #e8f5e9;
         color: #198754;
     }
 
+
     .status-shipping {
         background: #e7f1ff;
         color: #0d6efd;
     }
+
 
     .status-received {
         background: #e8f0fe;
         color: #1769aa;
     }
 
+
     .status-inspecting {
         background: #f0eafd;
         color: #6f42c1;
     }
+
 
     .status-completed {
         background: #dff6e8;
         color: #157347;
     }
 
+
     .status-rejected {
         background: #fdecec;
         color: #dc3545;
     }
+
 
     .status-default {
         background: #f1f3f5;
         color: #495057;
     }
 
-    /* =========================
-           BUTTON
-        ========================= */
 
-    .btn-detail {
-        background: #0d6efd;
-        color: #fff;
-        border-radius: 8px;
+    /* =========================================
+           BUTTON
+        ========================================= */
+
+    .admin-btn-detail {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         padding: 7px 13px;
+        border-radius: 8px;
+        background: #0d6efd;
+        color: #ffffff;
+        text-decoration: none;
         font-size: 13px;
         font-weight: 600;
-        border: none;
-        transition: all .2s ease;
+        transition: all 0.2s ease;
+        white-space: nowrap;
     }
 
-        .btn-detail:hover {
+
+        .admin-btn-detail:hover {
             background: #0a58ca;
-            color: #fff;
+            color: #ffffff;
             transform: translateY(-1px);
         }
 
-    /* =========================
-           EMPTY
-        ========================= */
 
-    .empty-state {
+    /* =========================================
+           EMPTY STATE
+        ========================================= */
+
+    .return-empty-state {
         text-align: center;
         padding: 70px 20px;
     }
 
-    .empty-icon {
+
+    .return-empty-icon {
         width: 70px;
         height: 70px;
         border-radius: 50%;
-        margin: 0 auto;
+        margin: 0 auto 16px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -579,14 +1088,57 @@
         font-size: 30px;
     }
 
-    /* =========================
-           RESPONSIVE
-        ========================= */
 
-    @@media (max-width: 992px) {
+    .return-empty-state h5 {
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+
+
+    .return-empty-state p {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+
+
+    /* =========================================
+           RESPONSIVE
+        ========================================= */
+
+    @@media (max-width: 1100px) {
+
+        .admin-search-row {
+            flex-wrap: wrap;
+        }
+
+        .admin-search-input {
+            flex-basis: 100%;
+        }
+    }
+
+
+    @@media (max-width: 768px) {
+
+        .admin-search-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .admin-search-input,
+        .admin-search-select-wrapper,
+        .admin-search-btn,
+        .admin-reset-btn {
+            width: 100%;
+            flex-basis: auto;
+        }
+
+        .admin-search-btn,
+        .admin-reset-btn {
+            justify-content: center;
+        }
 
         .return-table {
-            min-width: 1000px;
+            min-width: 1050px;
         }
     }
 

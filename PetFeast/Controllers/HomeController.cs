@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PetFeast.Data;
 using PetFeast.Models;
 using PetFeast.Models.Interfaces;
+using PetFeast.Models.ViewModels;
 using System.Diagnostics;
 using System.Security.Claims;
 namespace PetFeast.Controllers
@@ -26,7 +27,7 @@ namespace PetFeast.Controllers
                 _productRepository.GetBestSellingProducts(8);
 
             // =========================
-            // S?N PH?M YÊU THÍCH
+            // SẢN PHẨM YÊU THÍCH
             // =========================
 
             var favoriteProductIds = new HashSet<int>();
@@ -48,13 +49,45 @@ namespace PetFeast.Controllers
 
             ViewBag.FavoriteProductIds = favoriteProductIds;
 
-            return View(products);
+            // =========================
+            // LẤY ĐÁNH GIÁ CHO PRODUCT CARD
+            // =========================
+
+            var productList = products.ToList();
+
+            var productIds = productList
+                .Select(p => p.ProductId)
+                .ToList();
+
+            var productRatings = _context.ProductReviews
+                .Where(r =>
+                    productIds.Contains(r.ProductId) &&
+                    !r.IsDeleted)
+                .GroupBy(r => r.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    AverageRating = g.Average(r => r.Rating),
+                    ReviewCount = g.Count()
+                })
+                .ToDictionary(
+                    x => x.ProductId,
+                    x => new ProductRatingViewModel
+                    {
+                        AverageRating = x.AverageRating,
+                        ReviewCount = x.ReviewCount
+                    });
+
+            ViewBag.ProductRatings = productRatings;
+
+            return View(productList);
         }
         public IActionResult Discount(
     int page = 1,
     int? minPrice = null,
     int? maxPrice = null,
     int? minDiscount = null,
+    double? minRating = null,
     string? sortOrder = null)
         {
             const int pageSize = 9;
@@ -99,7 +132,23 @@ namespace PetFeast.Controllers
                 };
             }
 
+            // ==========================================
+            // LỌC THEO ĐÁNH GIÁ
+            // ==========================================
 
+            if (minRating.HasValue)
+            {
+                var ratingProductIds = _context.ProductReviews
+                    .Where(r => !r.IsDeleted)
+                    .GroupBy(r => r.ProductId)
+                    .Where(g =>
+                        g.Average(r => r.Rating) >= minRating.Value)
+                    .Select(g => g.Key);
+
+                products = products
+                    .Where(x => ratingProductIds.Contains(x.ProductId))
+                    .ToList();
+            }
             // ==========================================
             // LỌC GIÁ SAU KHI GIẢM - TỪ
             // ==========================================
@@ -199,7 +248,34 @@ namespace PetFeast.Controllers
 
             ViewBag.FavoriteProductIds =
                 favoriteProductIds;
+            // ==========================================
+            // LẤY ĐÁNH GIÁ CHO PRODUCT CARD
+            // ==========================================
 
+            var productIds = pagedProducts
+                .Select(p => p.ProductId)
+                .ToList();
+
+            var productRatings = _context.ProductReviews
+                .Where(r =>
+                    productIds.Contains(r.ProductId) &&
+                    !r.IsDeleted)
+                .GroupBy(r => r.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    AverageRating = g.Average(r => r.Rating),
+                    ReviewCount = g.Count()
+                })
+                .ToDictionary(
+                    x => x.ProductId,
+                    x => new ProductRatingViewModel
+                    {
+                        AverageRating = x.AverageRating,
+                        ReviewCount = x.ReviewCount
+                    });
+
+            ViewBag.ProductRatings = productRatings;
 
             // ==========================================
             // TÍNH GIÁ CAO NHẤT SAU KHI GIẢM
@@ -228,7 +304,8 @@ namespace PetFeast.Controllers
 
             ViewBag.MinDiscount =
                 minDiscount;
-
+            ViewBag.MinRating =
+    minRating;
             ViewBag.MinPrice =
                 minPrice ?? 0;
 

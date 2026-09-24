@@ -40,10 +40,11 @@ namespace PetFeast.Controllers
             _notificationRepository = notificationRepository;
         }
         private async Task CreateNotificationAsync(
-    string? userId,
-    int? orderId,
-    string title,
-    string message)
+     string? userId,
+     int? orderId,
+     string title,
+     string message,
+     int? reviewReportId = null)
         {
             if (string.IsNullOrWhiteSpace(userId))
                 return;
@@ -52,6 +53,7 @@ namespace PetFeast.Controllers
             {
                 UserId = userId,
                 OrderId = orderId,
+                ReviewReportId = reviewReportId,
                 Title = title,
                 Message = message,
                 CreatedAt = DateTime.Now,
@@ -297,13 +299,37 @@ namespace PetFeast.Controllers
         }
 
         // PRODUCT
-        public IActionResult ProductList()
+        public async Task<IActionResult> ProductList(string? keyword)
         {
-            var products = _context.Products
-                .Include(x => x.Category)
-                .ToList();
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .AsNoTracking()
+                .OrderByDescending(p => p.ProductId)
+                .ToListAsync();
 
-            return View("Product/ProductList", products);
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+
+                products = products.Where(p =>
+                    (p.ProductName != null &&
+                     p.ProductName.Contains(keyword))
+
+                    ||
+
+                    (p.Category != null &&
+                     p.Category.CategoryName != null &&
+                     p.Category.CategoryName.Contains(keyword))
+
+                ).ToList();
+            }
+
+            ViewBag.Keyword = keyword;
+
+            return View(
+                "~/Views/Admin/Product/ProductList.cshtml",
+                products
+            );
         }
 
         public IActionResult CreateProduct()
@@ -370,9 +396,9 @@ namespace PetFeast.Controllers
 
 
             _productRepo.Add(product);
-
             _productRepo.Save();
 
+            TempData["Success"] = "Thêm sản phẩm thành công.";
 
             return RedirectToAction(nameof(ProductList));
         }
@@ -427,16 +453,25 @@ namespace PetFeast.Controllers
                 oldProduct.Price = product.Price;
                 oldProduct.Quantity = product.Quantity;
                 oldProduct.Description = product.Description;
+
+                oldProduct.Brand = product.Brand;
+                oldProduct.Origin = product.Origin;
+                oldProduct.TargetPet = product.TargetPet;
+                oldProduct.Ingredients = product.Ingredients;
+                oldProduct.Nutrition = product.Nutrition;
+                oldProduct.Usage = product.Usage;
+                oldProduct.Storage = product.Storage;
+                oldProduct.Warning = product.Warning;
+
                 oldProduct.CategoryId = product.CategoryId;
                 oldProduct.DiscountPercent = product.DiscountPercent;
 
                 _productRepo.Save();
-
+                TempData["Success"] = "Cập nhật sản phẩm thành công.";
                 return RedirectToAction(nameof(ProductList));
             }
 
             ViewBag.Categories = _categoryRepo.GetAll();
-
             return View("Product/EditProduct", product);
         }
 
@@ -467,7 +502,7 @@ namespace PetFeast.Controllers
             {
                 _categoryRepo.Add(category);
                 _categoryRepo.Save();
-
+                TempData["Success"] = "Thêm danh mục thành công.";
                 return RedirectToAction(nameof(CategoryList));
             }
 
@@ -486,7 +521,7 @@ namespace PetFeast.Controllers
             {
                 _categoryRepo.Update(category);
                 _categoryRepo.Save();
-
+                TempData["Success"] = "Cập nhật danh mục thành công.";
                 return RedirectToAction(nameof(CategoryList));
             }
 
@@ -516,7 +551,7 @@ namespace PetFeast.Controllers
 
             return RedirectToAction(nameof(CategoryList));
         }
-        public async Task<IActionResult> OrderList()
+        public async Task<IActionResult> OrderList(string? keyword)
         {
             var orders = await _context.Orders
                 .Include(o => o.User)
@@ -526,7 +561,39 @@ namespace PetFeast.Controllers
                 .OrderByDescending(o => o.OrderDate)
                 .ToListAsync();
 
-            Console.WriteLine($"Tổng số đơn hàng: {orders.Count}");
+            // ================================
+            // TÌM KIẾM
+            // ================================
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+
+                orders = orders.Where(o =>
+                    // Mã đơn
+                    o.OrderId.ToString().Contains(keyword)
+
+                    // Tên khách hàng trong Order
+                    || (o.CustomerName != null &&
+                        o.CustomerName.Contains(keyword))
+
+                    // Tên tài khoản
+                    || (o.User != null &&
+                        o.User.FullName != null &&
+                        o.User.FullName.Contains(keyword))
+
+                    // Email
+                    || (o.User != null &&
+                        o.User.Email != null &&
+                        o.User.Email.Contains(keyword))
+
+                    // Số điện thoại
+                    || (o.Phone != null &&
+                        o.Phone.Contains(keyword))
+
+                ).ToList();
+            }
+
+            ViewBag.Keyword = keyword;
 
             return View(
                 "~/Views/Admin/Order/OrderList.cshtml",
@@ -852,19 +919,6 @@ namespace PetFeast.Controllers
             }
            
         }
-
-        public IActionResult ProductSearch(string keyword)
-        {
-
-            var products = _context.Products
-                .Include(x => x.Category)
-                .Where(x => x.ProductName.Contains(keyword))
-                .ToList();
-
-
-            return View("Product/ProductList", products);
-
-        }
         // =========================
         // VOUCHER
         // =========================
@@ -1083,15 +1137,103 @@ namespace PetFeast.Controllers
         // RETURN REQUEST
         // =========================
 
-        public async Task<IActionResult> ReturnRequestList()
+        public async Task<IActionResult> ReturnRequestList(
+    string? keyword,
+    string? status)
         {
             var requests = await _context.ReturnRequests
                 .Include(r => r.Order)
                 .Include(r => r.User)
+                .AsNoTracking()
                 .OrderByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
-            return View("Return/ReturnRequestList", requests);
+            // ================================
+            // TÌM KIẾM
+            // ================================
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+
+                // Bỏ dấu # nếu người dùng nhập #1, #2...
+                var searchKeyword = keyword.TrimStart('#');
+
+                // ================================
+                // TÌM THEO MÃ YÊU CẦU HOẶC MÃ ĐƠN
+                // ================================
+
+                if (int.TryParse(searchKeyword, out int searchId))
+                {
+                    requests = requests
+                        .Where(r =>
+                            r.ReturnRequestId == searchId
+                            ||
+                            (r.Order != null &&
+                             r.Order.OrderId == searchId)
+                        )
+                        .ToList();
+                }
+                else
+                {
+                    // ================================
+                    // TÌM THEO THÔNG TIN KHÁC
+                    // ================================
+
+                    requests = requests
+                        .Where(r =>
+                            // Tên khách hàng
+                            (r.User != null &&
+                             !string.IsNullOrEmpty(r.User.FullName) &&
+                             r.User.FullName.Contains(
+                                 searchKeyword,
+                                 StringComparison.OrdinalIgnoreCase))
+
+                            ||
+
+                            // Email
+                            (r.User != null &&
+                             !string.IsNullOrEmpty(r.User.Email) &&
+                             r.User.Email.Contains(
+                                 searchKeyword,
+                                 StringComparison.OrdinalIgnoreCase))
+
+                            ||
+
+                            // Lý do trả hàng
+                            (!string.IsNullOrEmpty(r.Reason) &&
+                             r.Reason.Contains(
+                                 searchKeyword,
+                                 StringComparison.OrdinalIgnoreCase))
+                        )
+                        .ToList();
+                }
+            }
+
+            // ================================
+            // LỌC TRẠNG THÁI
+            // ================================
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                status = status.Trim();
+
+                requests = requests
+                    .Where(r => r.Status == status)
+                    .ToList();
+            }
+
+            // ================================
+            // GIỮ GIÁ TRỊ TRÊN VIEW
+            // ================================
+
+            ViewBag.Keyword = keyword;
+            ViewBag.Status = status;
+
+            return View(
+                "Return/ReturnRequestList",
+                requests
+            );
         }
         public async Task<IActionResult> ReturnRequestDetail(int id)
         {
@@ -1582,10 +1724,14 @@ namespace PetFeast.Controllers
             var pendingReturnCount = _context.ReturnRequests
                 .Count(r => r.Status == "Chờ xử lý");
 
+            var pendingReportCount = _context.ReviewReports
+                .Count(r => r.Status == "Chờ xử lý");
+
             return Json(new
             {
                 newOrderCount,
-                pendingReturnCount
+                pendingReturnCount,
+                pendingReportCount
             });
         }
         // =========================
@@ -1749,6 +1895,277 @@ namespace PetFeast.Controllers
             );
 
         }
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ReviewReports(string? keyword)
+        {
+            var reports = await _context.ReviewReports
+                .Include(r => r.ProductReview)
+                    .ThenInclude(r => r.Product)
+                .Include(r => r.ProductReview)
+                    .ThenInclude(r => r.User)
+                .Include(r => r.ReporterUser)
+                .AsNoTracking()
+                .OrderByDescending(r => r.CreatedAt)
+                .ToListAsync();
 
+            // ================================
+            // TÌM KIẾM
+            // ================================
+
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+
+                // Cho phép tìm #1 hoặc 1
+                var searchKeyword = keyword.TrimStart('#');
+
+                // Nếu nhập mã tố cáo
+                if (int.TryParse(searchKeyword, out int reportId))
+                {
+                    reports = reports
+                        .Where(r =>
+                            r.ReviewReportId == reportId
+                        )
+                        .ToList();
+                }
+                else
+                {
+                    reports = reports
+                        .Where(r =>
+
+                            // ================================
+                            // TÊN SẢN PHẨM
+                            // ================================
+                            (
+                                r.ProductReview != null &&
+                                r.ProductReview.Product != null &&
+                                !string.IsNullOrEmpty(
+                                    r.ProductReview.Product.ProductName) &&
+                                r.ProductReview.Product.ProductName
+                                    .Contains(
+                                        searchKeyword,
+                                        StringComparison.OrdinalIgnoreCase)
+                            )
+
+                            ||
+
+                            // ================================
+                            // TÊN NGƯỜI ĐÁNH GIÁ
+                            // ================================
+                            (
+                                r.ProductReview != null &&
+                                r.ProductReview.User != null &&
+                                (
+                                    (
+                                        !string.IsNullOrEmpty(
+                                            r.ProductReview.User.FullName) &&
+                                        r.ProductReview.User.FullName
+                                            .Contains(
+                                                searchKeyword,
+                                                StringComparison.OrdinalIgnoreCase)
+                                    )
+                                    ||
+                                    (
+                                        !string.IsNullOrEmpty(
+                                            r.ProductReview.User.UserName) &&
+                                        r.ProductReview.User.UserName
+                                            .Contains(
+                                                searchKeyword,
+                                                StringComparison.OrdinalIgnoreCase)
+                                    )
+                                )
+                            )
+
+                            ||
+
+                            // ================================
+                            // NGƯỜI TỐ CÁO
+                            // ================================
+                            (
+                                r.ReporterUser != null &&
+                                (
+                                    (
+                                        !string.IsNullOrEmpty(
+                                            r.ReporterUser.FullName) &&
+                                        r.ReporterUser.FullName
+                                            .Contains(
+                                                searchKeyword,
+                                                StringComparison.OrdinalIgnoreCase)
+                                    )
+                                    ||
+                                    (
+                                        !string.IsNullOrEmpty(
+                                            r.ReporterUser.UserName) &&
+                                        r.ReporterUser.UserName
+                                            .Contains(
+                                                searchKeyword,
+                                                StringComparison.OrdinalIgnoreCase)
+                                    )
+                                )
+                            )
+
+                            ||
+
+                            // ================================
+                            // LÝ DO TỐ CÁO
+                            // ================================
+                            (
+                                !string.IsNullOrEmpty(r.Reason) &&
+                                r.Reason.Contains(
+                                    searchKeyword,
+                                    StringComparison.OrdinalIgnoreCase)
+                            )
+
+                            ||
+
+                            // ================================
+                            // NỘI DUNG ĐÁNH GIÁ
+                            // ================================
+                            (
+                                r.ProductReview != null &&
+                                !string.IsNullOrEmpty(
+                                    r.ProductReview.Comment) &&
+                                r.ProductReview.Comment.Contains(
+                                    searchKeyword,
+                                    StringComparison.OrdinalIgnoreCase)
+                            )
+
+                            ||
+
+                            // ================================
+                            // TRẠNG THÁI
+                            // ================================
+                            (
+                                !string.IsNullOrEmpty(r.Status) &&
+                                r.Status.Contains(
+                                    searchKeyword,
+                                    StringComparison.OrdinalIgnoreCase)
+                            )
+                        )
+                        .ToList();
+                }
+            }
+
+            ViewBag.Keyword = keyword;
+
+            return View(
+                "ReviewReport/Index",
+                reports
+            );
+        }
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ReviewReportDetail(int id)
+        {
+            var report = await _context.ReviewReports
+                .Include(r => r.ProductReview)
+                    .ThenInclude(r => r.Product)
+                .Include(r => r.ProductReview)
+                    .ThenInclude(r => r.User)
+                .Include(r => r.ReporterUser)
+                .FirstOrDefaultAsync(r => r.ReviewReportId == id);
+
+            if (report == null)
+                return NotFound();
+
+            return View("ReviewReport/Detail", report);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ResolveReviewReport(
+    int id,
+    string action,
+    string? adminNote)
+        {
+            var report = await _context.ReviewReports
+                .Include(r => r.ProductReview)
+                    .ThenInclude(r => r.User)
+                .Include(r => r.ReporterUser)
+                .FirstOrDefaultAsync(r =>
+                    r.ReviewReportId == id);
+
+            if (report == null)
+                return NotFound();
+
+            // Không cho xử lý lại report đã xử lý
+            if (report.Status != "Chờ xử lý")
+            {
+                TempData["Error"] = "Tố cáo này đã được xử lý trước đó.";
+
+                return RedirectToAction(nameof(ReviewReportDetail),
+                    new { id });
+            }
+
+            if (action == "keep")
+            {
+                // Không có vi phạm
+                report.Status = "Không vi phạm";
+            }
+            else if (action == "delete")
+            {
+                // Có vi phạm → ẩn đánh giá
+                if (report.ProductReview != null)
+                {
+                    report.ProductReview.IsDeleted = true;
+                }
+
+                report.Status = "Đã xóa đánh giá";
+            }
+            else
+            {
+                return BadRequest();
+            }
+
+            report.AdminNote = adminNote?.Trim();
+            report.ResolvedAt = DateTime.Now;
+
+            // Lưu kết quả xử lý report trước
+            await _context.SaveChangesAsync();
+
+            // ==========================================
+            // THÔNG BÁO CHO NGƯỜI TỐ CÁO
+            // ==========================================
+
+            if (action == "delete")
+            {
+                await CreateNotificationAsync(
+                    report.ReporterUserId,
+                    null,
+                    "Tố cáo của bạn đã được xử lý",
+                    "Cảm ơn bạn đã gửi tố cáo. PetFeast đã xác nhận nội dung được báo cáo có vi phạm và đã tiến hành xử lý. " +
+                    "Sự đóng góp của bạn góp phần xây dựng một PetFeast văn minh và tích cực hơn.",
+                    report.ReviewReportId);
+            }
+            else if (action == "keep")
+            {
+                await CreateNotificationAsync(
+                    report.ReporterUserId,
+                    null,
+                    "Tố cáo của bạn đã được xử lý",
+                    "Cảm ơn bạn đã gửi tố cáo. PetFeast đã xem xét nội dung được báo cáo và xác định nội dung này không vi phạm quy định cộng đồng.",
+                    report.ReviewReportId);
+            }
+
+            // ==========================================
+            // THÔNG BÁO CHO NGƯỜI BỊ TỐ CÁO
+            // CHỈ KHI REPORT ĐƯỢC XÁC NHẬN VI PHẠM
+            // ==========================================
+
+            if (action == "delete" &&
+    report.ProductReview?.UserId != null &&
+    report.ProductReview.UserId != report.ReporterUserId)
+            {
+                await CreateNotificationAsync(
+                    report.ProductReview.UserId,
+                    null,
+                    "Đánh giá của bạn đã vi phạm quy định",
+                    "Đánh giá của bạn đã được PetFeast xem xét và xác định là vi phạm quy định cộng đồng. " +
+                    "Đánh giá đã được xử lý. Vui lòng tuân thủ quy định khi đăng đánh giá sản phẩm.",
+                    report.ReviewReportId);
+            }
+
+            TempData["Success"] = "Đã xử lý tố cáo đánh giá.";
+            return RedirectToAction(nameof(ReviewReports));
+        }
     }
 }

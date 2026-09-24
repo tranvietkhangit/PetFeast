@@ -1,5 +1,5 @@
 ﻿@model IEnumerable<PetFeast.Models.Products.Product>
-
+@using PetFeast.Models.ViewModels
 @{
     var sliderId = "slider_" + Guid.NewGuid().ToString("N");
 
@@ -7,6 +7,11 @@
         ViewBag.FavoriteProductIds
         as HashSet<int>
         ?? new HashSet<int>();
+
+    var productRatings =
+        ViewBag.ProductRatings
+        as Dictionary<int, ProductRatingViewModel>
+        ?? new Dictionary<int, ProductRatingViewModel>();
 }
 
 <div class="product-slider-wrapper">
@@ -30,17 +35,19 @@
             bool isOutOfStock =
             item.Quantity <= 0;
 
+            ProductRatingViewModel? rating = null;
+
+            productRatings.TryGetValue(
+            item.ProductId,
+            out rating);
+
             <div class="product-item">
 
-                <div class="card h-100 shadow-sm product-card @(isOutOfStock ? "out-of-stock" : "")">
+                <div class="card product-card @(isOutOfStock ? "out-of-stock" : "")">
 
-                    <!-- ==============================
-                         IMAGE
-                    =============================== -->
-
+                    <!-- PRODUCT IMAGE -->
                     <div class="product-image-wrapper">
 
-                        <!-- OUT OF STOCK -->
                         @if (isOutOfStock)
                         {
                             <span class="out-of-stock-badge">
@@ -49,27 +56,22 @@
                             </span>
                         }
 
-                        <!-- IMAGE -->
-                        <a asp-controller="Product"
-                           asp-action="Detail"
-                           asp-route-id="@item.ProductId"
-                           class="product-image-link">
-
-                            <img src="@item.ImageUrl"
-                                 class="card-img-top"
-                                 style="height:250px; object-fit:cover;"
-                                 alt="@item.ProductName">
-
-                        </a>
-
-
-                        <!-- DISCOUNT -->
-                        @if (item.DiscountPercent > 0)
+                        @if (item.DiscountPercent > 0 && !isOutOfStock)
                         {
                             <span class="discount-badge">
                                 -@item.DiscountPercent%
                             </span>
                         }
+
+                        <a asp-controller="Product"
+                           asp-action="Detail"
+                           asp-route-id="@item.ProductId">
+
+                            <img src="@item.ImageUrl"
+                                 class="product-image"
+                                 alt="@item.ProductName" />
+
+                        </a>
 
 
                         <!-- FAVORITE -->
@@ -110,22 +112,74 @@
                     </div>
 
 
-                    <!-- ==============================
-                         PRODUCT INFO
-                    =============================== -->
-
-                    <div class="card-body text-center">
+                    <!-- PRODUCT BODY -->
+                    <div class="card-body">
 
                         <h6 class="product-name">
                             @item.ProductName
                         </h6>
 
 
-                        <!-- PRICE -->
-                        <div class="product-price-box">
+                        <!-- RATING -->
+                        <div class="product-rating">
 
-                            @if (item.DiscountPercent > 0)
+                            @if (rating != null && rating.ReviewCount > 0)
                             {
+                                <span class="rating-stars">
+
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (rating.AverageRating >= i)
+                                        {
+                                            <i class="bi bi-star-fill"></i>
+                                        }
+                                        else if (rating.AverageRating >= i - 0.5)
+                                        {
+                                            <i class="bi bi-star-half"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star"></i>
+                                        }
+                                    }
+
+                                </span>
+
+                                <span class="rating-score">
+                                    @rating.AverageRating.ToString("0.0")
+                                </span>
+
+                                <span class="rating-divider">
+                                    ·
+                                </span>
+
+                                <span class="rating-count">
+                                    @rating.ReviewCount đánh giá
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="rating-stars">
+                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star"></i>
+                                    <i class="bi bi-star"></i>
+                                </span>
+
+                                <span class="rating-count">
+                                    Chưa có đánh giá
+                                </span>
+                            }
+
+                        </div>
+
+
+                        <!-- PRICE -->
+                        @if (item.DiscountPercent > 0)
+                        {
+                            <div class="product-price-box">
+
                                 <div class="price-old">
                                     @item.Price.ToString("N0") đ
                                 </div>
@@ -135,37 +189,33 @@
                                 </div>
 
                                 <div class="price-saving">
+
                                     <i class="bi bi-tag-fill me-1"></i>
+
                                     Tiết kiệm
                                     @((item.Price - item.DiscountPrice).ToString("N0")) đ
+
                                 </div>
-                            }
-                            else
-                            {
+
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="product-price-box">
+
                                 <div class="price-normal">
                                     @item.Price.ToString("N0") đ
                                 </div>
-                            }
-
-                        </div>
-
-
-                        <!-- ==============================
-                             ADD TO CART
-                        =============================== -->
-                        @if (!isOutOfStock)
-                        {
-                            <button type="button"
-                                    class="btn btn-primary w-100 add-to-cart-btn"
-                                    data-product-id="@item.ProductId">
-
-                                <i class="bi bi-cart-plus"></i>
-
-                                <span>Thêm vào giỏ</span>
-
-                            </button>
+                            </div>
                         }
-                        else
+
+                    </div>
+
+
+                    <!-- ADD TO CART -->
+                    <div class="card-footer bg-white border-0">
+
+                        @if (isOutOfStock)
                         {
                             <button type="button"
                                     class="btn btn-secondary w-100 add-to-cart-btn"
@@ -174,6 +224,18 @@
                                 <i class="bi bi-x-circle me-1"></i>
 
                                 <span>Hết hàng</span>
+
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="button"
+                                    class="btn btn-primary w-100 add-to-cart-btn"
+                                    data-product-id="@item.ProductId">
+
+                                <i class="bi bi-cart-plus"></i>
+
+                                <span>Thêm vào giỏ hàng</span>
 
                             </button>
                         }
@@ -203,25 +265,174 @@
 ================================================== -->
 
 <style>
+    /* =========================
+       PRODUCT CARD
+    ========================= */
 
-    /* ========================================
-           PRODUCT IMAGE
-        ======================================== */
+    .product-card {
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+
+    /* =========================
+       PRODUCT IMAGE
+    ========================= */
 
     .product-image-wrapper {
         position: relative;
     }
 
-
-    /* ========================================
-           OUT OF STOCK
-        ======================================== */
-
-    .product-card.out-of-stock
-    .product-image-wrapper img {
-        opacity: 0.6;
+    .product-image {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        display: block;
     }
 
+
+    
+    /* =========================
+       PRODUCT RATING
+    ========================= */
+
+    .product-rating {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 24px;
+        margin-bottom: 7px;
+        font-size: 13px;
+    }
+
+    .rating-stars {
+        display: inline-flex;
+        align-items: center;
+        gap: 1px;
+    }
+
+        .rating-stars i {
+            color: #ffc107;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+    .rating-score {
+        color: #343a40;
+        font-weight: 600;
+    }
+
+    .rating-divider {
+        color: #adb5bd;
+        margin: 0 1px;
+    }
+
+    .rating-count {
+        color: #6c757d;
+    }
+
+
+    /* =========================
+       PRICE
+    ========================= */
+
+    .product-price-box {
+        min-height: 72px;
+        margin-bottom: 8px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+
+    /* OLD PRICE */
+
+    .price-old {
+        font-size: 16px;
+        color: #888;
+        text-decoration: line-through;
+        line-height: 21px;
+    }
+
+
+    /* NEW PRICE */
+
+    .price-new {
+        font-size: 23px;
+        font-weight: 700;
+        color: #dc3545;
+        line-height: 29px;
+    }
+
+
+    /* SAVING */
+
+    .price-saving {
+        font-size: 14px;
+        font-weight: 700;
+        color: #198754;
+        line-height: 20px;
+    }
+
+
+    /* NORMAL PRICE */
+
+    .price-normal {
+        font-size: 23px;
+        font-weight: 700;
+        color: #0d6efd;
+        line-height: 29px;
+    }
+
+
+    /* =========================
+       CARD BODY
+    ========================= */
+
+    .product-card .card-body {
+        padding: 12px 14px 8px;
+    }
+
+
+    /* =========================
+       CARD FOOTER
+    ========================= */
+
+    .product-card .card-footer {
+        padding: 8px 14px 14px;
+    }
+
+
+    /* =========================
+       ADD TO CART
+    ========================= */
+
+    .add-to-cart-btn {
+        height: 44px;
+        font-size: 16px;
+        font-weight: 600;
+    }
+
+        .add-to-cart-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .add-to-cart-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+
+    /* =========================
+       OUT OF STOCK
+    ========================= */
+
+    .product-card.out-of-stock .product-image {
+        opacity: 0.6;
+    }
 
     .out-of-stock-badge {
         position: absolute;
@@ -240,9 +451,32 @@
     }
 
 
+    /* =========================
+       DISCOUNT
+    ========================= */
+
+    .discount-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 15;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 54px;
+        height: 28px;
+        padding: 0 10px;
+        background: #dc3545;
+        color: #fff;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: 0 3px 8px rgba(220, 53, 69, 0.22);
+    }
+
     /* ========================================
-           FAVORITE
-        ======================================== */
+       FAVORITE
+    ======================================== */
 
     .favorite-form {
         position: absolute;
@@ -252,169 +486,150 @@
         margin: 0;
     }
 
-
     .favorite-btn {
-        width: 50px;
-        height: 50px;
+        width: 44px;
+        height: 44px;
         padding: 0;
+        border: 1px solid #dee2e6;
         border-radius: 50%;
-        border: 2px solid #222;
-        background: #fff;
+        background: rgba(255, 255, 255, 0.96);
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
         text-decoration: none;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-        transition: border-color 0.25s ease, color 0.25s ease, transform 0.25s ease;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.10);
+        transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
     }
 
-
         .favorite-btn i {
-            font-size: 24px;
-            color: #222;
-            transition: color 0.25s ease;
+            font-size: 20px;
+            color: #495057;
+            transition: color 0.2s ease, transform 0.2s ease;
         }
 
 
-        /* ACTIVE */
-
-        .favorite-btn.active {
-            border-color: #ff416c;
-        }
-
-
-            .favorite-btn.active i {
-                color: #ff416c;
-            }
-
-
-        /* HOVER */
+        /* Hover */
 
         .favorite-btn:hover {
             transform: translateY(-2px);
+            border-color: #dc3545;
+            background: #fff5f5;
         }
 
+            .favorite-btn:hover i {
+                color: #dc3545;
+                transform: scale(1.08);
+            }
 
-        /* KHÔNG SCALE KHI CLICK */
+
+        /* Đã yêu thích */
+
+        .favorite-btn.active {
+            border-color: #dc3545;
+            background: #fff1f2;
+        }
+
+            .favorite-btn.active i {
+                color: #dc3545;
+            }
+
+
+        /* Click */
 
         .favorite-btn:active {
-            transform: translateY(-2px);
+            transform: scale(0.95);
         }
 
-
+   
     /* ========================================
-           ADD TO CART
-        ======================================== */
+       PRODUCT RATING
+    ======================================== */
 
-    .add-to-cart-btn {
-        height: 44px;
-        font-size: 16px;
-        font-weight: 600;
-        transition: background-color 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
-    }
-
-
-        .add-to-cart-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-        }
-
-
-        .add-to-cart-btn:disabled {
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-
-
-    /* ========================================
-           DISCOUNT BADGE
-        ======================================== */
-
-    .discount-badge {
-        position: absolute;
-        top: 12px;
-        left: 12px;
-        z-index: 15;
-        background: #dc3545;
-        color: #fff;
-        padding: 6px 10px;
-        border-radius: 6px;
-        font-size: 13px;
-        font-weight: 700;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-    }
-
-
-    /* ========================================
-           PRODUCT NAME
-        ======================================== */
-
-    .product-name {
-        height: 30px;
-        margin-bottom: 8px;
-        font-size: 18px;
-        font-weight: 700;
-        line-height: 30px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-
-    /* ========================================
-           PRODUCT PRICE
-        ======================================== */
-
-    .product-price-box {
-        min-height: 72px;
-        margin-bottom: 8px;
+    .product-rating {
         display: flex;
-        flex-direction: column;
-        justify-content: center;
         align-items: center;
+        gap: 5px;
+        min-height: 24px;
+        margin-bottom: 7px;
+        font-size: 13px;
     }
 
 
-    .price-old {
-        font-size: 16px;
-        color: #888;
-        text-decoration: line-through;
-        line-height: 21px;
+    /* STAR */
+
+    .rating-stars {
+        display: inline-flex;
+        align-items: center;
+        gap: 1px;
+    }
+
+        .rating-stars i {
+            color: #ffc107;
+            font-size: 14px;
+            line-height: 1;
+        }
+
+
+    /* SCORE */
+
+    .rating-score {
+        color: #343a40;
+        font-weight: 600;
     }
 
 
-    .price-new {
-        font-size: 23px;
-        font-weight: 700;
-        color: #dc3545;
-        line-height: 29px;
+    /* DIVIDER */
+
+    .rating-divider {
+        color: #adb5bd;
+        margin: 0 1px;
     }
 
 
-    .price-saving {
-        font-size: 14px;
-        font-weight: 700;
-        color: #198754;
-        line-height: 20px;
+    /* COUNT */
+
+    .rating-count {
+        color: #6c757d;
     }
-
-
-    .price-normal {
-        font-size: 23px;
-        font-weight: 700;
-        color: #0d6efd;
-        line-height: 29px;
-    }
-
-
     /* ========================================
-           CARD BODY
-        ======================================== */
+       MOBILE
+    ======================================== */
+
+    @@media (max-width: 768px) {
+        .product-item
+
+    {
+        padding: 6px;
+    }
+
+    .product-image-wrapper {
+        height: 220px;
+    }
 
     .product-card .card-body {
-        padding: 12px 14px 8px;
+        padding: 13px 12px;
     }
 
+    .product-name {
+        font-size: 15px;
+    }
+
+    .price-new,
+    .price-normal {
+        font-size: 19px;
+    }
+
+    .favorite-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+        .favorite-btn i {
+            font-size: 18px;
+        }
+
+    }
 </style>
 
 
@@ -547,7 +762,7 @@
                             error
                         );
 
-                        alert(
+                        showErrorModal(
                             "Có lỗi xảy ra khi cập nhật yêu thích."
                         );
 
@@ -720,7 +935,7 @@
                         // HẾT HÀNG / KHÔNG ĐỦ STOCK
                         // ==============================
 
-                        alert(
+                        showErrorModal(
                             data.message ||
                             "Không thể thêm sản phẩm vào giỏ hàng."
                         );
@@ -740,7 +955,7 @@
                             error
                         );
 
-                        alert(
+                        showErrorModal(
                             "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng."
                         );
 

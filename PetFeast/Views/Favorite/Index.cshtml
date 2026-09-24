@@ -279,7 +279,7 @@
                 )?.value;
 
                 if (!token) {
-                    alert("Không tìm thấy mã bảo mật.");
+                    showErrorModal("Không tìm thấy mã bảo mật.");
                     return;
                 }
 
@@ -387,7 +387,7 @@
                         }, 300);
 
                     } else {
-                        alert(
+                        showErrorModal(
                             "Không thể bỏ yêu thích. Vui lòng thử lại."
                         );
 
@@ -401,7 +401,7 @@
                         error
                     );
 
-                    alert(
+                    showErrorModal(
                         "Có lỗi xảy ra. Vui lòng thử lại."
                     );
 

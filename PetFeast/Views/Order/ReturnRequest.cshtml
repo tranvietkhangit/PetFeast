@@ -704,7 +704,7 @@
 
             if (file.size > maxSize) {
 
-                alert("Hình ảnh không được vượt quá 5 MB.");
+                showErrorModal("Hình ảnh không được vượt quá 5 MB.");
 
                 this.value = "";
                 return;
@@ -718,7 +718,7 @@
 
             if (!allowedTypes.includes(file.type)) {
 
-                alert("Vui lòng chọn JPG, JPEG, PNG hoặc WEBP.");
+                showErrorModal("Vui lòng chọn JPG, JPEG, PNG hoặc WEBP.");
 
                 this.value = "";
                 return;
@@ -752,7 +752,7 @@
 
             if (file.size > maxSize) {
 
-                alert("Video không được vượt quá 50 MB.");
+                showErrorModal("Video không được vượt quá 50 MB.");
 
                 this.value = "";
                 return;

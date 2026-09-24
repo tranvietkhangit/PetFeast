@@ -5,6 +5,7 @@ using PetFeast.Data;
 using PetFeast.Models.Interfaces;
 using PetFeast.Models.Products;
 using PetFeast.Models.Services;
+using PetFeast.Models.ViewModels;
 using System.Security.Claims;
 
 namespace PetFeast.Controllers
@@ -28,7 +29,14 @@ namespace PetFeast.Controllers
             _cartRepo = cartRepo;
         }
 
-        public IActionResult Index( string? keyword, int? categoryId, decimal? minPrice, decimal? maxPrice, string? sortOrder, int page = 1)
+        public IActionResult Index(
+    string? keyword,
+    int? categoryId,
+    decimal? minPrice,
+    decimal? maxPrice,
+    double? minRating,
+    string? sortOrder,
+    int page = 1)
         {
             const int pageSize = 9;
             var products = _productRepo.GetAll();
@@ -95,7 +103,21 @@ namespace PetFeast.Controllers
                         : p.Price) <= maxPrice.Value);
             }
 
+            // =========================
+            // LỌC THEO ĐÁNH GIÁ
+            // =========================
 
+            if (minRating.HasValue)
+            {
+                var ratingProductIds = _context.ProductReviews
+                    .Where(r => !r.IsDeleted)
+                    .GroupBy(r => r.ProductId)
+                    .Where(g => g.Average(r => r.Rating) >= minRating.Value)
+                    .Select(g => g.Key);
+
+                products = products.Where(p =>
+                    ratingProductIds.Contains(p.ProductId));
+            }
             // =========================
             // SẮP XẾP THEO GIÁ SAU GIẢM
             // =========================
@@ -140,21 +162,52 @@ namespace PetFeast.Controllers
             products = products
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize);
+            // =========================
+            // LẤY ĐÁNH GIÁ CHO PRODUCT CARD
+            // =========================
+
+            var productList = products.ToList();
+
+            var productIds = productList
+                .Select(p => p.ProductId)
+                .ToList();
+
+            var productRatings = _context.ProductReviews
+                .Where(r =>
+                    productIds.Contains(r.ProductId) &&
+                    !r.IsDeleted)
+                .GroupBy(r => r.ProductId)
+                .Select(g => new
+                {
+                    ProductId = g.Key,
+                    AverageRating = g.Average(r => r.Rating),
+                    ReviewCount = g.Count()
+                })
+                .ToDictionary(
+                    x => x.ProductId,
+                    x => new ProductRatingViewModel
+                    {
+                        AverageRating = x.AverageRating,
+                        ReviewCount = x.ReviewCount
+                    });
+
 
             // ViewBag
+            ViewBag.ProductRatings = productRatings;
             ViewBag.Keyword = keyword;
             ViewBag.Categories = _categoryRepo.GetAll();
 
             ViewBag.MinPrice = minPrice;
             ViewBag.MaxPrice = maxPrice;
+            ViewBag.MinRating = minRating;
             ViewBag.MaxProductPrice = maxProductPrice;
             ViewBag.CurrentPage = page;
             ViewBag.TotalPages = totalPages;
             ViewBag.FavoriteProductIds = favoriteProductIds;
-            return View(products);
+            return View(productList);
         }
 
-        public IActionResult Detail(int id)
+        public async Task<IActionResult> Detail(int id)
         {
             var product = _productRepo.GetById(id);
 
@@ -233,6 +286,30 @@ namespace PetFeast.Controllers
                         x.ProductId != product.ProductId)
                     .Take(4)
                     .ToList();
+
+            // =========================
+            // LẤY ĐÁNH GIÁ SẢN PHẨM
+            // =========================
+
+            var reviews = await _context.ProductReviews
+    .Include(r => r.User)
+    .Where(r =>
+        r.ProductId == id &&
+        !r.IsDeleted)
+    .OrderByDescending(r => r.CreatedAt)
+    .ToListAsync();
+
+            ViewBag.ProductReviews = reviews;
+
+            // =========================
+            // THỐNG KÊ ĐÁNH GIÁ
+            // =========================
+
+            ViewBag.ReviewCount = reviews.Count;
+
+            ViewBag.AverageRating = reviews.Any()
+                ? reviews.Average(r => r.Rating)
+                : 0;
 
             return View(product);
         }

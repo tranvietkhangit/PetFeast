@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PetFeast.Data;
 
@@ -11,9 +12,11 @@ using PetFeast.Data;
 namespace PetFeast.Migrations
 {
     [DbContext(typeof(PetFeastDBContext))]
-    partial class PetFeastDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260923222058_AddReviewReport")]
+    partial class AddReviewReport
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -320,9 +323,6 @@ namespace PetFeast.Migrations
                     b.Property<int?>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("ReviewReportId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -334,8 +334,6 @@ namespace PetFeast.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("OrderId");
-
-                    b.HasIndex("ReviewReportId");
 
                     b.HasIndex("UserId");
 
@@ -676,9 +674,6 @@ namespace PetFeast.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
                     b.Property<int>("OrderDetailId")
                         .HasColumnType("int");
 
@@ -946,11 +941,6 @@ namespace PetFeast.Migrations
                         .WithMany()
                         .HasForeignKey("OrderId");
 
-                    b.HasOne("PetFeast.Models.Reviews.ReviewReport", "ReviewReport")
-                        .WithMany()
-                        .HasForeignKey("ReviewReportId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("PetFeast.Models.Identity.ApplicationUser", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
@@ -958,8 +948,6 @@ namespace PetFeast.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
-
-                    b.Navigation("ReviewReport");
 
                     b.Navigation("User");
                 });

@@ -20,11 +20,16 @@ namespace PetFeast.Controllers
         // =========================
         // DANH SÁCH LIÊN HỆ
         // =========================
-        public async Task<IActionResult> Index(string? status = null)
+        public async Task<IActionResult> Index(
+            string? keyword = null,
+            string? status = null)
         {
             IQueryable<Contact> query = _context.Contacts
                 .AsNoTracking();
 
+            // =========================
+            // LỌC TRẠNG THÁI
+            // =========================
             if (status == "unread")
             {
                 query = query.Where(c => !c.IsRead);
@@ -34,7 +39,31 @@ namespace PetFeast.Controllers
                 query = query.Where(c => c.IsRead);
             }
 
+            // =========================
+            // TÌM KIẾM
+            // =========================
+            if (!string.IsNullOrWhiteSpace(keyword))
+            {
+                keyword = keyword.Trim();
+
+                query = query.Where(c =>
+                    (c.Name != null &&
+                     c.Name.Contains(keyword))
+
+                    ||
+
+                    (c.Email != null &&
+                     c.Email.Contains(keyword))
+
+                    ||
+
+                    (c.Phone != null &&
+                     c.Phone.Contains(keyword))
+                );
+            }
+
             ViewBag.Status = status;
+            ViewBag.Keyword = keyword;
 
             ViewBag.UnreadCount = await _context.Contacts
                 .CountAsync(c => !c.IsRead);

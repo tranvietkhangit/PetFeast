@@ -1,6 +1,6 @@
 ﻿using PetFeast.Models.Identity;
 using PetFeast.Models.Orders;
-
+using PetFeast.Models.Reviews;
 namespace PetFeast.Models.Notifications
 {
     public class Notification
@@ -22,5 +22,8 @@ namespace PetFeast.Models.Notifications
         public ApplicationUser? User { get; set; }
 
         public Order? Order { get; set; }
+        public int? ReviewReportId { get; set; }
+
+        public ReviewReport? ReviewReport { get; set; }
     }
 }

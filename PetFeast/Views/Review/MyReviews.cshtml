@@ -1,0 +1,250 @@
+﻿@model List<PetFeast.Models.Products.ProductReview>
+
+@{
+    ViewData["Title"] = "Đánh giá của tôi";
+}
+
+<div class="container py-5">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                Đánh giá của tôi
+            </h2>
+
+            <p class="text-muted mb-0">
+                Những đánh giá bạn đã gửi cho các sản phẩm.
+            </p>
+        </div>
+
+    </div>
+
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-body text-center py-5">
+
+                <i class="bi bi-star display-4 text-muted"></i>
+
+                <h5 class="fw-bold mt-3">
+                    Bạn chưa có đánh giá nào
+                </h5>
+
+                <p class="text-muted">
+                    Hãy đánh giá sản phẩm sau khi đơn hàng hoàn thành.
+                </p>
+
+                <a asp-controller="Order"
+                   asp-action="UserOrderList"
+                   class="btn btn-primary">
+
+                    Xem đơn hàng
+
+                </a>
+
+            </div>
+
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+
+            @foreach (var review in Model)
+            {
+                <div class="col-12">
+
+                    <div class="card border-0 shadow-sm review-card
+                                 @(review.IsDeleted ? "deleted-review" : "")">
+
+                        <div class="card-body p-4">
+
+                            <div class="row">
+
+                                <!-- ========================= -->
+                                <!-- SẢN PHẨM -->
+                                <!-- ========================= -->
+
+                                <div class="col-md-2 text-center">
+
+                                    @if (review.Product != null)
+                                    {
+                                        <img src="@review.Product.ImageUrl"
+                                             class="review-product-image"
+                                             alt="@review.Product.ProductName" />
+                                    }
+
+                                </div>
+
+
+                                <!-- ========================= -->
+                                <!-- REVIEW -->
+                                <!-- ========================= -->
+
+                                <div class="col-md-10">
+
+                                    @if (review.Product != null)
+                                    {
+                                        <h5 class="fw-bold mb-2">
+                                            @review.Product.ProductName
+                                        </h5>
+                                    }
+
+
+                                    <!-- ========================= -->
+                                    <!-- REVIEW ĐÃ BỊ XÓA -->
+                                    <!-- ========================= -->
+                                    @if (review.IsDeleted)
+                                    {
+                                        <div class="alert alert-danger mb-3">
+
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+
+                                            <strong>
+                                                Đánh giá này đã bị xóa
+                                            </strong>
+
+                                            <div class="small mt-1">
+                                                Đánh giá đã được PetFeast xem xét
+                                                và xóa do vi phạm quy định cộng đồng.
+                                            </div>
+
+                                        </div>
+                                    }
+
+
+                                    <!-- ========================= -->
+                                    <!-- ĐÁNH GIÁ -->
+                                    <!-- ========================= -->
+
+                                    <div class="mb-2">
+
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= review.Rating)
+                                            {
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star text-muted"></i>
+                                            }
+                                        }
+
+                                        <span class="ms-2 text-muted">
+                                            @review.Rating/5
+                                        </span>
+
+                                    </div>
+
+
+                                    <!-- ========================= -->
+                                    <!-- NỘI DUNG -->
+                                    <!-- ========================= -->
+                                    @if (!string.IsNullOrWhiteSpace(review.Comment))
+                                    {
+                                        <p class="mb-3 @(review.IsDeleted ? "text-muted text-decoration-line-through" : "")">
+                                            @review.Comment
+                                        </p>
+                                    }
+
+
+                                    <!-- ========================= -->
+                                    <!-- NGÀY ĐÁNH GIÁ -->
+                                    <!-- ========================= -->
+
+                                    <div class="text-muted small mb-3">
+
+                                        <i class="bi bi-calendar3 me-1"></i>
+
+                                        @review.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+
+                                    </div>
+
+
+                                    <!-- ========================= -->
+                                    <!-- NÚT -->
+                                    <!-- ========================= -->
+                                    @if (!review.IsDeleted)
+                                    {
+                                        <div class="d-flex gap-2">
+
+                                            <a asp-controller="Review"
+                                               asp-action="Edit"
+                                               asp-route-id="@review.ProductReviewId"
+                                               class="btn btn-outline-primary btn-sm">
+
+                                                <i class="bi bi-pencil me-1"></i>
+                                                Sửa
+
+                                            </a>
+
+
+                                            <a asp-controller="Review"
+                                               asp-action="Delete"
+                                               asp-route-id="@review.ProductReviewId"
+                                               class="btn btn-outline-danger btn-sm">
+
+                                                <i class="bi bi-trash me-1"></i>
+                                                Xóa
+
+                                            </a>
+
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">
+
+                                            <i class="bi bi-lock-fill me-1"></i>
+
+                                            Không thể chỉnh sửa
+
+                                        </span>
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+</div>
+
+
+<style>
+
+    .review-card {
+        border-radius: 14px;
+        transition: 0.2s ease;
+    }
+
+        .review-card:hover {
+            transform: translateY(-2px);
+        }
+
+    .review-product-image {
+        width: 110px;
+        height: 110px;
+        object-fit: contain;
+        border-radius: 10px;
+    }
+
+    /* Review đã bị xóa */
+
+    .deleted-review {
+        opacity: 0.85;
+    }
+
+</style>

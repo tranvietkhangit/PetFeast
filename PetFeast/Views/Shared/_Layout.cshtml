@@ -512,8 +512,452 @@
         </div>
 
     </footer>
+    <!-- ==================================================
+     PETFEAST ACTION MODAL
+     ================================================== -->
 
+    <div class="modal fade"
+         id="petFeastActionModal"
+         tabindex="-1"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+
+            <div class="modal-content petfeast-modal">
+
+                <div class="modal-body text-center">
+
+                    <div id="petFeastModalIcon"
+                         class="petfeast-modal-icon">
+
+                        <i class="bi bi-check-circle-fill"></i>
+
+                    </div>
+
+                    <h5 id="petFeastModalTitle"
+                        class="petfeast-modal-title">
+
+                        Thành công
+
+                    </h5>
+
+                    <p id="petFeastModalMessage"
+                       class="petfeast-modal-message">
+
+                        Thao tác đã được thực hiện thành công.
+
+                    </p>
+
+                    <div id="petFeastModalButtons"
+                         class="petfeast-modal-buttons">
+
+                        <button type="button"
+                                id="petFeastModalCancel"
+                                class="btn btn-outline-secondary">
+
+                            Hủy
+
+                        </button>
+
+                        <button type="button"
+                                id="petFeastModalConfirm"
+                                class="btn btn-primary">
+
+                            OK
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+        let petFeastModalInstance = null;
+        let petFeastConfirmCallback = null;
+
+
+        // ==================================================
+        // KHỞI TẠO MODAL
+        // ==================================================
+
+        function initPetFeastModal() {
+
+            const modalElement =
+                document.getElementById("petFeastActionModal");
+
+            if (!modalElement) {
+                console.error(
+                    "Không tìm thấy #petFeastActionModal"
+                );
+
+                return;
+            }
+
+
+            // Chỉ tạo instance một lần
+            if (!petFeastModalInstance) {
+
+                petFeastModalInstance =
+                    new bootstrap.Modal(modalElement);
+
+            }
+
+
+            const confirmButton =
+                document.getElementById(
+                    "petFeastModalConfirm"
+                );
+
+
+            const cancelButton =
+                document.getElementById(
+                    "petFeastModalCancel"
+                );
+
+
+            // ==================================================
+            // NÚT OK
+            // ==================================================
+
+            if (
+                confirmButton &&
+                !confirmButton.dataset.initialized
+            ) {
+
+                confirmButton.dataset.initialized = "true";
+
+                confirmButton.addEventListener(
+                    "click",
+                    function () {
+
+                        if (petFeastConfirmCallback) {
+
+                            const callback =
+                                petFeastConfirmCallback;
+
+                            petFeastConfirmCallback =
+                                null;
+
+                            petFeastModalInstance.hide();
+
+                            callback();
+
+                        }
+                        else {
+
+                            petFeastModalInstance.hide();
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            // ==================================================
+            // NÚT HỦY
+            // ==================================================
+
+            if (
+                cancelButton &&
+                !cancelButton.dataset.initialized
+            ) {
+
+                cancelButton.dataset.initialized = "true";
+
+                cancelButton.addEventListener(
+                    "click",
+                    function () {
+
+                        petFeastConfirmCallback =
+                            null;
+
+                        petFeastModalInstance.hide();
+
+                    }
+                );
+
+            }
+
+        }
+
+
+        // ==================================================
+        // SUCCESS
+        // ==================================================
+
+        function showSuccessModal(
+            message,
+            callback = null
+        ) {
+
+            initPetFeastModal();
+
+
+            const icon =
+                document.getElementById(
+                    "petFeastModalIcon"
+                );
+
+            const title =
+                document.getElementById(
+                    "petFeastModalTitle"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "petFeastModalMessage"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "petFeastModalCancel"
+                );
+
+            const confirmButton =
+                document.getElementById(
+                    "petFeastModalConfirm"
+                );
+
+
+            if (!icon ||
+                !title ||
+                !messageElement ||
+                !confirmButton) {
+
+                console.error(
+                    "PetFeast modal chưa được cấu hình đúng."
+                );
+
+                return;
+
+            }
+
+
+            icon.innerHTML =
+                '<i class="bi bi-check-circle-fill"></i>';
+
+            icon.style.background =
+                "#eaf7ee";
+
+            icon.style.color =
+                "#198754";
+
+
+            title.textContent =
+                "Thành công";
+
+
+            messageElement.textContent =
+                message;
+
+
+            cancelButton.style.display =
+                "none";
+
+
+            confirmButton.textContent =
+                "OK";
+
+
+            confirmButton.className =
+                "btn btn-success";
+
+
+            petFeastConfirmCallback =
+                callback;
+
+
+            if (petFeastModalInstance) {
+
+                petFeastModalInstance.show();
+
+            }
+
+        }
+
+
+        // ==================================================
+        // ERROR
+        // ==================================================
+
+        function showErrorModal(message) {
+
+            initPetFeastModal();
+
+
+            const icon =
+                document.getElementById(
+                    "petFeastModalIcon"
+                );
+
+            const title =
+                document.getElementById(
+                    "petFeastModalTitle"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "petFeastModalMessage"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "petFeastModalCancel"
+                );
+
+            const confirmButton =
+                document.getElementById(
+                    "petFeastModalConfirm"
+                );
+
+
+            icon.innerHTML =
+                '<i class="bi bi-x-circle-fill"></i>';
+
+            icon.style.background =
+                "#fdecec";
+
+            icon.style.color =
+                "#dc3545";
+
+
+            title.textContent =
+                "Có lỗi xảy ra";
+
+
+            messageElement.textContent =
+                message;
+
+
+            cancelButton.style.display =
+                "none";
+
+
+            confirmButton.textContent =
+                "OK";
+
+
+            confirmButton.className =
+                "btn btn-danger";
+
+
+            petFeastConfirmCallback =
+                null;
+
+
+            if (petFeastModalInstance) {
+
+                petFeastModalInstance.show();
+
+            }
+
+        }
+
+
+        // ==================================================
+        // CONFIRM
+        // ==================================================
+
+        function showConfirmModal(
+            message,
+            callback
+        ) {
+
+            initPetFeastModal();
+
+
+            const icon =
+                document.getElementById(
+                    "petFeastModalIcon"
+                );
+
+            const title =
+                document.getElementById(
+                    "petFeastModalTitle"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "petFeastModalMessage"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "petFeastModalCancel"
+                );
+
+            const confirmButton =
+                document.getElementById(
+                    "petFeastModalConfirm"
+                );
+
+
+            icon.innerHTML =
+                '<i class="bi bi-question-circle-fill"></i>';
+
+            icon.style.background =
+                "#fff4e5";
+
+            icon.style.color =
+                "#fd7e14";
+
+
+            title.textContent =
+                "Xác nhận";
+
+
+            messageElement.textContent =
+                message;
+
+
+            cancelButton.style.display =
+                "inline-block";
+
+
+            confirmButton.textContent =
+                "OK";
+
+
+            confirmButton.className =
+                "btn btn-primary";
+
+
+            petFeastConfirmCallback =
+                callback;
+
+
+            if (petFeastModalInstance) {
+
+                petFeastModalInstance.show();
+
+            }
+
+        }
+
+
+        // ==================================================
+        // INIT
+        // ==================================================
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                initPetFeastModal();
+
+            }
+        );
+
+    </script>
     <script>
                        function scrollSlider(id, direction) {
 
@@ -636,7 +1080,7 @@
     </script>
 
     @await RenderSectionAsync("Scripts", false)
-
+    
 </body>
 </html>
 <style>
@@ -1231,4 +1675,56 @@
     }
 
     }
+    /* ==================================================
+       PETFEAST ACTION MODAL
+       ================================================== */
+
+    .petfeast-modal {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.18);
+    }
+
+        .petfeast-modal .modal-body {
+            padding: 30px 25px 25px;
+        }
+
+    .petfeast-modal-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 15px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 30px;
+        background: #eaf7ee;
+        color: #198754;
+    }
+
+    .petfeast-modal-title {
+        margin-bottom: 8px;
+        font-weight: 700;
+        color: #222;
+    }
+
+    .petfeast-modal-message {
+        margin-bottom: 25px;
+        color: #666;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    .petfeast-modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+        .petfeast-modal-buttons .btn {
+            min-width: 90px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
 </style>

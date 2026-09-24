@@ -1,0 +1,602 @@
+﻿@model IEnumerable<PetFeast.Models.Reviews.ReviewReport>
+
+@{
+    ViewData["Title"] = "Tố cáo đánh giá";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<div class="container-fluid admin-list-page">
+
+    <!-- ============================= -->
+    <!-- HEADER -->
+    <!-- ============================= -->
+
+    <div class="admin-page-header">
+
+        <div>
+            <h3 class="admin-page-title">
+                Tố cáo đánh giá
+            </h3>
+
+            <p class="text-muted mb-0 mt-1">
+                Quản lý và xử lý các tố cáo đánh giá từ khách hàng.
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- TÌM KIẾM -->
+    <!-- ============================= -->
+
+    <div class="admin-search-card mb-4">
+
+        <form asp-controller="Admin"
+              asp-action="ReviewReports"
+              method="get">
+
+            <div class="admin-search-row">
+
+                <div class="admin-search-input">
+
+                    <i class="bi bi-search"></i>
+
+                    <input type="text"
+                           name="keyword"
+                           value="@ViewBag.Keyword"
+                           placeholder="Tìm mã tố cáo, sản phẩm, người đánh giá hoặc lý do..." />
+
+                </div>
+
+                <button type="submit"
+                        class="admin-search-btn">
+
+                    <i class="bi bi-search me-1"></i>
+
+                    Tìm kiếm
+
+                </button>
+
+                <a asp-controller="Admin"
+                   asp-action="ReviewReports"
+                   class="admin-reset-btn">
+
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+
+                    Làm mới
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- ============================= -->
+    <!-- DANH SÁCH -->
+    <!-- ============================= -->
+
+    <div class="admin-card">
+
+        <div class="admin-card-header">
+
+            <div>
+
+                <h4>
+                    <i class="bi bi-flag-fill me-2"></i>
+                    Danh sách tố cáo
+                </h4>
+
+                <span class="text-muted small">
+                    Tổng cộng @Model.Count() tố cáo
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-card-body">
+
+            <div class="admin-table-wrapper">
+
+                <table class="table admin-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th class="text-center">
+                                #
+                            </th>
+
+                            <th>
+                                Sản phẩm
+                            </th>
+
+                            <th>
+                                Người đánh giá
+                            </th>
+
+                            <th>
+                                Nội dung đánh giá
+                            </th>
+
+                            <th>
+                                Người tố cáo
+                            </th>
+
+                            <th>
+                                Lý do
+                            </th>
+
+                            <th class="text-center">
+                                Trạng thái
+                            </th>
+
+                            <th class="text-center">
+                                Ngày tố cáo
+                            </th>
+
+                            <th class="text-center">
+                                Thao tác
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @if (!Model.Any())
+                        {
+                            <tr>
+
+                                <td colspan="9"
+                                    class="text-center py-5">
+
+                                    <i class="bi bi-flag fs-1 text-muted"></i>
+
+                                    <div class="mt-3 text-muted">
+
+                                        @if (!string.IsNullOrWhiteSpace(ViewBag.Keyword))
+                                        {
+                                            <span>
+                                                Không tìm thấy tố cáo phù hợp với
+                                                "<strong>@ViewBag.Keyword</strong>".
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span>
+                                                Chưa có tố cáo đánh giá nào.
+                                            </span>
+                                        }
+
+                                    </div>
+
+                                </td>
+
+                            </tr>
+                        }
+                        else
+                        {
+                            foreach (var report in Model)
+                            {
+                                <tr>
+
+                                    <!-- ================= -->
+                                    <!-- MÃ TỐ CÁO -->
+                                    <!-- ================= -->
+
+                                    <td class="text-center">
+
+                                        <span class="fw-semibold">
+                                            #@report.ReviewReportId
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- ================= -->
+                                    <!-- SẢN PHẨM -->
+                                    <!-- ================= -->
+
+                                    <td>
+
+                                        @if (report.ProductReview?.Product != null)
+                                        {
+                                            <div class="fw-semibold product-name-cell">
+
+                                                @report.ProductReview.Product.ProductName
+
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                Sản phẩm không tồn tại
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ================= -->
+                                    <!-- NGƯỜI ĐÁNH GIÁ -->
+                                    <!-- ================= -->
+
+                                    <td>
+
+                                        @if (report.ProductReview?.User != null)
+                                        {
+                                            <div class="fw-semibold">
+
+                                                @(report.ProductReview.User.FullName
+                                                                                    ?? report.ProductReview.User.UserName)
+
+                                </div>
+
+                                            <small class="text-muted">
+
+                                                @report.ProductReview.User.UserName
+
+                                            </small>
+                                                                }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                Không xác định
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ================= -->
+                                    <!-- NỘI DUNG -->
+                                    <!-- ================= -->
+
+                                    <td>
+
+                                        @if (report.ProductReview != null)
+                                        {
+                                            <!-- Rating -->
+
+                                            <div class="mb-1">
+
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    if (i <= report.ProductReview.Rating)
+                                                    {
+                                                        <i class="bi bi-star-fill text-warning"></i>
+                                                    }
+                                                    else
+                                                    {
+                                                        <i class="bi bi-star text-muted"></i>
+                                                    }
+                                                }
+
+                                            </div>
+
+
+                                            <!-- Comment -->
+                                            @if (!string.IsNullOrWhiteSpace(
+                                                                            report.ProductReview.Comment))
+                                            {
+                                                <div class="review-content">
+
+                                                    @if (report.ProductReview.Comment.Length > 100)
+                                                    {
+                                                        @report.ProductReview.Comment.Substring(0, 100)
+                                    
+                                                        <text>...</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        @report.ProductReview.Comment
+                                                    }
+
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted fst-italic">
+                                                    Không có nội dung
+                                                </span>
+                                            }
+
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                Đánh giá đã bị xóa
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ================= -->
+                                    <!-- NGƯỜI TỐ CÁO -->
+                                    <!-- ================= -->
+
+                                    <td>
+
+                                        @if (report.ReporterUser != null)
+                                        {
+                                            <div class="fw-semibold">
+
+                                                @(report.ReporterUser.FullName
+                                                                                    ?? report.ReporterUser.UserName)
+
+                                </div>
+
+                                            <small class="text-muted">
+
+                                                @report.ReporterUser.UserName
+
+                                            </small>
+                                                                }
+                                        else
+                                        {
+                                            <span class="text-muted">
+                                                Không xác định
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ================= -->
+                                    <!-- LÝ DO -->
+                                    <!-- ================= -->
+
+                                    <td>
+
+                                        <div class="report-reason">
+
+                                            @report.Reason
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- ================= -->
+                                    <!-- TRẠNG THÁI -->
+                                    <!-- ================= -->
+
+                                    <td class="text-center">
+
+                                        @if (report.Status == "Chờ xử lý")
+                                        {
+                                            <span class="badge status-badge status-pending">
+
+                                                <i class="bi bi-clock me-1"></i>
+
+                                                Chờ xử lý
+
+                                            </span>
+                                        }
+                                        else if (report.Status == "Không vi phạm")
+                                        {
+                                            <span class="badge status-badge status-success">
+
+                                                <i class="bi bi-check-circle me-1"></i>
+
+                                                Không vi phạm
+
+                                            </span>
+                                        }
+                                        else if (report.Status == "Đã xóa đánh giá")
+                                        {
+                                            <span class="badge status-badge status-danger">
+
+                                                <i class="bi bi-trash me-1"></i>
+
+                                                Đã xóa đánh giá
+
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge status-badge status-secondary">
+
+                                                @report.Status
+
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ================= -->
+                                    <!-- NGÀY -->
+                                    <!-- ================= -->
+
+                                    <td class="text-center">
+
+                                        <div>
+                                            @report.CreatedAt.ToString("dd/MM/yyyy")
+                                        </div>
+
+                                        <small class="text-muted">
+                                            @report.CreatedAt.ToString("HH:mm")
+                                        </small>
+
+                                    </td>
+
+
+                                    <!-- ================= -->
+                                    <!-- THAO TÁC -->
+                                    <!-- ================= -->
+
+                                    <td class="text-center">
+
+                                        <a asp-controller="Admin"
+                                           asp-action="ReviewReportDetail"
+                                           asp-route-id="@report.ReviewReportId"
+                                           class="admin-btn-view">
+
+                                            <i class="bi bi-eye me-1"></i>
+
+                                            Xem
+
+                                        </a>
+
+                                    </td>
+
+                                </tr>
+                            }
+                        }
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+    /* ============================= */
+    /* SEARCH */
+    /* ============================= */
+
+    .admin-search-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .admin-search-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .admin-search-input {
+        position: relative;
+        flex: 1;
+    }
+
+        .admin-search-input i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .admin-search-input input {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0 14px 0 40px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+            .admin-search-input input:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+            }
+
+            .admin-search-input input::placeholder {
+                color: #adb5bd;
+            }
+
+    .admin-search-btn {
+        height: 42px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 8px;
+        background: #0d6efd;
+        color: #ffffff;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .admin-search-btn:hover {
+            background: #0a58ca;
+        }
+
+    .admin-reset-btn {
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        color: #495057;
+        background: #ffffff;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+        .admin-reset-btn:hover {
+            background: #f8f9fa;
+            color: #212529;
+        }
+
+    @@media (max-width: 768px) {
+        .admin-search-row
+
+    {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-search-btn,
+    .admin-reset-btn {
+        width: 100%;
+    }
+
+    }
+    /* ============================= */
+    /* BUTTON XEM */
+    /* ============================= */
+
+    a.admin-btn-view {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        height: 34px !important;
+        min-width: 70px !important;
+        padding: 0 12px !important;
+        border: 1px solid #0d6efd !important;
+        border-radius: 7px !important;
+        color: #0d6efd !important;
+        background-color: #ffffff !important;
+        text-decoration: none !important;
+        font-size: 13px !important;
+        font-weight: 500 !important;
+        white-space: nowrap !important;
+        transition: all 0.2s ease;
+    }
+
+        a.admin-btn-view:hover {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #ffffff !important;
+            text-decoration: none !important;
+        }
+</style>

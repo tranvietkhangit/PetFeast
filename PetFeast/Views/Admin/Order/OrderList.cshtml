@@ -19,6 +19,51 @@
         </div>
     </div>
 
+
+    <!-- TÌM KIẾM -->
+    <div class="admin-search-card mb-4">
+
+        <form asp-controller="Admin"
+              asp-action="OrderList"
+              method="get">
+
+            <div class="admin-search-row">
+
+                <div class="admin-search-input">
+
+                    <i class="bi bi-search"></i>
+
+                    <input type="text"
+                           name="keyword"
+                           value="@ViewBag.Keyword"
+                           placeholder="Tìm mã đơn, tên khách hàng hoặc số điện thoại..." />
+
+                </div>
+
+                <button type="submit"
+                        class="admin-search-btn">
+
+                    <i class="bi bi-search me-1"></i>
+                    Tìm kiếm
+
+                </button>
+
+                <a asp-controller="Admin"
+                   asp-action="OrderList"
+                   class="admin-reset-btn">
+
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Làm mới
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
     <!-- CARD -->
     <div class="admin-card">
 
@@ -51,6 +96,7 @@
             }
             else
             {
+                
                 <div class="admin-table-wrapper">
 
                     <table class="table admin-table order-table">
@@ -244,7 +290,7 @@
                                             {
                                                 <form asp-action="ConfirmPayment"
                                                       method="post"
-                                                      onsubmit="return confirm('Xác nhận đơn hàng đã thanh toán?')">
+                                                      class="confirm-payment-form">
 
                                                     @Html.AntiForgeryToken()
 
@@ -269,7 +315,7 @@
                                             {
                                                 <form asp-action="ConfirmOrder"
                                                       method="post"
-                                                      onsubmit="return confirm('Xác nhận đơn hàng này?')">
+                                                      class="confirm-order-form">
 
                                                     @Html.AntiForgeryToken()
 
@@ -292,7 +338,7 @@
                                             {
                                                 <form asp-action="CompleteOrder"
                                                       method="post"
-                                                      onsubmit="return confirm('Xác nhận đơn hàng đã hoàn thành?')">
+                                                      class="complete-order-form">
 
                                                     @Html.AntiForgeryToken()
 
@@ -316,7 +362,7 @@
                                             {
                                                 <form asp-action="CancelOrder"
                                                       method="post"
-                                                      onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?')">
+                                                      class="cancel-order-form">
 
                                                     @Html.AntiForgeryToken()
 
@@ -350,3 +396,166 @@
         </div>
     </div>
 </div>
+<style>
+    /* ================================
+       ADMIN SEARCH
+    ================================ */
+
+    .admin-search-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .admin-search-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .admin-search-input {
+        position: relative;
+        flex: 1;
+    }
+
+        .admin-search-input i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .admin-search-input input {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0 14px 0 40px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+            .admin-search-input input:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+            }
+
+            .admin-search-input input::placeholder {
+                color: #adb5bd;
+            }
+
+    .admin-search-btn {
+        height: 42px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 8px;
+        background: #0d6efd;
+        color: #ffffff;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .admin-search-btn:hover {
+            background: #0a58ca;
+        }
+
+    .admin-reset-btn {
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        color: #495057;
+        background: #ffffff;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+        .admin-reset-btn:hover {
+            background: #f8f9fa;
+            color: #212529;
+        }
+
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+        .admin-search-row
+
+    {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-search-btn,
+    .admin-reset-btn {
+        width: 100%;
+    }
+
+    }
+</style>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.addEventListener("submit", function (event) {
+
+                const form = event.target;
+
+                if (form.classList.contains("confirm-payment-form")) {
+                    event.preventDefault();
+
+                    showConfirmModal(
+                        "Xác nhận đơn hàng đã thanh toán?",
+                        function () {
+                            form.submit();
+                        }
+                    );
+                }
+
+                else if (form.classList.contains("confirm-order-form")) {
+                    event.preventDefault();
+
+                    showConfirmModal(
+                        "Xác nhận đơn hàng này?",
+                        function () {
+                            form.submit();
+                        }
+                    );
+                }
+
+                else if (form.classList.contains("complete-order-form")) {
+                    event.preventDefault();
+
+                    showConfirmModal(
+                        "Xác nhận đơn hàng đã hoàn thành?",
+                        function () {
+                            form.submit();
+                        }
+                    );
+                }
+
+                else if (form.classList.contains("cancel-order-form")) {
+                    event.preventDefault();
+
+                    showConfirmModal(
+                        "Bạn có chắc muốn hủy đơn hàng này?",
+                        function () {
+                            form.submit();
+                        }
+                    );
+                }
+
+            });
+
+        });
+    </script>
+}

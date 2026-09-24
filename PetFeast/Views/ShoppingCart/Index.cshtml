@@ -297,7 +297,7 @@
 
                 if (!data.success) {
 
-                    alert(data.message);
+                    showErrorModal(data.message);
 
                     if (data.quantity !== undefined) {
 
@@ -370,7 +370,7 @@
 
                 console.error("Quantity error:", error);
 
-                alert("Có lỗi xảy ra. Vui lòng thử lại.");
+                showErrorModal("Có lỗi xảy ra. Vui lòng thử lại.");
 
             }
             finally {

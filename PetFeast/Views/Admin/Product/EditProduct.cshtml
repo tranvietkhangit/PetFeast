@@ -138,7 +138,129 @@
                     <textarea asp-for="Description"
                               class="form-control"></textarea>
                 </div>
+                <!-- =========================
+                     THÔNG TIN SẢN PHẨM
+                ========================= -->
 
+                <div class="admin-card-header mt-4 mb-3">
+                    <i class="bi bi-info-circle text-primary"></i>
+                    <h4>Thông tin chi tiết sản phẩm</h4>
+                </div>
+
+                <div class="row">
+
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="Brand"
+                                   class="admin-form-label">
+                                Thương hiệu
+                            </label>
+
+                            <input asp-for="Brand"
+                                   class="form-control"
+                                   placeholder="VD: Royal Canin, Whiskas..." />
+
+                            <span asp-validation-for="Brand"
+                                  class="text-danger">
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="Origin"
+                                   class="admin-form-label">
+                                Xuất xứ
+                            </label>
+
+                            <input asp-for="Origin"
+                                   class="form-control"
+                                   placeholder="VD: Pháp, Mỹ, Nhật Bản..." />
+
+                            <span asp-validation-for="Origin"
+                                  class="text-danger">
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label asp-for="TargetPet"
+                                   class="admin-form-label">
+                                Đối tượng sử dụng
+                            </label>
+
+                            <input asp-for="TargetPet"
+                                   class="form-control"
+                                   placeholder="VD: Chó trưởng thành, mèo con..." />
+
+                            <span asp-validation-for="TargetPet"
+                                  class="text-danger">
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Ingredients"
+                           class="admin-form-label">
+                        Thành phần
+                    </label>
+
+                    <textarea asp-for="Ingredients"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Nhập thành phần sản phẩm..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Nutrition"
+                           class="admin-form-label">
+                        Thông tin dinh dưỡng
+                    </label>
+
+                    <textarea asp-for="Nutrition"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Nhập thông tin dinh dưỡng..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Usage"
+                           class="admin-form-label">
+                        Hướng dẫn sử dụng
+                    </label>
+
+                    <textarea asp-for="Usage"
+                              class="form-control"
+                              rows="4"
+                              placeholder="Nhập hướng dẫn sử dụng..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Storage"
+                           class="admin-form-label">
+                        Hướng dẫn bảo quản
+                    </label>
+
+                    <textarea asp-for="Storage"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Nhập hướng dẫn bảo quản..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Warning"
+                           class="admin-form-label">
+                        Cảnh báo
+                    </label>
+
+                    <textarea asp-for="Warning"
+                              class="form-control"
+                              rows="3"
+                              placeholder="Nhập cảnh báo hoặc lưu ý..."></textarea>
+                </div>
                 <div class="mb-3">
 
                     <label class="admin-form-label">

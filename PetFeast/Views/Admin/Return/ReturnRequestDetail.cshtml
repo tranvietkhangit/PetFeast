@@ -93,38 +93,6 @@
 
     </div>
 
-    <!-- ALERT -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show shadow-sm"
-             role="alert">
-
-            <i class="bi bi-check-circle-fill me-2"></i>
-            @TempData["Success"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
-        </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm"
-             role="alert">
-
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            @TempData["Error"]
-
-            <button type="button"
-                    class="btn-close"
-                    data-bs-dismiss="alert">
-            </button>
-        </div>
-    }
-
-
     <div class="row g-4">
 
         <!-- =========================
@@ -703,13 +671,12 @@
                               asp-action="ApproveReturnRequest"
                               asp-route-id="@Model.ReturnRequestId"
                               method="post"
-                              class="mb-3">
+                              class="mb-3 approve-return-form">
 
                             @Html.AntiForgeryToken()
 
                             <button type="submit"
-                                    class="btn btn-approve w-100"
-                                    onclick="return confirm('Bạn có chắc muốn duyệt yêu cầu trả hàng này?');">
+                                    class="btn btn-approve w-100">
 
                                 <i class="bi bi-check-circle me-2"></i>
                                 Duyệt yêu cầu
@@ -723,7 +690,8 @@
                         <form asp-controller="Admin"
                               asp-action="RejectReturnRequest"
                               asp-route-id="@Model.ReturnRequestId"
-                              method="post">
+                              method="post"
+                              class="reject-return-form">
 
                             @Html.AntiForgeryToken()
 
@@ -738,8 +706,7 @@
                                   required></textarea>
 
                             <button type="submit"
-                                    class="btn btn-reject w-100"
-                                    onclick="return confirm('Bạn có chắc muốn từ chối yêu cầu này?');">
+                                    class="btn btn-reject w-100">
 
                                 <i class="bi bi-x-circle me-2"></i>
                                 Từ chối yêu cầu
@@ -871,15 +838,13 @@
                         <form asp-controller="Admin"
                               asp-action="SetReturnRefunded"
                               asp-route-id="@Model.ReturnRequestId"
-                              method="post">
+                              method="post"
+                              class="refund-return-form">
 
                             @Html.AntiForgeryToken()
 
                             <button type="submit"
-                                    class="btn btn-primary-action w-100"
-                                    onclick="return confirm(
-                        'Bạn xác nhận sản phẩm đạt điều kiện và muốn hoàn tiền? Hệ thống sẽ hoàn lại điểm, kích hoạt lại voucher và cộng lại tồn kho.'
-                    );">
+                                    class="btn btn-primary-action w-100">
 
                                 <i class="bi bi-cash-coin me-2"></i>
 
@@ -888,12 +853,11 @@
 
                         </form>
                         <!-- TỪ CHỐI SAU KHI KIỂM TRA -->
-
                         <form asp-controller="Admin"
                               asp-action="RejectReturnAfterInspection"
                               asp-route-id="@Model.ReturnRequestId"
                               method="post"
-                              class="mt-3">
+                              class="reject-after-inspection-form mt-3">
 
                             @Html.AntiForgeryToken()
 
@@ -908,8 +872,7 @@
                                   required></textarea>
 
                             <button type="submit"
-                                    class="btn btn-reject w-100"
-                                    onclick="return confirm('Bạn có chắc muốn từ chối hoàn trả sau khi kiểm tra?');">
+                                    class="btn btn-reject w-100">
 
                                 <i class="bi bi-x-circle me-2"></i>
                                 Từ chối hoàn trả
@@ -1475,11 +1438,6 @@
     /* =========================
        REFUND
     ========================= */
-
-    
-
-      
-
     .refund-summary {
         border: 1px solid #dbeafe;
         border-radius: 12px;
@@ -1539,3 +1497,64 @@
             color: #212529;
         }
 </style>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.addEventListener("submit", function (event) {
+
+                const form = event.target;
+
+                if (form.classList.contains("approve-return-form")) {
+
+                    event.preventDefault();
+
+                    showConfirmModal(
+                        "Bạn có chắc muốn duyệt yêu cầu trả hàng này?",
+                        function () {
+                            form.submit();
+                        }
+                    );
+                }
+
+                else if (form.classList.contains("reject-return-form")) {
+
+                    event.preventDefault();
+
+                    showConfirmModal(
+                        "Bạn có chắc muốn từ chối yêu cầu này?",
+                        function () {
+                            form.submit();
+                        }
+                    );
+                }
+
+                else if (form.classList.contains("refund-return-form")) {
+
+                    event.preventDefault();
+
+                    showConfirmModal(
+                        "Bạn xác nhận sản phẩm đạt điều kiện và muốn hoàn tiền? Hệ thống sẽ hoàn lại điểm, kích hoạt lại voucher và cộng lại tồn kho.",
+                        function () {
+                            form.submit();
+                        }
+                    );
+                }
+
+                else if (form.classList.contains("reject-after-inspection-form")) {
+
+                    event.preventDefault();
+
+                    showConfirmModal(
+                        "Bạn có chắc muốn từ chối hoàn trả sau khi kiểm tra?",
+                        function () {
+                            form.submit();
+                        }
+                    );
+                }
+
+            });
+
+        });
+    </script>
+}

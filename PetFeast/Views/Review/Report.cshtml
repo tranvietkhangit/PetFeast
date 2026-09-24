@@ -1,0 +1,326 @@
+﻿@model PetFeast.Models.Reviews.ReviewReport
+
+@{
+    var review = Model.ProductReview;
+}
+
+<div class="container mt-5 mb-5">
+
+    <div class="report-container">
+
+        <!-- TIÊU ĐỀ -->
+
+        <div class="report-title">
+            <div>
+                <h2>
+                    Tố cáo đánh giá
+                </h2>
+
+                <p>
+                    Hãy cho chúng tôi biết vấn đề với đánh giá này.
+                </p>
+            </div>
+
+        </div>
+
+
+        <!-- REVIEW ĐƯỢC TỐ CÁO -->
+        @if (review != null)
+        {
+            <div class="reported-review">
+
+                <div class="reported-review-header">
+
+                    <div class="review-avatar">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+
+                    <div>
+
+                        <div class="fw-bold">
+                            @(review.User?.FullName
+                                                    ?? review.User?.UserName
+                                                    ?? "Khách hàng")
+                    </div>
+
+                        <div class="text-muted small">
+                            @review.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="reported-rating">
+
+                @for (int i = 1; i <= 5; i++)
+                    {
+                        if (i <= review.Rating)
+                        {
+                            <i class="bi bi-star-fill"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-star"></i>
+                        }
+                    }
+
+                </div>
+
+
+                @if (!string.IsNullOrWhiteSpace(review.Comment))
+                {
+                    <div class="reported-comment">
+                        @review.Comment
+                    </div>
+                }
+
+            </div>
+        }
+
+
+        <!-- FORM -->
+
+        <form asp-action="Report"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            <input type="hidden"
+                   asp-for="ProductReviewId"
+                   value="@review?.ProductReviewId" />
+
+
+            <!-- LÝ DO -->
+
+            <div class="mb-4">
+
+                <label asp-for="Reason"
+                       class="form-label fw-bold">
+
+                    Lý do tố cáo
+
+                </label>
+
+
+                <select asp-for="Reason"
+                        class="form-select">
+
+                    <option value="">
+                        -- Chọn lý do --
+                    </option>
+
+                    <option value="Nội dung không phù hợp">
+                        Nội dung không phù hợp
+                    </option>
+
+                    <option value="Nội dung xúc phạm">
+                        Nội dung xúc phạm
+                    </option>
+
+                    <option value="Spam hoặc quảng cáo">
+                        Spam hoặc quảng cáo
+                    </option>
+
+                    <option value="Thông tin sai lệch">
+                        Thông tin sai lệch
+                    </option>
+
+                    <option value="Nội dung không liên quan">
+                        Nội dung không liên quan
+                    </option>
+
+                    <option value="Lý do khác">
+                        Lý do khác
+                    </option>
+
+                </select>
+
+                <span asp-validation-for="Reason"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <!-- MÔ TẢ -->
+
+            <div class="mb-4">
+
+                <label asp-for="Description"
+                       class="form-label fw-bold">
+
+                    Mô tả thêm
+                    <span class="text-muted fw-normal">
+                        (không bắt buộc)
+                    </span>
+
+                </label>
+
+
+                <textarea asp-for="Description"
+                          class="form-control"
+                          rows="5"
+                          maxlength="1000"
+                          placeholder="Hãy mô tả cụ thể vấn đề bạn muốn tố cáo..."></textarea>
+
+                <div class="form-text">
+                    Tối đa 1000 ký tự.
+                </div>
+
+                <span asp-validation-for="Description"
+                      class="text-danger">
+                </span>
+
+            </div>
+
+
+            <!-- BUTTON -->
+
+            <div class="report-actions">
+
+                @if (review != null)
+                {
+                    <a asp-controller="Product"
+                       asp-action="Detail"
+                       asp-route-id="@review.ProductId"
+                       class="btn btn-outline-secondary">
+
+                        <i class="bi bi-arrow-left me-1"></i>
+                        Quay lại
+                    </a>
+                }
+
+
+                <button type="submit"
+                        class="btn btn-danger">
+
+                    <i class="bi bi-flag-fill me-1"></i>
+                    Gửi tố cáo
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    .report-container {
+        max-width: 750px;
+        margin: 0 auto;
+        padding: 35px;
+        background: #ffffff;
+        border: 1px solid #eeeeee;
+        border-radius: 18px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+    }
+
+
+    .report-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding-bottom: 20px;
+        margin-bottom: 25px;
+        border-bottom: 1px solid #eeeeee;
+    }
+
+
+        .report-title > i {
+            font-size: 35px;
+            color: #dc3545;
+        }
+
+
+        .report-title h2 {
+            margin: 0;
+            font-weight: 700;
+        }
+
+
+        .report-title p {
+            margin: 5px 0 0;
+            color: #777;
+        }
+
+
+    .reported-review {
+        padding: 20px;
+        margin-bottom: 30px;
+        background: #f8f9fa;
+        border: 1px solid #eeeeee;
+        border-radius: 12px;
+    }
+
+
+    .reported-review-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+
+    .reported-review .review-avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: #eaf3ff;
+        color: #0d6efd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 19px;
+        flex-shrink: 0;
+    }
+
+
+    .reported-rating {
+        margin-top: 8px;
+        color: #ffc107;
+        font-size: 17px;
+    }
+
+
+    .reported-comment {
+        margin-top: 6px;
+        color: #555;
+        line-height: 1.6;
+        white-space: pre-line;
+    }
+
+
+    .report-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+
+    @@media (max-width: 576px) {
+
+        .report-container {
+            padding: 20px;
+        }
+
+        .report-actions {
+            flex-direction: column-reverse;
+        }
+
+            .report-actions .btn {
+                width: 100%;
+            }
+    }
+
+</style>
+
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

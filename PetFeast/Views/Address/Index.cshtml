@@ -29,31 +29,6 @@
 
     </div>
 
-
-    <!-- THÔNG BÁO -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">
-
-            <i class="bi bi-check-circle me-2"></i>
-
-            @TempData["Success"]
-
-        </div>
-    }
-
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger">
-
-            <i class="bi bi-exclamation-circle me-2"></i>
-
-            @TempData["Error"]
-
-        </div>
-    }
-
-
     @if (!Model.Any())
     {
         <div class="text-center py-5">
@@ -176,7 +151,7 @@
                                 <form asp-controller="Address"
                                       asp-action="Delete"
                                       method="post"
-                                      onsubmit="return confirm('Bạn có chắc muốn xóa địa chỉ này?');">
+                                      class="delete-address-form">
 
                                     @Html.AntiForgeryToken()
 
@@ -223,3 +198,29 @@
     }
 
 </div>
+@section Scripts {
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.addEventListener("submit", function (event) {
+
+                const form =
+                    event.target.closest(".delete-address-form");
+
+                if (!form) return;
+
+                event.preventDefault();
+
+                showConfirmModal(
+                    "Bạn có chắc muốn xóa địa chỉ này?",
+                    function () {
+                        form.submit();
+                    }
+                );
+            });
+
+        });
+    </script>
+
+}

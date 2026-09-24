@@ -184,42 +184,27 @@
                     }
 
                 </p>
+                    @if (!string.IsNullOrWhiteSpace(Model.Note))
+                    {
+                        <hr class="my-4" />
 
+                        <div class="order-note-box">
+
+                            <div class="order-note-title">
+                                <i class="bi bi-chat-left-text me-2"></i>
+                                Ghi chú của khách hàng
+                            </div>
+
+                            <div class="order-note-content">
+                                @Model.Note
+                            </div>
+
+                        </div>
+                    }
             </div>
 
         </div>
-
-
-        <!-- ========================= -->
-        <!-- GHI CHÚ -->
-        <!-- ========================= -->
-
-        @if (!string.IsNullOrWhiteSpace(Model.Note))
-        {
-                <div class="admin-card admin-detail-card">
-
-                <div class="card-header bg-secondary text-white">
-
-                    <h5 class="mb-0">
-                        <i class="bi bi-chat-left-text me-2"></i>
-                        Ghi chú
-                    </h5>
-
-                </div>
-
-                    <div class="admin-card-body">
-                        y">
-
-                    <p class="mb-0">
-                        @Model.Note
-                    </p>
-
-                </div>
-
-            </div>
-        }
-
-
+        
         <!-- ========================= -->
         <!-- HỦY ĐƠN -->
         <!-- ========================= -->
@@ -480,17 +465,16 @@
                             <div class="return-action-area">
 
                                 <!-- DUYỆT -->
-                                <form asp-controller="Admin"
-                                      asp-action="ApproveReturnRequest"
-                                      asp-route-id="@Model.ReturnRequest.ReturnRequestId"
-                                      method="post"
-                                      class="approve-form">
+                                    <form asp-controller="Admin"
+                                          asp-action="ApproveReturnRequest"
+                                          asp-route-id="@Model.ReturnRequest.ReturnRequestId"
+                                          method="post"
+                                          class="approve-return-form">
 
                                     @Html.AntiForgeryToken()
 
                                     <button type="submit"
-                                            class="btn btn-primary btn-approve"
-                                            onclick="return confirm('Bạn có chắc muốn duyệt yêu cầu trả hàng này?');">
+                                            class="btn btn-primary btn-approve">
 
                                         <i class="bi bi-check-circle me-1"></i>
                                         Duyệt yêu cầu
@@ -501,11 +485,11 @@
 
 
                                 <!-- TỪ CHỐI -->
-                                <form asp-controller="Admin"
-                                      asp-action="RejectReturnRequest"
-                                      asp-route-id="@Model.ReturnRequest.ReturnRequestId"
-                                      method="post"
-                                      class="reject-form">
+                                    <form asp-controller="Admin"
+                                          asp-action="RejectReturnRequest"
+                                          asp-route-id="@Model.ReturnRequest.ReturnRequestId"
+                                          method="post"
+                                          class="reject-return-form">
 
                                     @Html.AntiForgeryToken()
 
@@ -516,8 +500,7 @@
                                            required />
 
                                     <button type="submit"
-                                            class="btn btn-reject"
-                                            onclick="return confirm('Bạn có chắc muốn từ chối yêu cầu này?');">
+                                            class="btn btn-reject">
 
                                         <i class="bi bi-x-circle me-1"></i>
                                         Từ chối
@@ -533,16 +516,16 @@
                         <!-- ĐÃ DUYỆT -->
                         @if (Model.ReturnRequest.Status == "Đã duyệt")
                         {
-                            <form asp-controller="Admin"
-                                  asp-action="SetReturnWaitingForProduct"
-                                  asp-route-id="@Model.ReturnRequest.ReturnRequestId"
-                                  method="post">
+                                <form asp-controller="Admin"
+                                      asp-action="SetReturnWaitingForProduct"
+                                      asp-route-id="@Model.ReturnRequest.ReturnRequestId"
+                                      method="post"
+                                      class="waiting-return-form">
 
                                 @Html.AntiForgeryToken()
 
                                 <button type="submit"
-                                        class="btn btn-primary"
-                                        onclick="return confirm('Xác nhận chuyển yêu cầu sang trạng thái Đang chờ nhận hàng?');">
+                                        class="btn btn-primary">
 
                                     <i class="bi bi-box-seam me-1"></i>
                                     Chờ nhận hàng
@@ -556,16 +539,16 @@
                         <!-- ĐANG CHỜ NHẬN HÀNG -->
                         @if (Model.ReturnRequest.Status == "Đang chờ nhận hàng")
                         {
-                            <form asp-controller="Admin"
-                                  asp-action="SetReturnReceived"
-                                  asp-route-id="@Model.ReturnRequest.ReturnRequestId"
-                                  method="post">
+                                <form asp-controller="Admin"
+                                      asp-action="SetReturnReceived"
+                                      asp-route-id="@Model.ReturnRequest.ReturnRequestId"
+                                      method="post"
+                                      class="received-return-form">
 
                                 @Html.AntiForgeryToken()
 
                                 <button type="submit"
-                                        class="btn btn-primary"
-                                        onclick="return confirm('Xác nhận PetFeast đã nhận được sản phẩm trả về?');">
+                                        class="btn btn-primary">
 
                                     <i class="bi bi-box-arrow-in-down me-1"></i>
                                     Đã nhận hàng
@@ -579,16 +562,16 @@
                         <!-- ĐÃ NHẬN HÀNG -->
                         @if (Model.ReturnRequest.Status == "Đã nhận hàng")
                         {
-                            <form asp-controller="Admin"
-                                  asp-action="SetReturnInspecting"
-                                  asp-route-id="@Model.ReturnRequest.ReturnRequestId"
-                                  method="post">
+                                <form asp-controller="Admin"
+                                      asp-action="SetReturnInspecting"
+                                      asp-route-id="@Model.ReturnRequest.ReturnRequestId"
+                                      method="post"
+                                      class="inspect-return-form">
 
                                 @Html.AntiForgeryToken()
 
                                 <button type="submit"
-                                        class="btn btn-warning"
-                                        onclick="return confirm('Xác nhận bắt đầu kiểm tra sản phẩm?');">
+                                        class="btn btn-warning">
 
                                     <i class="bi bi-search me-1"></i>
                                     Bắt đầu kiểm tra
@@ -602,16 +585,16 @@
                         <!-- ĐANG KIỂM TRA -->
                         @if (Model.ReturnRequest.Status == "Đang kiểm tra")
                         {
-                            <form asp-controller="Admin"
-                                  asp-action="SetReturnRefunded"
-                                  asp-route-id="@Model.ReturnRequest.ReturnRequestId"
-                                  method="post">
+                                <form asp-controller="Admin"
+                                      asp-action="SetReturnRefunded"
+                                      asp-route-id="@Model.ReturnRequest.ReturnRequestId"
+                                      method="post"
+                                      class="refund-return-form">
 
                                 @Html.AntiForgeryToken()
 
                                 <button type="submit"
-                                        class="btn btn-success"
-                                        onclick="return confirm('Xác nhận sản phẩm đạt điều kiện và thực hiện hoàn tiền?');">
+                                        class="btn btn-success">
 
                                     <i class="bi bi-cash-coin me-1"></i>
                                     Xác nhận hoàn tiền
@@ -778,9 +761,9 @@
                 <hr />
 
 
-                <!-- ========================= -->
-                <!-- TÍNH TIỀN -->
-                <!-- ========================= -->
+                    <!-- ========================= -->
+                    <!-- TÍNH TIỀN -->
+                    <!-- ========================= -->
 
                     <div class="row justify-content-end">
 
@@ -788,109 +771,105 @@
 
                             <div class="order-summary">
 
-                        <div class="d-flex justify-content-between mb-2">
+                                <!-- TIỀN SẢN PHẨM -->
+                                <div class="order-summary-row">
 
-                            <span>
-                                Tiền sản phẩm:
-                            </span>
+                                    <span class="order-summary-label">
+                                        Tiền sản phẩm:
+                                    </span>
 
-                            <strong>
-                                @(
-                                                                Model.OrderDetails?
-                                                                .Sum(x => x.Price * x.Quantity)
-                                                                .ToString("N0")
-                                                                ) đ
-                            </strong>
-                            </<div>
+                                    <strong class="order-summary-value">
+                                        @(Model.OrderDetails?
+                                                                                .Sum(x => x.Price * x.Quantity)
+                                                                                .ToString("N0")) đ
+                                    </strong>
 
-                            </div>
-                        </div>
+                                </div>
 
 
-                        <!-- GIẢM ĐIỂM -->
+                                <!-- GIẢM ĐIỂM -->
+                                @if (Model.PointDiscount > 0)
+                                {
+                                    <div class="order-summary-row text-success">
 
-                        @if (Model.PointDiscount > 0)
-                        {
-                            <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span class="order-summary-label">
+                                            <i class="bi bi-coin me-1"></i>
+                                            Giảm bằng điểm:
+                                        </span>
 
-                                <span>
-                                    <i class="bi bi-coin me-1"></i>
-                                    Giảm bằng điểm
-                                    (@Model.UsedPoints điểm):
-                                </span>
+                                        <strong class="order-summary-value">
+                                            -@Model.PointDiscount.ToString("N0") đ
+                                        </strong>
 
-                                <strong>
-                                    -@Model.PointDiscount.ToString("N0") đ
-                                </strong>
-
-                            </div>
-                        }
+                                    </div>
+                                }
 
 
-                        <!-- VOUCHER -->
+                                <!-- VOUCHER -->
+                                @if (Model.VoucherDiscount > 0)
+                                {
+                                    <div class="order-summary-row text-success">
 
-                        @if (Model.VoucherDiscount > 0)
-                        {
-                            <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span class="order-summary-label">
+                                            <i class="bi bi-ticket-perforated me-1"></i>
+                                            Giảm voucher:
 
-                                <span>
-                                    <i class="bi bi-ticket-perforated me-1"></i>
-                                    Giảm voucher:
+                                            @if (Model.UserVoucher != null)
+                                            {
+                                                <small>
+                                                    (@Model.UserVoucher.VoucherCode)
+                                                </small>
+                                            }
+                                        </span>
 
-                                    @if (Model.UserVoucher != null)
+                                        <strong class="order-summary-value">
+                                            -@Model.VoucherDiscount.ToString("N0") đ
+                                        </strong>
+
+                                    </div>
+                                }
+
+
+                                <!-- PHÍ VẬN CHUYỂN -->
+                                <div class="order-summary-row">
+
+                                    <span class="order-summary-label">
+                                        Phí vận chuyển:
+                                    </span>
+
+                                    @if (Model.DeliveryMethod == "Ship")
                                     {
-                                        <small>
-                                            (@Model.UserVoucher.VoucherCode)
-                                        </small>
+                                        <strong class="order-summary-value">
+                                            @Model.ShippingFee.ToString("N0") đ
+                                        </strong>
                                     }
-                                </span>
+                                    else
+                                    {
+                                        <strong class="order-summary-value text-secondary">
+                                            0 đ
+                                        </strong>
+                                    }
 
-                                <strong>
-                                    -@Model.VoucherDiscount.ToString("N0") đ
-                                </strong>
+                                </div>
+
+
+                                <hr />
+
+
+                                <!-- TỔNG -->
+                                <div class="order-summary-total">
+
+                                    <span class="fw-bold fs-5">
+                                        Tổng thanh toán:
+                                    </span>
+
+                                    <span class="text-success fw-bold fs-3">
+                                        @Model.TotalAmount.ToString("N0") đ
+                                    </span>
+
+                                </div>
 
                             </div>
-                        }
-
-
-                        <!-- PHÍ SHIP -->
-
-                        <div class="d-flex justify-content-between mb-2">
-
-                            <span>
-                                Phí vận chuyển:
-                            </span>
-
-                            @if (Model.DeliveryMethod == "Ship")
-{
-                                <strong>
-                                    @Model.ShippingFee.ToString("N0") đ
-                                </strong>
-}
-else
-{
-    <strong class="text-secondary">
-        0 đ
-    </strong>
-}
-
-                        </div>
-
-
-                        <hr />
-
-
-                        <!-- TỔNG -->
-
-                        <div class="d-flex justify-content-between align-items-center">
-
-                            <span class="fw-bold fs-5">
-                                Tổng thanh toán:
-                            </span>
-
-                            <span class="text-success fw-bold fs-3">
-                                @Model.TotalAmount.ToString("N0") đ
-                            </span>
 
                         </div>
 
@@ -908,16 +887,16 @@ else
         @if (Model.PaymentMethod == "BankTransfer"
             && Model.PaymentStatus != "Đã thanh toán")
         {
-            <form asp-controller="Admin"
-                  asp-action="ConfirmPayment"
-                  asp-route-id="@Model.OrderId"
-                  method="post">
+                            <form asp-controller="Admin"
+                                  asp-action="ConfirmPayment"
+                                  asp-route-id="@Model.OrderId"
+                                  method="post"
+                                  class="detail-confirm-payment-form">
 
                 @Html.AntiForgeryToken()
 
                 <button type="submit"
-                        class="btn btn-outline-warning fw-bold"
-                        onclick="return confirm('Bạn đã kiểm tra và xác nhận số tiền chuyển khoản của đơn hàng này?');">
+                        class="btn btn-outline-warning fw-bold">
 
                     <i class="bi bi-cash-coin me-1"></i>
                     Xác nhận thanh toán
@@ -936,13 +915,13 @@ else
                             <form asp-controller="Admin"
                                   asp-action="ConfirmOrder"
                                   asp-route-id="@Model.OrderId"
-                                  method="post">
+                                  method="post"
+                                  class="detail-confirm-order-form">
 
                                 @Html.AntiForgeryToken()
 
                                 <button type="submit"
-                                        class="btn btn-primary fw-bold"
-                                        onclick="return confirm('Xác nhận đơn hàng và chuyển sang trạng thái Đang giao?');">
+                                        class="btn btn-primary fw-bold">
 
                                     <i class="bi bi-truck me-1"></i>
                                     Xác nhận đơn
@@ -963,13 +942,13 @@ else
                         <form asp-controller="Admin"
                               asp-action="CompleteOrder"
                               asp-route-id="@Model.OrderId"
-                              method="post">
+                              method="post"
+                              class="detail-complete-order-form">
 
                             @Html.AntiForgeryToken()
 
                             <button type="submit"
-                                    class="btn btn-success fw-bold"
-                                    onclick="return confirm('Xác nhận đơn hàng đã giao thành công?');">
+                                    class="btn btn-success fw-bold">
 
                                 <i class="bi bi-check-circle me-1"></i>
                                 Hoàn thành đơn hàng
@@ -990,13 +969,13 @@ else
                         <form asp-controller="Admin"
                               asp-action="CancelOrder"
                               asp-route-id="@Model.OrderId"
-                              method="post">
+                              method="post"
+                              class="detail-cancel-order-form">
 
                             @Html.AntiForgeryToken()
 
                             <button type="submit"
-                                    class="btn btn-outline-danger fw-bold"
-                                    onclick="return confirm('Bạn có chắc muốn hủy đơn hàng này? Điểm, voucher và tồn kho sẽ được hoàn lại.');">
+                                    class="btn btn-outline-danger fw-bold">
 
                                 <i class="bi bi-x-circle me-1"></i>
                                 Hủy đơn hàng
@@ -1088,7 +1067,7 @@ else
         width: 100%;
     }
 
-    .approve-form {
+    .approve-return-form {
         flex: 0 0 auto;
     }
 
@@ -1101,7 +1080,7 @@ else
         white-space: nowrap;
     }
 
-    .reject-form {
+    .reject-return-form {
         display: flex;
         align-items: center;
         gap: 8px;
@@ -1110,7 +1089,7 @@ else
         min-width: 0;
     }
 
-        .reject-form .form-control {
+        .reject-return-form .form-control {
             flex: 1;
             min-width: 0;
         }
@@ -1123,5 +1102,144 @@ else
         flex: 0 0 auto;
         min-width: 90px;
         white-space: nowrap;
+    }
+</style>
+@section Scripts {
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+
+                    document.addEventListener("submit", function (event) {
+
+                        const form = event.target;
+
+                        let message = null;
+
+                        if (form.classList.contains("approve-return-form")) {
+
+                            message =
+                                "Bạn có chắc muốn duyệt yêu cầu trả hàng này?";
+
+                        }
+                        else if (form.classList.contains("reject-return-form")) {
+
+                            message =
+                                "Bạn có chắc muốn từ chối yêu cầu này?";
+
+                        }
+                        else if (form.classList.contains("waiting-return-form")) {
+
+                            message =
+                                "Xác nhận chuyển yêu cầu sang trạng thái Đang chờ nhận hàng?";
+
+                        }
+                        else if (form.classList.contains("received-return-form")) {
+
+                            message =
+                                "Xác nhận PetFeast đã nhận được sản phẩm trả về?";
+
+                        }
+                        else if (form.classList.contains("inspect-return-form")) {
+
+                            message =
+                                "Xác nhận bắt đầu kiểm tra sản phẩm?";
+
+                        }
+                        else if (form.classList.contains("refund-return-form")) {
+
+                            message =
+                                "Xác nhận sản phẩm đạt điều kiện và thực hiện hoàn tiền?";
+
+                        }
+                        else if (form.classList.contains("detail-confirm-payment-form")) {
+
+                            message =
+                                "Bạn đã kiểm tra và xác nhận số tiền chuyển khoản của đơn hàng này?";
+
+                        }
+                        else if (form.classList.contains("detail-confirm-order-form")) {
+
+                            message =
+                                "Xác nhận đơn hàng và chuyển sang trạng thái Đang giao?";
+
+                        }
+                        else if (form.classList.contains("detail-complete-order-form")) {
+
+                            message =
+                                "Xác nhận đơn hàng đã giao thành công?";
+
+                        }
+                        else if (form.classList.contains("detail-cancel-order-form")) {
+
+                            message =
+                                "Bạn có chắc muốn hủy đơn hàng này? Điểm, voucher và tồn kho sẽ được hoàn lại?";
+
+                        }
+
+                        if (!message) {
+                            return;
+                        }
+
+                        event.preventDefault();
+
+                        showConfirmModal(
+                            message,
+                            function () {
+                                form.submit();
+                            }
+                        );
+
+                    });
+
+                });
+            </script>
+}
+<style>
+    .order-note-box {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .order-note-title {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
+        .order-note-title i {
+            color: #0d6efd;
+        }
+
+    .order-note-content {
+        color: #495057;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .order-summary-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 15px;
+    }
+
+    .order-summary-label {
+        width: 180px;
+        flex-shrink: 0;
+    }
+
+    .order-summary-value {
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .order-summary-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 </style>

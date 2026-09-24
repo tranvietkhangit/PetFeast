@@ -39,34 +39,6 @@
             }
 
         </div>
-
-
-        <!-- SUCCESS -->
-        @if (TempData["OtpSuccess"] != null)
-        {
-            <div class="alert alert-success mt-4">
-
-                <i class="bi bi-check-circle me-2"></i>
-
-                @TempData["OtpSuccess"]
-
-            </div>
-        }
-
-
-        <!-- ERROR -->
-        @if (TempData["OtpError"] != null)
-        {
-            <div class="alert alert-danger mt-4">
-
-                <i class="bi bi-exclamation-circle me-2"></i>
-
-                @TempData["OtpError"]
-
-            </div>
-        }
-
-
         <!-- VALIDATION -->
         <div asp-validation-summary="All"
              class="text-danger mt-3">

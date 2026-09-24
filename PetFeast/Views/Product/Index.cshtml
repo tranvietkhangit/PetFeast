@@ -1,9 +1,17 @@
 ﻿@model IEnumerable<PetFeast.Models.Products.Product>
+
+@using PetFeast.Models.ViewModels
+
 @{
     var favoriteProductIds =
         ViewBag.FavoriteProductIds
         as HashSet<int>
         ?? new HashSet<int>();
+
+    var productRatings =
+        ViewBag.ProductRatings
+        as Dictionary<int, ProductRatingViewModel>
+        ?? new Dictionary<int, ProductRatingViewModel>();
 }
 @{
     decimal maxProductPrice = ViewBag.MaxProductPrice ?? 0;
@@ -59,7 +67,9 @@
     <input type="hidden"
            name="maxPrice"
            value="@Context.Request.Query["maxPrice"]" />
-
+           <input type="hidden"
+       name="minRating"
+       value="@Context.Request.Query["minRating"]" />
     <select name="sortOrder"
         class="form-select sort-select">
 
@@ -92,6 +102,139 @@
       asp-controller="Product"
       asp-action="Index"
       class="product-filter-form">
+      <!-- =========================
+     LỌC THEO ĐÁNH GIÁ
+========================= -->
+
+<div class="card mt-3">
+
+    <div class="card-header bg-primary text-white">
+        ĐÁNH GIÁ
+    </div>
+
+    <div class="card-body">
+
+        <div class="rating-filter">
+
+            <!-- 5 SAO -->
+            <label class="rating-filter-item">
+                <input type="radio"
+                       name="minRating"
+                       value="5"
+                       @(Context.Request.Query["minRating"] == "5"
+                           ? "checked"
+                           : "") />
+
+                <span class="rating-stars">
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                </span>
+
+                <span class="rating-filter-text">
+                    5 sao
+                </span>
+            </label>
+
+
+            <!-- 4 SAO -->
+            <label class="rating-filter-item">
+                <input type="radio"
+                       name="minRating"
+                       value="4"
+                       @(Context.Request.Query["minRating"] == "4"
+                           ? "checked"
+                           : "") />
+
+                <span class="rating-stars">
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star"></i>
+                </span>
+
+                <span class="rating-filter-text">
+                    4 sao trở lên
+                </span>
+            </label>
+
+
+            <!-- 3 SAO -->
+            <label class="rating-filter-item">
+                <input type="radio"
+                       name="minRating"
+                       value="3"
+                       @(Context.Request.Query["minRating"] == "3"
+                           ? "checked"
+                           : "") />
+
+                <span class="rating-stars">
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                </span>
+
+                <span class="rating-filter-text">
+                    3 sao trở lên
+                </span>
+            </label>
+
+
+            <!-- 2 SAO -->
+            <label class="rating-filter-item">
+                <input type="radio"
+                       name="minRating"
+                       value="2"
+                       @(Context.Request.Query["minRating"] == "2"
+                           ? "checked"
+                           : "") />
+
+                <span class="rating-stars">
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                </span>
+
+                <span class="rating-filter-text">
+                    2 sao trở lên
+                </span>
+            </label>
+
+
+            <!-- 1 SAO -->
+            <label class="rating-filter-item">
+                <input type="radio"
+                       name="minRating"
+                       value="1"
+                       @(Context.Request.Query["minRating"] == "1"
+                           ? "checked"
+                           : "") />
+
+                <span class="rating-stars">
+                    <i class="bi bi-star-fill"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                    <i class="bi bi-star"></i>
+                </span>
+
+                <span class="rating-filter-text">
+                    1 sao trở lên
+                </span>
+            </label>
+
+        </div>
+
+    </div>
+
+</div>
 
                 <div class="card mb-3">
 
@@ -266,8 +409,17 @@
 
                        @foreach (var item in Model)
 {
-    bool isFavorite = favoriteProductIds.Contains(item.ProductId);
-bool isOutOfStock = item.Quantity <= 0;
+     bool isFavorite =
+        favoriteProductIds.Contains(item.ProductId);
+
+    bool isOutOfStock =
+        item.Quantity <= 0;
+
+    ProductRatingViewModel? rating = null;
+
+    productRatings.TryGetValue(
+        item.ProductId,
+        out rating);
 
     <div class="col-md-4 mb-4">
 
@@ -346,8 +498,67 @@ bool isOutOfStock = item.Quantity <= 0;
     @item.ProductName
 </h6>
 
+<!-- =========================
+     RATING
+========================= -->
 
-                @if (item.DiscountPercent > 0)
+<div class="product-rating">
+
+    @if (rating != null && rating.ReviewCount > 0)
+    {
+        <span class="rating-stars">
+
+            @for (int i = 1; i <= 5; i++)
+            {
+                if (rating.AverageRating >= i)
+                {
+                    <i class="bi bi-star-fill"></i>
+                }
+                else if (rating.AverageRating >= i - 0.5)
+                {
+                    <i class="bi bi-star-half"></i>
+                }
+                else
+                {
+                    <i class="bi bi-star"></i>
+                }
+            }
+
+        </span>
+
+        <span class="rating-score">
+            @rating.AverageRating.ToString("0.0")
+        </span>
+
+        <span class="rating-divider">
+            ·
+        </span>
+
+        <span class="rating-count">
+            @rating.ReviewCount đánh giá
+        </span>
+    }
+    else
+    {
+        <span class="rating-stars">
+
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+            <i class="bi bi-star"></i>
+
+        </span>
+
+        <span class="rating-count">
+            Chưa có đánh giá
+        </span>
+    }
+
+</div>
+
+
+@if (item.DiscountPercent > 0)
 {
     <div class="product-price-box">
 
@@ -439,6 +650,7 @@ else
                            categoryId = Context.Request.Query["categoryId"],
                            minPrice = ViewBag.MinPrice,
                            maxPrice = ViewBag.MaxPrice,
+minRating = Context.Request.Query["minRating"],
                            sortOrder = Context.Request.Query["sortOrder"],
                            page = ViewBag.CurrentPage - 1
                        })">
@@ -462,6 +674,7 @@ else
                            categoryId = Context.Request.Query["categoryId"],
                            minPrice = ViewBag.MinPrice,
                            maxPrice = ViewBag.MaxPrice,
+minRating = Context.Request.Query["minRating"],
                            sortOrder = Context.Request.Query["sortOrder"],
                            page = i
                        })">
@@ -485,6 +698,7 @@ else
                            categoryId = Context.Request.Query["categoryId"],
                            minPrice = ViewBag.MinPrice,
                            maxPrice = ViewBag.MaxPrice,
+minRating = Context.Request.Query["minRating"],
                            sortOrder = Context.Request.Query["sortOrder"],
                            page = ViewBag.CurrentPage + 1
                        })">
@@ -868,7 +1082,7 @@ else
                 error
             );
 
-            alert(
+            showErrorModal(
                 "Không thể tải sản phẩm. Vui lòng thử lại."
             );
 
@@ -1288,7 +1502,7 @@ else
                     error
                 );
 
-                alert(
+                showErrorModal(
                     "Có lỗi xảy ra khi cập nhật yêu thích."
                 );
 
@@ -1451,7 +1665,7 @@ else
                 }
                 else {
 
-                    alert(
+                    showErrorModal(
                         data.message ||
                         "Không thể thêm sản phẩm vào giỏ hàng."
                     );
@@ -1474,7 +1688,7 @@ else
                 );
 
 
-                alert(
+                showErrorModal(
                     "Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng."
                 );
 
@@ -2118,4 +2332,93 @@ else
             width: 100%;
         }
     }
+    /* =========================
+   PRODUCT RATING
+========================= */
+
+.product-rating {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+
+    min-height: 24px;
+
+    margin-bottom: 7px;
+
+    font-size: 13px;
+}
+
+.rating-stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.rating-stars i {
+    color: #ffc107;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.rating-score {
+    color: #343a40;
+    font-weight: 600;
+}
+
+.rating-divider {
+    color: #adb5bd;
+    margin: 0 1px;
+}
+
+.rating-count {
+    color: #6c757d;
+}
+/* =========================
+   RATING FILTER
+========================= */
+
+.rating-filter {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rating-filter-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    cursor: pointer;
+
+    padding: 6px 8px;
+
+    border-radius: 6px;
+
+    transition: background 0.2s ease;
+}
+
+.rating-filter-item:hover {
+    background: #f1f6ff;
+}
+
+.rating-filter-item input[type="radio"] {
+    margin: 0;
+    cursor: pointer;
+}
+
+.rating-filter-item .rating-stars {
+    display: inline-flex;
+    gap: 1px;
+}
+
+.rating-filter-item .rating-stars i {
+    color: #ffc107;
+    font-size: 15px;
+}
+
+.rating-filter-text {
+    font-size: 14px;
+    color: #343a40;
+}
 </style>

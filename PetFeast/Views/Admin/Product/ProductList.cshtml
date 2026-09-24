@@ -7,7 +7,6 @@
 <div class="container-fluid admin-list-page">
 
     <div class="admin-page-header">
-
         <div>
             <h3 class="admin-page-title">
                 Danh sách sản phẩm
@@ -17,20 +16,47 @@
                 Quản lý sản phẩm, giá bán và tồn kho
             </p>
         </div>
+    </div>
+
+
+    <!-- TÌM KIẾM -->
+    <div class="admin-search-card mb-4">
 
         <form asp-controller="Admin"
-              asp-action="ProductSearch"
-              method="get"
-              class="admin-search">
+              asp-action="ProductList"
+              method="get">
 
-            <input type="text"
-                   name="keyword"
-                   placeholder="Tìm sản phẩm..."
-                   value="@Context.Request.Query["keyword"]" />
+            <div class="admin-search-row">
 
-            <button type="submit">
-                <i class="bi bi-search"></i>
-            </button>
+                <div class="admin-search-input">
+
+                    <i class="bi bi-search"></i>
+
+                    <input type="text"
+                           name="keyword"
+                           value="@ViewBag.Keyword"
+                           placeholder="Tìm tên sản phẩm hoặc danh mục..." />
+
+                </div>
+
+                <button type="submit"
+                        class="admin-search-btn">
+
+                    <i class="bi bi-search me-1"></i>
+                    Tìm kiếm
+
+                </button>
+
+                <a asp-controller="Admin"
+                   asp-action="ProductList"
+                   class="admin-reset-btn">
+
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Làm mới
+
+                </a>
+
+            </div>
 
         </form>
 
@@ -169,15 +195,22 @@
 
                                         </a>
 
-                                        <a asp-action="DeleteProduct"
-                                           asp-route-id="@item.ProductId"
-                                           class="btn btn-outline-danger"
-                                           title="Xóa"
-                                           onclick="return confirm('Xóa sản phẩm này?')">
+                                        <form asp-action="DeleteProduct"
+                                              asp-route-id="@item.ProductId"
+                                              method="post"
+                                              class="delete-product-form d-inline">
 
-                                            <i class="bi bi-trash"></i>
+                                            @Html.AntiForgeryToken()
 
-                                        </a>
+                                            <button type="submit"
+                                                    class="btn btn-outline-danger"
+                                                    title="Xóa">
+
+                                                <i class="bi bi-trash"></i>
+
+                                            </button>
+
+                                        </form>
 
                                     </div>
                                 </td>
@@ -196,3 +229,135 @@
     </div>
 
 </div>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.addEventListener("submit", function (event) {
+
+                const form = event.target;
+
+                if (!form.classList.contains("delete-product-form")) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                showConfirmModal(
+                    "Bạn có chắc muốn xóa sản phẩm này?",
+                    function () {
+                        form.submit();
+                    }
+                );
+            });
+
+        });
+    </script>
+}
+<style>
+    /* ================================
+           ADMIN SEARCH
+        ================================ */
+
+    .admin-search-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .admin-search-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .admin-search-input {
+        position: relative;
+        flex: 1;
+    }
+
+        .admin-search-input i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .admin-search-input input {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0 14px 0 40px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+            .admin-search-input input:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+            }
+
+            .admin-search-input input::placeholder {
+                color: #adb5bd;
+            }
+
+    .admin-search-btn {
+        height: 42px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 8px;
+        background: #0d6efd;
+        color: #ffffff;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .admin-search-btn:hover {
+            background: #0a58ca;
+        }
+
+    .admin-reset-btn {
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        color: #495057;
+        background: #ffffff;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+        .admin-reset-btn:hover {
+            background: #f8f9fa;
+            color: #212529;
+        }
+
+
+    /* ================================
+           RESPONSIVE
+        ================================ */
+
+    @@media (max-width: 768px) {
+
+        .admin-search-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .admin-search-btn,
+        .admin-reset-btn {
+            width: 100%;
+        }
+    }
+</style>

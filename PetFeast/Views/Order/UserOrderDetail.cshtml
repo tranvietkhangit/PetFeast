@@ -1,5 +1,9 @@
 ﻿@model PetFeast.Models.Orders.Order
-
+@{
+    var reviewedOrderDetailIds =
+        ViewBag.ReviewedOrderDetailIds as List<int>
+        ?? new List<int>();
+}
 <div class="container mt-4 mb-5">
 
     <!-- HEADER -->
@@ -602,8 +606,7 @@
                                 <div class="refund-completed-time">
                                     <i class="bi bi-clock me-1"></i>
                                     Hoàn tất lúc:
-                                    @returnRequest.CompletedAt.Value
-                                    .ToString("dd/MM/yyyy HH:mm")
+                                    @returnRequest.CompletedAt.Value.ToString("dd/MM/yyyy HH:mm")
                                 </div>
                             }
 
@@ -645,15 +648,14 @@
                 <table class="table align-middle mb-0">
 
                     <thead class="table-light">
-
                         <tr>
                             <th style="width: 90px;">Sản phẩm</th>
                             <th>Tên sản phẩm</th>
                             <th class="text-center">SL</th>
                             <th class="text-end">Đơn giá</th>
                             <th class="text-end">Thành tiền</th>
+                            <th class="text-center">Đánh giá</th>
                         </tr>
-
                     </thead>
 
                     <tbody>
@@ -689,7 +691,38 @@
                                 <td class="text-end text-success fw-bold">
                                     @((item.Price * item.Quantity).ToString("N0")) đ
                                 </td>
+                                <td class="text-center">
 
+                                    @if (Model.Status == "Hoàn thành" &&
+                                                                    Model.ReturnRequest?.Status != "Đã hoàn tiền")
+                                    {
+                                        @if (reviewedOrderDetailIds.Contains(item.OrderDetailId))
+                                        {
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle me-1"></i>
+                                                Đã đánh giá
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <a asp-controller="Review"
+                                               asp-action="Create"
+                                               asp-route-orderDetailId="@item.OrderDetailId"
+                                               class="btn btn-outline-primary btn-sm review-btn">
+
+                                                <i class="bi bi-star me-1"></i>
+                                                Đánh giá
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small">
+                                            Chưa thể đánh giá
+                                        </span>
+                                    }
+
+                                </td>
                             </tr>
                         }
 
@@ -1070,4 +1103,10 @@
         .refund-total-row .refund-amount {
             font-size: 20px;
         }
+
+    .review-btn {
+        border-radius: 8px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
 </style>

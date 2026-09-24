@@ -1,0 +1,132 @@
+﻿@model PetFeast.Models.Products.ProductReview
+
+@{
+    ViewData["Title"] = "Xóa đánh giá";
+}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-lg-6">
+
+            <div class="card border-0 shadow-sm">
+
+                <div class="card-body p-4 text-center">
+
+                    <div class="mb-3">
+                        <i class="bi bi-exclamation-triangle-fill text-danger"
+                           style="font-size: 55px;">
+                        </i>
+                    </div>
+
+                    <h2 class="fw-bold mb-3">
+                        Xóa đánh giá?
+                    </h2>
+
+                    <p class="text-muted mb-4">
+                        Bạn có chắc chắn muốn xóa đánh giá này không?
+                        Hành động này không thể hoàn tác.
+                    </p>
+
+
+                    @if (Model.Product != null)
+                    {
+                        <div class="d-flex align-items-center
+                                        justify-content-center
+                                        gap-3 mb-4">
+
+                            @if (!string.IsNullOrEmpty(Model.Product.ImageUrl))
+                            {
+                                <img src="@Model.Product.ImageUrl"
+                                     alt="@Model.Product.ProductName"
+                                     style="
+                                                 width: 80px;
+                                                 height: 80px;
+                                                 object-fit: cover;
+                                                 border-radius: 10px;
+                                             " />
+                            }
+
+                            <div class="text-start">
+
+                                <h5 class="fw-bold mb-1">
+                                    @Model.Product.ProductName
+                                </h5>
+
+                                <div>
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= Model.Rating)
+                                        {
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-star text-muted"></i>
+                                        }
+                                    }
+                                </div>
+
+                            </div>
+
+                        </div>
+                    }
+
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Comment))
+                    {
+                        <div class="bg-light rounded p-3 mb-4 text-start">
+
+                            <small class="text-muted d-block mb-1">
+                                Nội dung đánh giá:
+                            </small>
+
+                            <span>
+                                @Model.Comment
+                            </span>
+
+                        </div>
+                    }
+
+
+                    <form asp-controller="Review"
+                          asp-action="DeleteConfirmed"
+                          asp-route-id="@Model.ProductReviewId"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div class="d-flex
+                                    justify-content-center
+                                    gap-2">
+
+                            <a asp-controller="Review"
+                               asp-action="MyReviews"
+                               class="btn btn-outline-secondary">
+
+                                <i class="bi bi-arrow-left me-1"></i>
+                                Hủy
+                            </a>
+
+                            <button type="submit"
+                                    class="btn btn-danger">
+
+                                <i class="bi bi-trash me-1"></i>
+                                Xóa đánh giá
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

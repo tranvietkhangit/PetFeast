@@ -9,16 +9,18 @@
 
 <div class="container-fluid admin-list-page">
 
+    <!-- ========================= -->
     <!-- HEADER -->
-    <div class="d-flex justify-content-between
-                align-items-center mb-4">
+    <!-- ========================= -->
+
+    <div class="admin-page-header">
 
         <div>
-            <h2 class="fw-bold">
+            <h3 class="admin-page-title">
                 Quản lý liên hệ
-            </h2>
+            </h3>
 
-            <p class="text-muted mb-0">
+            <p class="text-muted mb-0 mt-1">
                 Xem và quản lý tin nhắn từ khách hàng.
             </p>
         </div>
@@ -29,38 +31,98 @@
 
     </div>
 
-    <!-- THÔNG BÁO -->
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">
-            @TempData["Success"]
-        </div>
-    }
 
-    <!-- BỘ LỌC -->
-    <div class="mb-3">
+    <!-- ========================= -->
+    <!-- TÌM KIẾM -->
+    <!-- ========================= -->
+
+    <div class="admin-search-card mb-4">
+
+        <form asp-action="Index"
+              method="get">
+
+            <!-- Giữ trạng thái hiện tại khi tìm kiếm -->
+            <input type="hidden"
+                   name="status"
+                   value="@currentStatus" />
+
+            <div class="admin-search-row">
+
+                <div class="admin-search-input">
+
+                    <i class="bi bi-search"></i>
+
+                    <input type="text"
+                           name="keyword"
+                           value="@ViewBag.Keyword"
+                           placeholder="Tìm tên khách hàng, email hoặc số điện thoại..." />
+
+                </div>
+
+                <button type="submit"
+                        class="admin-search-btn">
+
+                    <i class="bi bi-search me-1"></i>
+                    Tìm kiếm
+
+                </button>
+
+                <a asp-action="Index"
+                   asp-route-status="@currentStatus"
+                   class="admin-reset-btn">
+
+                    <i class="bi bi-arrow-clockwise me-1"></i>
+                    Làm mới
+
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- BỘ LỌC TRẠNG THÁI -->
+    <!-- ========================= -->
+
+    <div class="contact-filter mb-4">
 
         <a asp-action="Index"
+           asp-route-keyword="@ViewBag.Keyword"
            class="btn @(string.IsNullOrEmpty(currentStatus)
-                          ? "btn-primary"
-                          : "btn-outline-primary")">
+                                 ? "btn-primary"
+                                 : "btn-outline-primary")">
+
             Tất cả
+
         </a>
 
+
         <a asp-action="Index"
+           asp-route-keyword="@ViewBag.Keyword"
            asp-route-status="unread"
            class="btn @(currentStatus == "unread"
-                          ? "btn-primary"
-                          : "btn-outline-primary")">
+                                 ? "btn-primary"
+                                 : "btn-outline-primary")">
+
+            <i class="bi bi-envelope me-1"></i>
             Chưa đọc
+
         </a>
 
+
         <a asp-action="Index"
+           asp-route-keyword="@ViewBag.Keyword"
            asp-route-status="read"
            class="btn @(currentStatus == "read"
-                          ? "btn-primary"
-                          : "btn-outline-primary")">
+                                 ? "btn-primary"
+                                 : "btn-outline-primary")">
+
+            <i class="bi bi-envelope-open me-1"></i>
             Đã đọc
+
         </a>
 
     </div>
@@ -80,7 +142,7 @@
                         <th>Số điện thoại</th>
                         <th>Ngày gửi</th>
                         <th>Trạng thái</th>
-                        <th class="text-center">Thao tác</th>
+                        <th class="text-center action-column">Thao tác</th>
                     </tr>
 
                 </thead>
@@ -173,9 +235,7 @@
                                         <form asp-action="Delete"
                                               asp-route-id="@contact.Id"
                                               method="post"
-                                              onsubmit="return confirm(
-                                                          'Bạn có chắc muốn xóa liên hệ này?'
-                                                      );">
+                                              class="delete-contact-form">
 
                                             @Html.AntiForgeryToken()
 
@@ -289,4 +349,148 @@
                 font-size: 14px;
             }
 
+</style>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.addEventListener("submit", function (event) {
+
+                const form =
+                    event.target.closest(".delete-contact-form");
+
+                if (!form) return;
+
+                event.preventDefault();
+
+                showConfirmModal(
+                    "Bạn có chắc muốn xóa liên hệ này?",
+                    function () {
+                        form.submit();
+                    }
+                );
+            });
+
+        });
+    </script>
+}
+<style>
+    /* ============================= */
+    /* THANH TÌM KIẾM */
+    /* ============================= */
+
+    .admin-search-card {
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 18px 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .admin-search-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .admin-search-input {
+        position: relative;
+        flex: 1;
+    }
+
+        .admin-search-input i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .admin-search-input input {
+            width: 100%;
+            height: 42px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0 14px 0 40px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+            .admin-search-input input:focus {
+                border-color: #0d6efd;
+                box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+            }
+
+            .admin-search-input input::placeholder {
+                color: #adb5bd;
+            }
+
+
+    /* NÚT TÌM KIẾM */
+
+    .admin-search-btn {
+        height: 42px;
+        padding: 0 18px;
+        border: none;
+        border-radius: 8px;
+        background: #0d6efd;
+        color: #ffffff;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+        .admin-search-btn:hover {
+            background: #0a58ca;
+        }
+
+
+    /* NÚT LÀM MỚI */
+
+    .admin-reset-btn {
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 16px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        color: #495057;
+        background: #ffffff;
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+        .admin-reset-btn:hover {
+            background: #f8f9fa;
+            color: #212529;
+        }
+
+
+    /* BỘ LỌC */
+
+    .contact-filter {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+
+    /* RESPONSIVE */
+
+    @@media (max-width: 768px) {
+
+        .admin-search-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .admin-search-btn,
+        .admin-reset-btn {
+            width: 100%;
+        }
+    }
 </style>

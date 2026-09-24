@@ -1,67 +1,89 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="vi">
+
 <head>
 
-    <meta charset="utf-8">
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
 
     <title>PetFeast Admin</title>
 
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+          rel="stylesheet" />
 
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
+    <!-- Favicon -->
     <link rel="icon"
           type="image/png"
-          href="~/img/Logo/logo1.png">
+          href="~/img/Logo/logo1.png" />
 
-    <link rel="stylesheet" href="~/css/admin.css" />
+    <!-- Admin CSS -->
+    <link rel="stylesheet"
+          href="~/css/admin.css" />
 
 </head>
 
 <body>
 
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+
     <div class="sidebar">
 
+        <!-- LOGO -->
         <div class="logo">
-
-            <img src="~/img/logo/logo1.png"
-                 alt="PetFeast Logo">
-
+            <img src="~/img/Logo/logo1.png"
+                 alt="PetFeast Logo" />
         </div>
 
+        <!-- MENU -->
         <ul>
 
+            <!-- DASHBOARD -->
             <li>
                 <a asp-controller="Admin"
                    asp-action="Dashboard">
 
                     <i class="bi bi-speedometer2"></i>
-                    Dashboard
+
+                    <span>Dashboard</span>
 
                 </a>
             </li>
 
+
+            <!-- SẢN PHẨM -->
             <li>
                 <a asp-controller="Admin"
                    asp-action="ProductList">
 
                     <i class="bi bi-box-seam"></i>
-                    Sản phẩm
+
+                    <span>Sản phẩm</span>
 
                 </a>
             </li>
 
+
+            <!-- DANH MỤC -->
             <li>
                 <a asp-controller="Admin"
                    asp-action="CategoryList">
 
                     <i class="bi bi-grid"></i>
-                    Danh mục
+
+                    <span>Danh mục</span>
 
                 </a>
             </li>
+
 
             <!-- ĐƠN HÀNG -->
             <li>
@@ -69,6 +91,7 @@
                    asp-action="OrderList">
 
                     <i class="bi bi-cart3"></i>
+
                     <span>Đơn hàng</span>
 
                     <span id="newOrderBadge"
@@ -79,12 +102,14 @@
                 </a>
             </li>
 
+
             <!-- HOÀN TRẢ -->
             <li>
                 <a asp-controller="Admin"
                    asp-action="ReturnRequestList">
 
                     <i class="bi bi-arrow-return-left"></i>
+
                     <span>Hoàn trả</span>
 
                     <span id="returnBadge"
@@ -95,6 +120,7 @@
                 </a>
             </li>
 
+
             <!-- VOUCHER -->
             <li>
                 <a asp-controller="Admin"
@@ -102,12 +128,16 @@
                    class="nav-link">
 
                     <i class="bi bi-ticket-perforated me-2"></i>
-                    Quản lý Voucher
+
+                    <span>Quản lý Voucher</span>
 
                 </a>
             </li>
-            <!-- CONTACT -->
+
+
+            <!-- LIÊN HỆ -->
             <li class="nav-item">
+
                 <a asp-controller="AdminContact"
                    asp-action="Index"
                    class="nav-link d-flex align-items-center">
@@ -116,10 +146,31 @@
 
                     <span>Quản lý liên hệ</span>
 
-                    @await Component.InvokeAsync(
-                    "UnreadContactCount")
+                    @await Component.InvokeAsync("UnreadContactCount")
+
+                </a>
+
+            </li>
+
+
+            <!-- TỐ CÁO ĐÁNH GIÁ -->
+            <li>
+                <a asp-controller="Admin"
+                   asp-action="ReviewReports">
+
+                    <i class="bi bi-flag"></i>
+
+                    <span>Tố cáo đánh giá</span>
+
+                    <span id="reportBadge"
+                          class="notification-badge d-none">
+                        0
+                    </span>
+
                 </a>
             </li>
+
+
             <!-- ĐĂNG XUẤT -->
             <li>
 
@@ -131,7 +182,8 @@
                             class="logout-btn">
 
                         <i class="bi bi-box-arrow-right"></i>
-                        Đăng xuất
+
+                        <span>Đăng xuất</span>
 
                     </button>
 
@@ -143,14 +195,24 @@
 
     </div>
 
+
+    <!-- =========================================================
+         MAIN
+    ========================================================== -->
+
     <div class="main">
 
+        <!-- TOPBAR -->
         <div class="topbar">
 
-            <h3>Quản lý PetFeast</h3>
+            <h3>
+                Quản lý PetFeast
+            </h3>
 
         </div>
 
+
+        <!-- CONTENT -->
         <div class="content">
 
             @RenderBody()
@@ -158,7 +220,12 @@
         </div>
 
     </div>
-    <!-- Back to Top Button -->
+
+
+    <!-- =========================================================
+         BACK TO TOP
+    ========================================================== -->
+
     <button id="backToTop"
             class="back-to-top"
             type="button"
@@ -167,9 +234,484 @@
         <i class="bi bi-arrow-up"></i>
 
     </button>
-    <!-- ============================= -->
-    <!-- CẬP NHẬT THÔNG BÁO ADMIN -->
-    <!-- ============================= -->
+
+
+    <!-- =========================================================
+         GLOBAL PETFEAST ACTION MODAL
+    ========================================================== -->
+
+    <div class="modal fade"
+         id="petFeastActionModal"
+         tabindex="-1"
+         aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+
+            <div class="modal-content petfeast-modal">
+
+                <div class="modal-body text-center">
+
+                    <!-- ICON -->
+                    <div id="petFeastModalIcon"
+                         class="petfeast-modal-icon">
+
+                        <i class="bi bi-check-circle-fill"></i>
+
+                    </div>
+
+
+                    <!-- TITLE -->
+                    <h5 id="petFeastModalTitle"
+                        class="petfeast-modal-title">
+
+                        Thành công
+
+                    </h5>
+
+
+                    <!-- MESSAGE -->
+                    <p id="petFeastModalMessage"
+                       class="petfeast-modal-message">
+
+                        Thao tác đã được thực hiện thành công.
+
+                    </p>
+
+
+                    <!-- BUTTONS -->
+                    <div id="petFeastModalButtons"
+                         class="petfeast-modal-buttons">
+
+                        <button type="button"
+                                id="petFeastModalCancel"
+                                class="btn btn-outline-secondary">
+
+                            Hủy
+
+                        </button>
+
+
+                        <button type="button"
+                                id="petFeastModalConfirm"
+                                class="btn btn-primary">
+
+                            OK
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         BOOTSTRAP JS
+    ========================================================== -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <!-- =========================================================
+         GLOBAL PETFEAST MODAL
+    ========================================================== -->
+
+    <script>
+
+        let petFeastModalInstance = null;
+        let petFeastConfirmCallback = null;
+
+
+        function initPetFeastModal() {
+
+            const modalElement =
+                document.getElementById("petFeastActionModal");
+
+            if (!modalElement) {
+                console.error(
+                    "Không tìm thấy #petFeastActionModal"
+                );
+                return false;
+            }
+
+
+            if (!petFeastModalInstance) {
+
+                petFeastModalInstance =
+                    new bootstrap.Modal(modalElement);
+
+            }
+
+
+            const confirmButton =
+                document.getElementById("petFeastModalConfirm");
+
+            const cancelButton =
+                document.getElementById("petFeastModalCancel");
+
+
+            // CONFIRM BUTTON
+            if (
+                confirmButton &&
+                !confirmButton.dataset.initialized
+            ) {
+
+                confirmButton.dataset.initialized = "true";
+
+                confirmButton.addEventListener(
+                    "click",
+                    function () {
+
+                        if (petFeastConfirmCallback) {
+
+                            const callback =
+                                petFeastConfirmCallback;
+
+                            petFeastConfirmCallback = null;
+
+                            petFeastModalInstance.hide();
+
+                            callback();
+
+                        }
+                        else {
+
+                            petFeastModalInstance.hide();
+
+                        }
+
+                    }
+                );
+
+            }
+
+
+            // CANCEL BUTTON
+            if (
+                cancelButton &&
+                !cancelButton.dataset.initialized
+            ) {
+
+                cancelButton.dataset.initialized = "true";
+
+                cancelButton.addEventListener(
+                    "click",
+                    function () {
+
+                        petFeastConfirmCallback = null;
+
+                        petFeastModalInstance.hide();
+
+                    }
+                );
+
+            }
+
+            return true;
+        }
+
+
+        // =====================================================
+        // SUCCESS
+        // =====================================================
+
+        function showSuccessModal(
+            message,
+            callback = null
+        ) {
+
+            if (!initPetFeastModal()) {
+                return;
+            }
+
+            const icon =
+                document.getElementById(
+                    "petFeastModalIcon"
+                );
+
+            const title =
+                document.getElementById(
+                    "petFeastModalTitle"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "petFeastModalMessage"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "petFeastModalCancel"
+                );
+
+            const confirmButton =
+                document.getElementById(
+                    "petFeastModalConfirm"
+                );
+
+
+            icon.innerHTML =
+                '<i class="bi bi-check-circle-fill"></i>';
+
+            icon.style.background =
+                "#eaf7ee";
+
+            icon.style.color =
+                "#198754";
+
+            title.textContent =
+                "Thành công";
+
+            messageElement.textContent =
+                message;
+
+            cancelButton.style.display =
+                "none";
+
+            confirmButton.textContent =
+                "OK";
+
+            confirmButton.className =
+                "btn btn-success";
+
+            petFeastConfirmCallback =
+                callback;
+
+
+            petFeastModalInstance.show();
+        }
+
+
+        // =====================================================
+        // ERROR
+        // =====================================================
+
+        function showErrorModal(message) {
+
+            if (!initPetFeastModal()) {
+                return;
+            }
+
+            const icon =
+                document.getElementById(
+                    "petFeastModalIcon"
+                );
+
+            const title =
+                document.getElementById(
+                    "petFeastModalTitle"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "petFeastModalMessage"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "petFeastModalCancel"
+                );
+
+            const confirmButton =
+                document.getElementById(
+                    "petFeastModalConfirm"
+                );
+
+
+            icon.innerHTML =
+                '<i class="bi bi-x-circle-fill"></i>';
+
+            icon.style.background =
+                "#fdecec";
+
+            icon.style.color =
+                "#dc3545";
+
+            title.textContent =
+                "Có lỗi xảy ra";
+
+            messageElement.textContent =
+                message;
+
+            cancelButton.style.display =
+                "none";
+
+            confirmButton.textContent =
+                "OK";
+
+            confirmButton.className =
+                "btn btn-danger";
+
+            petFeastConfirmCallback =
+                null;
+
+
+            petFeastModalInstance.show();
+        }
+
+
+        // =====================================================
+        // INFO
+        // =====================================================
+
+        function showInfoModal(message) {
+
+            if (!initPetFeastModal()) {
+                return;
+            }
+
+            const icon =
+                document.getElementById(
+                    "petFeastModalIcon"
+                );
+
+            const title =
+                document.getElementById(
+                    "petFeastModalTitle"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "petFeastModalMessage"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "petFeastModalCancel"
+                );
+
+            const confirmButton =
+                document.getElementById(
+                    "petFeastModalConfirm"
+                );
+
+
+            icon.innerHTML =
+                '<i class="bi bi-info-circle-fill"></i>';
+
+            icon.style.background =
+                "#e7f3ff";
+
+            icon.style.color =
+                "#0d6efd";
+
+            title.textContent =
+                "Thông tin";
+
+            messageElement.textContent =
+                message;
+
+            cancelButton.style.display =
+                "none";
+
+            confirmButton.textContent =
+                "OK";
+
+            confirmButton.className =
+                "btn btn-primary";
+
+            petFeastConfirmCallback =
+                null;
+
+
+            petFeastModalInstance.show();
+        }
+
+
+        // =====================================================
+        // CONFIRM
+        // =====================================================
+
+        function showConfirmModal(
+            message,
+            callback
+        ) {
+
+            if (!initPetFeastModal()) {
+                return;
+            }
+
+            const icon =
+                document.getElementById(
+                    "petFeastModalIcon"
+                );
+
+            const title =
+                document.getElementById(
+                    "petFeastModalTitle"
+                );
+
+            const messageElement =
+                document.getElementById(
+                    "petFeastModalMessage"
+                );
+
+            const cancelButton =
+                document.getElementById(
+                    "petFeastModalCancel"
+                );
+
+            const confirmButton =
+                document.getElementById(
+                    "petFeastModalConfirm"
+                );
+
+
+            icon.innerHTML =
+                '<i class="bi bi-question-circle-fill"></i>';
+
+            icon.style.background =
+                "#fff4e5";
+
+            icon.style.color =
+                "#fd7e14";
+
+            title.textContent =
+                "Xác nhận";
+
+            messageElement.textContent =
+                message;
+
+            cancelButton.style.display =
+                "inline-block";
+
+            confirmButton.textContent =
+                "OK";
+
+            confirmButton.className =
+                "btn btn-primary";
+
+            petFeastConfirmCallback =
+                typeof callback === "function"
+                    ? callback
+                    : null;
+
+
+            petFeastModalInstance.show();
+        }
+
+
+        // INIT
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                initPetFeastModal();
+
+            }
+        );
+
+    </script>
+
+
+    <!-- =========================================================
+         ADMIN NOTIFICATIONS
+    ========================================================== -->
 
     <script>
 
@@ -178,54 +720,101 @@
             try {
 
                 const response =
-                    await fetch('/Admin/GetAdminNotificationCount');
+                    await fetch(
+                        "/Admin/GetAdminNotificationCount"
+                    );
 
-                if (!response.ok)
+
+                if (!response.ok) {
                     return;
+                }
 
-                const data = await response.json();
+
+                const data =
+                    await response.json();
+
 
                 const orderBadge =
-                    document.getElementById('newOrderBadge');
+                    document.getElementById(
+                        "newOrderBadge"
+                    );
 
                 const returnBadge =
-                    document.getElementById('returnBadge');
+                    document.getElementById(
+                        "returnBadge"
+                    );
+
+                const reportBadge =
+                    document.getElementById(
+                        "reportBadge"
+                    );
 
 
-                // =========================
                 // ĐƠN HÀNG MỚI
-                // =========================
-
-                if (data.newOrderCount > 0) {
+                if (
+                    orderBadge &&
+                    data.newOrderCount > 0
+                ) {
 
                     orderBadge.textContent =
                         data.newOrderCount;
 
-                    orderBadge.classList.remove('d-none');
+                    orderBadge.classList.remove(
+                        "d-none"
+                    );
 
                 }
-                else {
+                else if (orderBadge) {
 
-                    orderBadge.classList.add('d-none');
+                    orderBadge.classList.add(
+                        "d-none"
+                    );
 
                 }
 
 
-                // =========================
                 // YÊU CẦU HOÀN TRẢ
-                // =========================
-
-                if (data.pendingReturnCount > 0) {
+                if (
+                    returnBadge &&
+                    data.pendingReturnCount > 0
+                ) {
 
                     returnBadge.textContent =
                         data.pendingReturnCount;
 
-                    returnBadge.classList.remove('d-none');
+                    returnBadge.classList.remove(
+                        "d-none"
+                    );
 
                 }
-                else {
+                else if (returnBadge) {
 
-                    returnBadge.classList.add('d-none');
+                    returnBadge.classList.add(
+                        "d-none"
+                    );
+
+                }
+
+
+                // TỐ CÁO ĐÁNH GIÁ
+                if (
+                    reportBadge &&
+                    data.pendingReportCount > 0
+                ) {
+
+                    reportBadge.textContent =
+                        data.pendingReportCount;
+
+                    reportBadge.classList.remove(
+                        "d-none"
+                    );
+
+                }
+                else if (reportBadge) {
+
+                    reportBadge.classList.add(
+                        "d-none"
+                    );
 
                 }
 
@@ -233,7 +822,7 @@
             catch (error) {
 
                 console.error(
-                    'Không thể cập nhật thông báo:',
+                    "Không thể cập nhật thông báo:",
                     error
                 );
 
@@ -251,40 +840,139 @@
             updateAdminNotifications,
             10000
         );
-        //Back to top
-                document.addEventListener("DOMContentLoaded", function () {
 
-            const backToTop = document.getElementById("backToTop");
+    </script>
 
-            if (!backToTop) return;
 
-            // Hiển thị / ẩn nút khi cuộn
-            window.addEventListener("scroll", function () {
+    <!-- =========================================================
+         BACK TO TOP
+    ========================================================== -->
 
-                if (window.scrollY > 300) {
-                    backToTop.classList.add("show");
-                } else {
-                    backToTop.classList.remove("show");
+    <script>
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                const backToTop =
+                    document.getElementById(
+                        "backToTop"
+                    );
+
+
+                if (!backToTop) {
+                    return;
                 }
 
-            });
 
-            // Cuộn về đầu trang
-            backToTop.addEventListener("click", function () {
+                window.addEventListener(
+                    "scroll",
+                    function () {
 
-                window.scrollTo({
-                    top: 0,
-                    behavior: "smooth"
-                });
+                        if (window.scrollY > 300) {
 
-            });
+                            backToTop.classList.add(
+                                "show"
+                            );
+
+                        }
+                        else {
+
+                            backToTop.classList.remove(
+                                "show"
+                            );
+
+                        }
+
+                    }
+                );
+
+
+                backToTop.addEventListener(
+                    "click",
+                    function () {
+
+                        window.scrollTo({
+                            top: 0,
+                            behavior: "smooth"
+                        });
+
+                    }
+                );
+
+            }
+        );
+
+    </script>
+
+
+    <!-- =========================================================
+         TEMPDATA → GLOBAL MODAL
+    ========================================================== -->
+    @if (TempData["Success"] != null)
+    {
+        <script>
+            window.addEventListener("load", function () {
+
+                showSuccessModal(
+                    @Html.Raw(
+                        System.Text.Json.JsonSerializer.Serialize(
+                                TempData["Success"]?.ToString()
+                        )
+                                )
+            );
 
         });
     </script>
+        }
 
-    @await RenderSectionAsync("Scripts", required: false)
+
+    @if (TempData["Error"] != null)
+    {
+        <script>
+            window.addEventListener("load", function () {
+
+                showErrorModal(
+                    @Html.Raw(
+                        System.Text.Json.JsonSerializer.Serialize(
+                                TempData["Error"]?.ToString()
+                        )
+                                )
+            );
+
+        });
+    </script>
+        }
+
+
+    @if (TempData["Info"] != null)
+    {
+        <script>
+            window.addEventListener("load", function () {
+
+                showInfoModal(
+                    @Html.Raw(
+                        System.Text.Json.JsonSerializer.Serialize(
+                                TempData["Info"]?.ToString()
+                        )
+                                )
+            );
+
+        });
+    </script>
+        }
+
+
+    <!-- =========================================================
+         VIEW-SPECIFIC SCRIPTS
+    ========================================================== -->
+    @await RenderSectionAsync(
+    "Scripts",
+        required: false
+        )
 
 </body>
+
 </html>
 <style>
     /* ========================================
@@ -1518,4 +2206,57 @@
     }
 
     }
+    /* =========================================
+       PETFEAST GLOBAL ACTION MODAL
+    ========================================= */
+
+    .petfeast-modal {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
+    }
+
+        .petfeast-modal .modal-body {
+            padding: 30px 25px 25px;
+        }
+
+    .petfeast-modal-icon {
+        width: 64px;
+        height: 64px;
+        margin: 0 auto 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #eaf7ee;
+        color: #198754;
+        font-size: 30px;
+    }
+
+    .petfeast-modal-title {
+        margin-bottom: 10px;
+        color: #212529;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .petfeast-modal-message {
+        margin-bottom: 22px;
+        color: #6c757d;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .petfeast-modal-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
+        .petfeast-modal-buttons .btn {
+            min-width: 90px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
 </style>

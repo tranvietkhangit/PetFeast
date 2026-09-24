@@ -1,0 +1,406 @@
+﻿@model PetFeast.Models.Reviews.ReviewReport
+
+@{
+    ViewData["Title"] = "Chi tiết tố cáo đánh giá";
+}
+
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+
+        <a asp-controller="Admin"
+           asp-action="ReviewReports"
+           class="btn btn-outline-secondary me-3">
+
+            <i class="bi bi-arrow-left"></i>
+
+        </a>
+
+        <div>
+
+            <h2 class="fw-bold mb-1">
+                Chi tiết tố cáo đánh giá
+            </h2>
+
+            <p class="text-muted mb-0">
+                Kiểm tra nội dung và đưa ra quyết định xử lý.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="row g-4">
+
+        <!-- Review -->
+        <div class="col-lg-7">
+
+            <div class="card border-0 shadow-sm h-100">
+
+                <div class="card-header bg-white border-0 pt-4 px-4">
+
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-star-fill text-warning me-2"></i>
+                        Nội dung đánh giá
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body px-4">
+
+                    @if (Model.ProductReview != null)
+                    {
+                        <!-- Product -->
+                        <div class="mb-4">
+
+                            <label class="text-muted small">
+                                Sản phẩm
+                            </label>
+
+                            <div class="fw-bold fs-5">
+
+                                @(Model.ProductReview.Product?.ProductName
+                                                            ?? "Không xác định")
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Reviewer -->
+                        <div class="mb-4">
+
+                            <label class="text-muted small">
+                                Người đánh giá
+                            </label>
+
+                            <div class="fw-semibold">
+
+                                @(Model.ProductReview.User?.FullName
+                                                            ?? Model.ProductReview.User?.UserName
+                                                            ?? "Không xác định")
+
+                        </div>
+
+                        </div>
+
+
+                        <!-- Rating -->
+                        <div class="mb-4">
+
+                            <label class="text-muted small d-block mb-1">
+                                Số sao
+                            </label>
+
+                            <div>
+
+                            @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Model.ProductReview.Rating)
+                                    {
+                                        <i class="bi bi-star-fill text-warning fs-5"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star text-muted fs-5"></i>
+                                    }
+                                }
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Comment -->
+                        <div class="mb-4">
+
+                            <label class="text-muted small">
+                                Nội dung
+                            </label>
+
+                            <div class="p-3 bg-light rounded">
+
+                                @if (!string.IsNullOrWhiteSpace(
+                                                            Model.ProductReview.Comment))
+                                {
+                                    @Model.ProductReview.Comment
+                                }
+                                else
+                                {
+                                    <span class="text-muted fst-italic">
+                                        Không có nội dung.
+                                    </span>
+                                }
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Review date -->
+                        <div>
+
+                            <label class="text-muted small">
+                                Ngày đánh giá
+                            </label>
+
+                            <div>
+                                @Model.ProductReview.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </div>
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-secondary">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Đánh giá này không còn tồn tại.
+                        </div>
+                    }
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Report -->
+        <div class="col-lg-5">
+
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-header bg-white border-0 pt-4 px-4">
+
+                    <h5 class="fw-bold mb-0">
+                        Thông tin tố cáo
+                    </h5>
+
+                </div>
+
+
+                <div class="card-body px-4">
+
+                    <!-- Reporter -->
+                    <div class="mb-3">
+
+                        <label class="text-muted small">
+                            Người tố cáo
+                        </label>
+
+                        <div class="fw-semibold">
+
+                            @(Model.ReporterUser?.FullName
+                                                        ?? Model.ReporterUser?.UserName
+                                                        ?? "Không xác định")
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Reason -->
+                    <div class="mb-3">
+
+                        <label class="text-muted small">
+                            Lý do
+                        </label>
+
+                        <div class="fw-semibold">
+                            @Model.Reason
+                        </div>
+
+                    </div>
+
+
+                    <!-- Description -->
+                    <div class="mb-3">
+
+                        <label class="text-muted small">
+                            Mô tả
+                        </label>
+
+                        <div class="p-3 bg-light rounded">
+
+                            @if (!string.IsNullOrWhiteSpace(
+                                                        Model.Description))
+                            {
+                                @Model.Description
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">
+                                    Không có mô tả thêm.
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Created -->
+                    <div class="mb-3">
+
+                        <label class="text-muted small">
+                            Ngày tố cáo
+                        </label>
+
+                        <div>
+                            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+
+                    </div>
+
+
+                    <!-- Status -->
+                    <div>
+
+                        <label class="text-muted small">
+                            Trạng thái
+                        </label>
+
+                        <div>
+
+                            @if (Model.Status == "Chờ xử lý")
+                            {
+                                <span class="badge bg-warning text-dark">
+                                    Chờ xử lý
+                                </span>
+                            }
+                            else if (Model.Status == "Không vi phạm")
+                            {
+                                <span class="badge bg-success">
+                                    Không vi phạm
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">
+                                    Đã xóa đánh giá
+                                </span>
+                            }
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Processing -->
+            @if (Model.Status == "Chờ xử lý")
+            {
+                <div class="card border-0 shadow-sm">
+
+                    <div class="card-header bg-white border-0 pt-4 px-4">
+
+                        <h5 class="fw-bold mb-0">
+                            Xử lý tố cáo
+                        </h5>
+
+                    </div>
+
+
+                    <div class="card-body px-4">
+
+                        <form asp-controller="Admin"
+                              asp-action="ResolveReviewReport"
+                              method="post">
+
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden"
+                                   name="id"
+                                   value="@Model.ReviewReportId" />
+
+
+                            <div class="mb-3">
+
+                                <label class="form-label fw-semibold">
+                                    Ghi chú của Admin
+                                </label>
+
+                                <textarea name="adminNote"
+                                      class="form-control"
+                                      rows="4"
+                                      maxlength="1000"
+                                      placeholder="Nhập ghi chú xử lý..."></textarea>
+
+                            </div>
+
+
+                            <div class="d-grid gap-2">
+
+                                <!-- Không vi phạm -->
+                                <button type="submit"
+                                        name="action"
+                                        value="keep"
+                                        class="btn btn-success">
+
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Không vi phạm
+                                </button>
+
+
+                                <!-- Xóa đánh giá -->
+                                <button type="submit"
+                                        name="action"
+                                        value="delete"
+                                        class="btn btn-danger delete-review-report-form">
+
+                                    <i class="bi bi-trash me-1"></i>
+                                    Xóa đánh giá
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+
+    </div>
+
+</div>
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            document.addEventListener("click", function (event) {
+
+                const button = event.target.closest(".delete-review-report-form");
+
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const form = button.closest("form");
+
+                if (!form) {
+                    return;
+                }
+
+                showConfirmModal(
+                    "Bạn có chắc muốn xóa đánh giá này không?",
+                    function () {
+                        form.submit();
+                    }
+                );
+            });
+
+        });
+    </script>
+}

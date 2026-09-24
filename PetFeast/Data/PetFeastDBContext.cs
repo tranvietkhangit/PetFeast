@@ -2,13 +2,14 @@
 using Microsoft.EntityFrameworkCore;
 using PetFeast.Models.Contacts;
 using PetFeast.Models.Identity;
+using PetFeast.Models.Notifications;
 using PetFeast.Models.Orders;
 using PetFeast.Models.Points;
 using PetFeast.Models.Products;
+using PetFeast.Models.Reviews;
 using PetFeast.Models.ShoppingCart;
 using PetFeast.Models.Voucher;
 using System.Reflection.Emit;
-using PetFeast.Models.Notifications;
 namespace PetFeast.Data
 {
     public class PetFeastDBContext : IdentityDbContext<ApplicationUser>
@@ -90,6 +91,44 @@ namespace PetFeast.Data
             builder.Entity<ReturnRequest>()
                 .Property(x => x.RefundAmount)
                 .HasPrecision(18, 2);
+            builder.Entity<OrderDetail>()
+    .HasOne(x => x.Product)
+    .WithMany()
+    .HasForeignKey(x => x.ProductId)
+    .OnDelete(DeleteBehavior.NoAction);
+            builder.Entity<ProductReview>()
+    .HasOne(r => r.Product)
+    .WithMany()
+    .HasForeignKey(r => r.ProductId)
+    .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProductReview>()
+                .HasOne(r => r.OrderDetail)
+                .WithOne()
+                .HasForeignKey<ProductReview>(r => r.OrderDetailId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ProductReview>()
+                .HasOne(r => r.User)
+                .WithMany()
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            builder.Entity<ReviewReport>()
+    .HasOne(r => r.ProductReview)
+    .WithMany()
+    .HasForeignKey(r => r.ProductReviewId)
+    .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<ReviewReport>()
+                .HasOne(r => r.ReporterUser)
+                .WithMany()
+                .HasForeignKey(r => r.ReporterUserId)
+                .OnDelete(DeleteBehavior.NoAction);
+            builder.Entity<Notification>()
+    .HasOne(n => n.ReviewReport)
+    .WithMany()
+    .HasForeignKey(n => n.ReviewReportId)
+    .OnDelete(DeleteBehavior.SetNull);
         }
         public DbSet<PointTransaction> PointTransactions { get; set; }
         public DbSet<Cart> Carts { get; set; }
@@ -100,5 +139,7 @@ namespace PetFeast.Data
         public DbSet<UserVoucher> UserVouchers { get; set; }
         public DbSet<ReturnRequest> ReturnRequests { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<ProductReview> ProductReviews { get; set; }
+        public DbSet<ReviewReport> ReviewReports { get; set; }
     }
 }
