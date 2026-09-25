@@ -2,7 +2,8 @@
 
 @if (Model > 0)
 {
-    <span class="notification-badge">
+    <span class="notification-count"
+          data-count="@Model">
         @(Model > 99 ? "99+" : Model)
     </span>
 }

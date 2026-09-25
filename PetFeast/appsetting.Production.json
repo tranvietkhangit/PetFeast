@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "PetFeastDBContextConnection": "Server=db67224.databaseasp.net; Database=db67224; User Id=db67224; Password=kG=5+i4D6Fo?; Encrypt=False;"
+  }
+}

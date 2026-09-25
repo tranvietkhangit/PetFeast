@@ -25,7 +25,9 @@
             foreach (var notification in Model)
             {
                 <div class="notification-item border-bottom px-3 py-3
-                                    @(notification.IsRead ? "" : "bg-light")">
+                                    @(notification.IsRead ? "" : "bg-light")"
+                     data-notification-id="@notification.Id"
+                     data-is-read="@notification.IsRead.ToString().ToLower()">
 
                     <div class="d-flex align-items-start gap-2">
 
@@ -74,6 +76,7 @@
     </div>
 
 </div>
+
 <style>
     /* Khung dropdown thông báo */
     .notification-dropdown {
@@ -116,8 +119,237 @@
             background-color: #f0f6ff;
         }
 
+        /* Thông báo đã đọc */
+        .notification-item.read {
+            background-color: #ffffff;
+        }
+
     /* Phần cuối dropdown */
     .notification-footer {
         background-color: white;
     }
 </style>
+
+<script>
+
+    document.addEventListener(
+        "shown.bs.dropdown",
+        function (event) {
+
+            const notificationList =
+                document.querySelector(".notification-list");
+
+            if (!notificationList) {
+                return;
+            }
+
+
+            // ==========================================
+            // Lấy các notification chưa đọc
+            // ==========================================
+            const unreadItems =
+                notificationList.querySelectorAll(
+                    ".notification-item[data-is-read='false']"
+                );
+
+            if (unreadItems.length === 0) {
+                return;
+            }
+
+
+            // ==========================================
+            // Theo dõi notification khi xuất hiện
+            // ==========================================
+            const observer =
+                new IntersectionObserver(
+                    async function (entries, observer) {
+
+                        for (const entry of entries) {
+
+                            if (!entry.isIntersecting) {
+                                continue;
+                            }
+
+
+                            const item =
+                                entry.target;
+
+                            const id =
+                                item.dataset.notificationId;
+
+                            if (!id) {
+                                continue;
+                            }
+
+
+                            // Không gửi request nhiều lần
+                            if (
+                                item.dataset.marking === "true"
+                            ) {
+                                continue;
+                            }
+
+                            item.dataset.marking =
+                                "true";
+
+
+                            // ==========================================
+                            // Lấy AntiForgeryToken
+                            // ==========================================
+                            const token =
+                                document.querySelector(
+                                    'input[name="__RequestVerificationToken"]'
+                                );
+
+
+                            const formData =
+                                new FormData();
+
+                            formData.append(
+                                "id",
+                                id
+                            );
+
+
+                            if (token) {
+
+                                formData.append(
+                                    "__RequestVerificationToken",
+                                    token.value
+                                );
+                            }
+
+
+                            try {
+
+                                // ==========================================
+                                // Gọi Controller
+                                // ==========================================
+                                const response =
+                                    await fetch(
+                                        '@Url.Action("MarkAsRead", "Notification")',
+                                        {
+                                            method: "POST",
+                                            body: formData
+                                        }
+                                    );
+
+
+                                if (!response.ok) {
+
+                                    throw new Error(
+                                        `HTTP ${response.status}`
+                                    );
+                                }
+
+
+                                // ==========================================
+                                // Nhận kết quả
+                                // ==========================================
+                                const result =
+                                    await response.json();
+
+
+                                console.log(
+                                    "Dropdown MarkAsRead:",
+                                    result
+                                );
+
+
+                                // ==========================================
+                                // Thành công
+                                // ==========================================
+                                if (result.success) {
+
+                                    // -------------------------------
+                                    // Bỏ nền chưa đọc
+                                    // -------------------------------
+                                    item.classList.remove(
+                                        "bg-light"
+                                    );
+
+
+                                    // -------------------------------
+                                    // Đánh dấu đã đọc
+                                    // -------------------------------
+                                    item.dataset.isRead =
+                                        "true";
+
+
+                                    // -------------------------------
+                                    // Xóa chữ "Mới"
+                                    // -------------------------------
+                                    const badge =
+                                        item.querySelector(
+                                            ".badge"
+                                        );
+
+                                    if (badge) {
+                                        badge.remove();
+                                    }
+
+
+                                    // -------------------------------
+                                    // Cập nhật số trên icon chuông
+                                    // -------------------------------
+                                    updateNotificationBadge(
+                                        result.unreadCount
+                                    );
+
+
+                                    // -------------------------------
+                                    // Không theo dõi item nữa
+                                    // -------------------------------
+                                    observer.unobserve(
+                                        item
+                                    );
+                                }
+                                else {
+
+                                    console.warn(
+                                        "Không thể đánh dấu notification:",
+                                        result
+                                    );
+
+                                    // Cho phép thử lại
+                                    item.dataset.marking =
+                                        "false";
+                                }
+
+                            }
+                            catch (error) {
+
+                                console.error(
+                                    "Dropdown MarkAsRead error:",
+                                    error
+                                );
+
+                                // Cho phép thử lại
+                                item.dataset.marking =
+                                    "false";
+                            }
+                        }
+
+                    },
+                    {
+                        root: notificationList,
+                        threshold: 0.5
+                    }
+                );
+
+
+            // ==========================================
+            // Bắt đầu theo dõi
+            // ==========================================
+            unreadItems.forEach(
+                function (item) {
+
+                    observer.observe(item);
+
+                }
+            );
+
+        }
+    );
+
+</script>

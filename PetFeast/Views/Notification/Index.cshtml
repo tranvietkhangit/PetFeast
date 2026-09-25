@@ -4,6 +4,8 @@
     ViewData["Title"] = "Thông báo của tôi";
 }
 
+@Html.AntiForgeryToken()
+
 <div class="container mt-4 mb-5">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -31,7 +33,9 @@
             @foreach (var notification in Model)
             {
                 <div class="notification-card
-                                    @(notification.IsRead ? "" : "unread")">
+                    @(notification.IsRead ? "" : "unread")"
+                     data-notification-id="@notification.Id"
+                     data-is-read="@notification.IsRead.ToString().ToLower()">
 
                     <div class="d-flex justify-content-between
                                         align-items-start gap-3">
@@ -64,26 +68,6 @@
 
                         </div>
 
-                        @if (!notification.IsRead)
-                        {
-                            <form class="mark-as-read-form"
-                                  asp-action="MarkAsRead"
-                                  method="post">
-
-                                @Html.AntiForgeryToken()
-
-                                <input type="hidden"
-                                       name="id"
-                                       value="@notification.Id" />
-
-                                <button type="submit"
-                                        class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-check2 me-1"></i>
-                                    Đã đọc
-                                </button>
-                            </form>
-                        }
-
                     </div>
 
                 </div>
@@ -93,8 +77,9 @@
     }
 
 </div>
+
 <style>
-    /* Danh sách thông báo trong trang Index */
+    /* Danh sách thông báo */
     .notification-page-list {
         display: flex;
         flex-direction: column;
@@ -111,101 +96,338 @@
         transition: all 0.2s ease;
     }
 
-        /* Hiệu ứng khi di chuột */
+        /* Hover */
         .notification-card:hover {
             border-color: #0d6efd;
             box-shadow: 0 4px 12px rgba(13, 110, 253, 0.12);
         }
 
-        /* Thông báo chưa đọc */
+        /* Chưa đọc */
         .notification-card.unread {
             background-color: #f0f6ff;
             border-left: 4px solid #0d6efd;
         }
 
-        /* Nội dung thông báo */
+        /* Nội dung */
         .notification-card p {
             line-height: 1.6;
         }
 
-        /* Nút Đã đọc */
-        .notification-card .btn {
-            white-space: nowrap;
+        /* Hiệu ứng khi vừa được đánh dấu đã đọc */
+        .notification-card.read {
+            background-color: #ffffff;
+            border-left: 1px solid #dee2e6;
         }
 </style>
+
 @section Scripts {
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
 
-            const forms = document.querySelectorAll(".mark-as-read-form");
+        // ==========================================
+        // Cập nhật số thông báo trên icon chuông
+        // ==========================================
+                function updateNotificationBadge(unreadCount) {
 
-            forms.forEach(form => {
+            let notificationBadge =
+                document.querySelector(".notification-count");
 
-                form.addEventListener("submit", async function (event) {
+            const notificationLink =
+                document.querySelector(".header-notification");
 
-                    // Ngăn form submit thông thường
-                    event.preventDefault();
+            if (!notificationLink) {
+                return;
+            }
 
-                    const button = form.querySelector("button");
-                    const card = form.closest(".notification-card");
+            // Nếu badge chưa tồn tại thì tạo
+            if (!notificationBadge) {
 
-                    const formData = new FormData(form);
+                notificationBadge =
+                    document.createElement("span");
 
-                    button.disabled = true;
+                notificationBadge.className =
+                    "notification-count";
 
-                    try {
-                        const response = await fetch(form.action, {
-                            method: "POST",
-                            body: formData
-                        });
+                notificationLink.appendChild(
+                    notificationBadge
+                );
+            }
 
-                        if (!response.ok) {
-                            throw new Error("Không thể đánh dấu đã đọc.");
-                        }
+            // Luôn hiển thị số
+            notificationBadge.dataset.count =
+                unreadCount;
 
-                        const result = await response.json();
+            notificationBadge.textContent =
+                unreadCount > 99
+                    ? "99+"
+                    : unreadCount;
+        }
 
-                        if (result.success) {
+                function updateNotificationBadge(unreadCount) {
 
-                            // Xóa nền thông báo chưa đọc
-                            card.classList.remove("unread");
+            let notificationBadge =
+                document.querySelector(".notification-count");
 
-                            // Xóa nhãn "Mới"
-                            const badge = card.querySelector(".badge");
+            // Không còn thông báo chưa đọc
+            if (unreadCount <= 0) {
 
-                            if (badge) {
-                                badge.remove();
+                if (notificationBadge) {
+                    notificationBadge.remove();
+                }
+
+                return;
+            }
+
+            // Badge chưa tồn tại → tạo lại
+            if (!notificationBadge) {
+
+                const notificationLink =
+                    document.querySelector(".header-notification");
+
+                if (!notificationLink) {
+                    return;
+                }
+
+                notificationBadge =
+                    document.createElement("span");
+
+                notificationBadge.className =
+                    "notification-count";
+
+                notificationLink.appendChild(
+                    notificationBadge
+                );
+            }
+
+            // Cập nhật số
+            notificationBadge.dataset.count =
+                unreadCount;
+
+            notificationBadge.textContent =
+                unreadCount > 99
+                    ? "99+"
+                    : unreadCount;
+        }
+        // ==========================================
+        // Khi trang Notification/Index đã load
+        // ==========================================
+        document.addEventListener(
+            "DOMContentLoaded",
+            function () {
+
+                const cards =
+                    document.querySelectorAll(
+                        ".notification-card.unread"
+                    );
+
+                if (cards.length === 0) {
+                    return;
+                }
+
+
+                // ==========================================
+                // Theo dõi notification khi xuất hiện trên màn hình
+                // ==========================================
+                const observer =
+                    new IntersectionObserver(
+                        async function (entries, observer) {
+
+                            for (const entry of entries) {
+
+                                if (!entry.isIntersecting) {
+                                    continue;
+                                }
+
+
+                                const card =
+                                    entry.target;
+
+                                const notificationId =
+                                    card.dataset.notificationId;
+
+                                if (!notificationId) {
+                                    continue;
+                                }
+
+
+                                // Không gửi request nhiều lần
+                                if (
+                                    card.dataset.marking === "true"
+                                ) {
+                                    continue;
+                                }
+
+                                card.dataset.marking =
+                                    "true";
+
+
+                                // ==========================================
+                                // Lấy AntiForgeryToken
+                                // ==========================================
+                                const token =
+                                    document.querySelector(
+                                        'input[name="__RequestVerificationToken"]'
+                                    );
+
+
+                                const formData =
+                                    new FormData();
+
+                                formData.append(
+                                    "id",
+                                    notificationId
+                                );
+
+
+                                if (token) {
+
+                                    formData.append(
+                                        "__RequestVerificationToken",
+                                        token.value
+                                    );
+                                }
+
+
+                                try {
+
+                                    // ==========================================
+                                    // Gọi Controller
+                                    // ==========================================
+                                    const response =
+                                        await fetch(
+                                            '@Url.Action("MarkAsRead", "Notification")',
+                                            {
+                                                method: "POST",
+                                                body: formData
+                                            }
+                                        );
+
+
+                                    // ==========================================
+                                    // Kiểm tra HTTP response
+                                    // ==========================================
+                                    if (!response.ok) {
+
+                                        throw new Error(
+                                            `HTTP ${response.status}`
+                                        );
+                                    }
+
+
+                                    // ==========================================
+                                    // Đọc JSON
+                                    // ==========================================
+                                    const result =
+                                        await response.json();
+
+
+                                            console.log("========== MARK AS READ ==========");
+        console.log("Notification ID:", result.id);
+        console.log("Success:", result.success);
+        console.log("Unread Count:", result.unreadCount);
+        console.log("Full result:", JSON.stringify(result));
+        console.log("=================================");
+
+
+                                    // ==========================================
+                                    // Nếu Controller xử lý thành công
+                                    // ==========================================
+                                    if (result.success) {
+
+                                        // Bỏ trạng thái chưa đọc
+                                        card.classList.remove(
+                                            "unread"
+                                        );
+
+
+                                        // Đánh dấu đã đọc trên HTML
+                                        card.dataset.isRead =
+                                            "true";
+
+
+                                        // Xóa chữ "Mới"
+                                        const badge =
+                                            card.querySelector(
+                                                ".badge"
+                                            );
+
+                                        if (badge) {
+                                            badge.remove();
+                                        }
+
+
+                                        // ==========================================
+                                        // Cập nhật số trên trang
+                                        // ==========================================
+                                        const countElement =
+                                            document.querySelector(
+                                                "#unread-count"
+                                            );
+
+
+                                        if (countElement) {
+
+                                            countElement.textContent =
+                                                `${result.unreadCount} thông báo chưa đọc`;
+                                        }
+
+
+                                        // ==========================================
+                                        // Cập nhật badge trên icon chuông
+                                        // ==========================================
+                                        updateNotificationBadge(
+                                            result.unreadCount
+                                        );
+
+
+                                        // Không theo dõi notification này nữa
+                                        observer.unobserve(
+                                            card
+                                        );
+                                    }
+                                    else {
+
+                                        console.warn(
+                                            "MarkAsRead thất bại:",
+                                            result
+                                        );
+
+                                        // Cho phép thử lại
+                                        card.dataset.marking =
+                                            "false";
+                                    }
+
+                                }
+                                catch (error) {
+
+                                    console.error(
+                                        "Mark notification as read error:",
+                                        error
+                                    );
+
+                                    // Cho phép thử lại
+                                    card.dataset.marking =
+                                        "false";
+                                }
                             }
 
-                            // Xóa nút "Đã đọc"
-                            form.remove();
-
-                            // Cập nhật tổng số thông báo chưa đọc
-                            const unreadCountElement =
-                                document.querySelector("#unread-count");
-
-                            if (unreadCountElement) {
-
-                                let count = parseInt(
-                                    unreadCountElement.textContent
-                                ) || 0;
-
-                                count = Math.max(0, count - 1);
-
-                                unreadCountElement.textContent =
-                                    `${count} thông báo chưa đọc`;
-                            }
+                        },
+                        {
+                            threshold: 0.5
                         }
+                    );
+
+
+                // ==========================================
+                // Bắt đầu theo dõi tất cả notification chưa đọc
+                // ==========================================
+                cards.forEach(
+                    function (card) {
+                        observer.observe(card);
                     }
-                    catch (error) {
-                        showErrorModal(error.message);
-                        button.disabled = false;
-                    }
+                );
 
-                });
+            }
+        );
 
-            });
-
-        });
     </script>
 }

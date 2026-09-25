@@ -1080,7 +1080,44 @@
     </script>
 
     @await RenderSectionAsync("Scripts", false)
-    
+    <script>
+        function updateNotificationBadge(unreadCount) {
+
+            const notificationLink =
+                document.querySelector(".header-notification");
+
+            if (!notificationLink) {
+                return;
+            }
+
+            let notificationBadge =
+                notificationLink.querySelector(".notification-count");
+
+            // Nếu chưa có badge thì tạo
+            if (!notificationBadge) {
+
+                notificationBadge =
+                    document.createElement("span");
+
+                notificationBadge.className =
+                    "notification-count";
+
+                notificationLink.appendChild(
+                    notificationBadge
+                );
+            }
+
+            // Cập nhật số
+            notificationBadge.dataset.count =
+                unreadCount;
+
+            notificationBadge.textContent =
+                unreadCount > 99
+                    ? "99+"
+                    : unreadCount;
+        }
+    </script>
+
 </body>
 </html>
 <style>
@@ -1572,63 +1609,51 @@
         height: 42px;
         color: #0d6efd;
         text-decoration: none;
-        font-size: 22px;
+        font-size: 25px;
+        background: #eef5ff;
+        border: 1px solid #d7e7ff;
+        border-radius: 12px;
+        transition: background-color .25s ease, color .25s ease, box-shadow .25s ease, transform .25s ease;
     }
 
-        /* SỐ THÔNG BÁO CHƯA ĐỌC */
-        .header-notification .notification-badge {
+        /* ICON */
+        .header-notification > i {
+            font-size: 25px;
+            line-height: 1;
+        }
+
+        /* HOVER */
+        .header-notification:hover {
+            background: #0d6efd;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(13, 110, 253, .20);
+        }
+
+        /* Không thu nhỏ khi click */
+        .header-notification:active {
+            transform: translateY(-2px);
+        }
+
+        /* SỐ THÔNG BÁO */
+        .header-notification .notification-count {
             position: absolute;
-            top: -5px;
+            top: -7px;
             right: -7px;
-            min-width: 20px;
-            height: 20px;
+            min-width: 21px;
+            height: 21px;
             padding: 0 5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #dc3545;
-            color: white;
-            border: 2px solid white;
+            background: #dc3545;
+            color: #fff;
+            border: 2px solid #fff;
             border-radius: 50%;
             font-size: 10px;
             font-weight: 700;
             line-height: 1;
         }
-
-    .header-notification {
-        position: relative;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 42px;
-        height: 42px;
-        color: #0d6efd;
-        text-decoration: none;
-        font-size: 25px;
-    }
-
-        .header-notification:hover {
-            color: #0a58ca;
-        }
-
-    .notification-count {
-        position: absolute;
-        top: 0;
-        right: -4px;
-        min-width: 17px;
-        height: 17px;
-        padding: 0 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #dc3545;
-        color: white;
-        border-radius: 50%;
-        border: 2px solid white;
-        font-size: 10px;
-        font-weight: bold;
-        line-height: 1;
-    }
     /* Back to Top */
     .back-to-top {
         position: fixed;

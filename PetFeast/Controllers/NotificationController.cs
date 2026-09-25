@@ -46,10 +46,14 @@ namespace PetFeast.Controllers
 
             await _notificationRepo.MarkAsReadAsync(id, userId);
 
+            var unreadCount =
+                await _notificationRepo.GetUnreadCountAsync(userId);
+
             return Json(new
             {
                 success = true,
-                id = id
+                id = id,
+                unreadCount = unreadCount
             });
         }
     }
