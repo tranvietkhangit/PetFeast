@@ -96,6 +96,22 @@
 
             <li><hr class="dropdown-divider"></li>
 
+            @if (User.IsInRole("Admin"))
+            {
+                <li>
+                    <a class="dropdown-item fw-semibold"
+                       asp-controller="Admin"
+                       asp-action="Dashboard">
+
+                        <i class="bi bi-speedometer2 me-2"></i>
+                        Quản lý website
+
+                    </a>
+                </li>
+
+                <li><hr class="dropdown-divider"></li>
+            }
+
             <li>
                 <form asp-area="Identity"
                       asp-page="/Account/Logout"

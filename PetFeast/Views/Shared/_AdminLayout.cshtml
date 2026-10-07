@@ -44,155 +44,171 @@
         </div>
 
         <!-- MENU -->
-        <ul>
+        <div class="sidebar-menu">
 
-            <!-- DASHBOARD -->
-            <li>
-                <a asp-controller="Admin"
-                   asp-action="Dashboard">
+            <ul>
 
-                    <i class="bi bi-speedometer2"></i>
+                <!-- TRANG CHỦ -->
+                <li>
+                    <a asp-controller="Home"
+                       asp-action="Index">
 
-                    <span>Dashboard</span>
+                        <i class="bi bi-house"></i>
 
-                </a>
-            </li>
+                        <span>Trang chủ</span>
 
-
-            <!-- SẢN PHẨM -->
-            <li>
-                <a asp-controller="Admin"
-                   asp-action="ProductList">
-
-                    <i class="bi bi-box-seam"></i>
-
-                    <span>Sản phẩm</span>
-
-                </a>
-            </li>
+                    </a>
+                </li>
 
 
-            <!-- DANH MỤC -->
-            <li>
-                <a asp-controller="Admin"
-                   asp-action="CategoryList">
+                <!-- DASHBOARD -->
+                <li>
+                    <a asp-controller="Admin"
+                       asp-action="Dashboard">
 
-                    <i class="bi bi-grid"></i>
+                        <i class="bi bi-speedometer2"></i>
 
-                    <span>Danh mục</span>
+                        <span>Dashboard</span>
 
-                </a>
-            </li>
-
-
-            <!-- ĐƠN HÀNG -->
-            <li>
-                <a asp-controller="Admin"
-                   asp-action="OrderList">
-
-                    <i class="bi bi-cart3"></i>
-
-                    <span>Đơn hàng</span>
-
-                    <span id="newOrderBadge"
-                          class="notification-badge d-none">
-                        0
-                    </span>
-
-                </a>
-            </li>
+                    </a>
+                </li>
 
 
-            <!-- HOÀN TRẢ -->
-            <li>
-                <a asp-controller="Admin"
-                   asp-action="ReturnRequestList">
+                <!-- SẢN PHẨM -->
+                <li>
+                    <a asp-controller="Admin"
+                       asp-action="ProductList">
 
-                    <i class="bi bi-arrow-return-left"></i>
+                        <i class="bi bi-box-seam"></i>
 
-                    <span>Hoàn trả</span>
+                        <span>Sản phẩm</span>
 
-                    <span id="returnBadge"
-                          class="notification-badge d-none">
-                        0
-                    </span>
-
-                </a>
-            </li>
+                    </a>
+                </li>
 
 
-            <!-- VOUCHER -->
-            <li>
-                <a asp-controller="Admin"
-                   asp-action="VoucherList"
-                   class="nav-link">
+                <!-- DANH MỤC -->
+                <li>
+                    <a asp-controller="Admin"
+                       asp-action="CategoryList">
 
-                    <i class="bi bi-ticket-perforated me-2"></i>
+                        <i class="bi bi-grid"></i>
 
-                    <span>Quản lý Voucher</span>
+                        <span>Danh mục</span>
 
-                </a>
-            </li>
-
-
-            <!-- LIÊN HỆ -->
-            <li class="nav-item">
-
-                <a asp-controller="AdminContact"
-                   asp-action="Index"
-                   class="nav-link d-flex align-items-center">
-
-                    <i class="bi bi-envelope me-2"></i>
-
-                    <span>Quản lý liên hệ</span>
-
-                    @await Component.InvokeAsync("UnreadContactCount")
-
-                </a>
-
-            </li>
+                    </a>
+                </li>
 
 
-            <!-- TỐ CÁO ĐÁNH GIÁ -->
-            <li>
-                <a asp-controller="Admin"
-                   asp-action="ReviewReports">
+                <!-- ĐƠN HÀNG -->
+                <li>
+                    <a asp-controller="Admin"
+                       asp-action="OrderList">
 
-                    <i class="bi bi-flag"></i>
+                        <i class="bi bi-cart3"></i>
 
-                    <span>Tố cáo đánh giá</span>
+                        <span>Đơn hàng</span>
 
-                    <span id="reportBadge"
-                          class="notification-badge d-none">
-                        0
-                    </span>
+                        <span id="newOrderBadge"
+                              class="notification-badge d-none">
+                            0
+                        </span>
 
-                </a>
-            </li>
+                    </a>
+                </li>
 
 
-            <!-- ĐĂNG XUẤT -->
-            <li>
+                <!-- HOÀN TRẢ -->
+                <li>
+                    <a asp-controller="Admin"
+                       asp-action="ReturnRequestList">
 
-                <form asp-area="Identity"
-                      asp-page="/Account/Logout"
-                      method="post">
+                        <i class="bi bi-arrow-return-left"></i>
 
-                    <button type="submit"
-                            class="logout-btn">
+                        <span>Hoàn trả</span>
 
-                        <i class="bi bi-box-arrow-right"></i>
+                        <span id="returnBadge"
+                              class="notification-badge d-none">
+                            0
+                        </span>
 
-                        <span>Đăng xuất</span>
+                    </a>
+                </li>
 
-                    </button>
 
-                </form>
+                <!-- VOUCHER -->
+                <li>
+                    <a asp-controller="Admin"
+                       asp-action="VoucherList"
+                       class="nav-link">
 
-            </li>
+                        <i class="bi bi-ticket-perforated me-2"></i>
 
-        </ul>
+                        <span>Quản lý Voucher</span>
 
+                    </a>
+                </li>
+
+
+                <!-- LIÊN HỆ -->
+                <li class="nav-item">
+
+                    <a asp-controller="AdminContact"
+                       asp-action="Index"
+                       class="nav-link d-flex align-items-center">
+
+                        <i class="bi bi-envelope me-2"></i>
+
+                        <span>Quản lý liên hệ</span>
+
+                        @await Component.InvokeAsync("UnreadContactCount")
+
+                    </a>
+
+                </li>
+
+
+                <!-- TỐ CÁO ĐÁNH GIÁ -->
+                <li>
+                    <a asp-controller="Admin"
+                       asp-action="ReviewReports">
+
+                        <i class="bi bi-flag"></i>
+
+                        <span>Tố cáo đánh giá</span>
+
+                        <span id="reportBadge"
+                              class="notification-badge d-none">
+                            0
+                        </span>
+
+                    </a>
+                </li>
+
+            </ul>
+
+        </div>
+
+
+        <!-- ĐĂNG XUẤT -->
+        <div class="sidebar-logout">
+
+            <form asp-area="Identity"
+                  asp-page="/Account/Logout"
+                  method="post">
+
+                <button type="submit"
+                        class="logout-btn">
+
+                    <i class="bi bi-box-arrow-right"></i>
+
+                    <span>Đăng xuất</span>
+
+                </button>
+
+            </form>
+
+        </div>
     </div>
     <div class="sidebar-overlay"
          id="sidebarOverlay">
@@ -2374,7 +2390,61 @@
     .sidebar-overlay {
         display: none;
     }
+    /* =========================================
+       SIDEBAR SCROLL
+    ========================================= */
 
+    .sidebar {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Phần menu có thể cuộn */
+    .sidebar-menu {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+        /* Không cho ul tạo khoảng cách thừa */
+        .sidebar-menu ul {
+            margin-bottom: 0;
+        }
+
+
+        /* =========================================
+       SIDEBAR SCROLLBAR
+    ========================================= */
+
+        .sidebar-menu::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-menu::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-menu::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 10px;
+        }
+
+            .sidebar-menu::-webkit-scrollbar-thumb:hover {
+                background: rgba(255, 255, 255, 0.4);
+            }
+
+
+    /* =========================================
+       SIDEBAR LOGOUT
+    ========================================= */
+
+    .sidebar-logout {
+        flex-shrink: 0;
+        padding: 10px 15px 15px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
     /* =========================================
        MOBILE
@@ -2391,13 +2461,22 @@
             z-index: 1100;
             transform: translateX(-100%);
             transition: transform 0.3s ease;
-            overflow-y: auto;
+            overflow: hidden;
         }
 
 
             .sidebar.mobile-open {
                 transform: translateX(0);
             }
+
+
+        .sidebar-menu {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
 
 
         .sidebar-overlay {
