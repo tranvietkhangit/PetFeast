@@ -132,39 +132,14 @@ namespace PetFeast.Areas.Identity.Pages.Account
 
                 return Page();
             }
+            // ĐĂNG NHẬP
 
-            _logger.LogInformation(
-                "LOGIN DEBUG - UserId: {UserId}, Email: {Email}, EmailConfirmed: {EmailConfirmed}, UserName: {UserName}",
-                user.Id,
-                user.Email,
-                user.EmailConfirmed,
-                user.UserName);
-            bool passwordOk = await _userManager.CheckPasswordAsync(
-    user,
-    Input.Password);
-
-            _logger.LogInformation(
-                "PASSWORD DEBUG - PasswordCorrect: {PasswordCorrect}",
-                passwordOk);
-            var passwordCorrect = await _userManager.CheckPasswordAsync(
-    user,
-    Input.Password);
-
-            _logger.LogInformation(
-                "PASSWORD DEBUG - Correct: {Correct}",
-                passwordCorrect);
             var result = await _signInManager.PasswordSignInAsync(
                 user,
                 Input.Password,
                 Input.RememberMe,
-                lockoutOnFailure: false);
-
-            _logger.LogInformation(
-     "LOGIN RESULT - Succeeded: {Succeeded}, NotAllowed: {NotAllowed}, LockedOut: {LockedOut}, RequiresTwoFactor: {RequiresTwoFactor}",
-     result.Succeeded,
-     result.IsNotAllowed,
-     result.IsLockedOut,
-     result.RequiresTwoFactor);
+                lockoutOnFailure: true);
+            // ĐĂNG NHẬP THÀNH CÔNG
 
             if (result.Succeeded)
             {
@@ -177,6 +152,7 @@ namespace PetFeast.Areas.Identity.Pages.Account
 
                 return LocalRedirect(returnUrl);
             }
+            // TÀI KHOẢN KHÔNG ĐƯỢC PHÉP LOGIN
 
             if (result.IsNotAllowed)
             {
@@ -186,13 +162,21 @@ namespace PetFeast.Areas.Identity.Pages.Account
 
                 return Page();
             }
+            // TÀI KHOẢN BỊ KHÓA
 
             if (result.IsLockedOut)
             {
-                _logger.LogWarning("User account locked out.");
+                _logger.LogWarning(
+                    "Tài khoản {Email} đã bị khóa do đăng nhập sai quá nhiều lần.",
+                    Input.Email);
 
-                return RedirectToPage("./Lockout");
+                ModelState.AddModelError(
+                    string.Empty,
+                    "Tài khoản đã bị tạm khóa do nhập sai mật khẩu quá nhiều lần. Vui lòng thử lại sau 5 phút.");
+
+                return Page();
             }
+            // TWO FACTOR
 
             if (result.RequiresTwoFactor)
             {
@@ -204,6 +188,7 @@ namespace PetFeast.Areas.Identity.Pages.Account
                         RememberMe = Input.RememberMe
                     });
             }
+            // ĐĂNG NHẬP THẤT BẠI
 
             ModelState.AddModelError(
                 string.Empty,

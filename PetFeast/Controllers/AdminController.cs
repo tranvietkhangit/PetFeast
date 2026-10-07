@@ -341,66 +341,113 @@ namespace PetFeast.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateProduct(Product product)
         {
+            ModelState.Remove(nameof(Product.CategoryId));
+            ModelState.Remove(nameof(Product.Price));
+            ModelState.Remove(nameof(Product.Quantity));
+            ModelState.Remove(nameof(Product.DiscountPercent));
+            if (product.CategoryId <= 0)
+            {
+                ModelState.AddModelError(
+                    nameof(Product.CategoryId),
+                    "Vui lòng chọn danh mục.");
+            }
+            else
+            {
+                // Kiểm tra Category có thực sự tồn tại không
+                var categoryExists = await _context.Categories
+                    .AnyAsync(c => c.CategoryId == product.CategoryId);
+
+                if (!categoryExists)
+                {
+                    ModelState.AddModelError(
+                        nameof(Product.CategoryId),
+                        "Danh mục sản phẩm không hợp lệ.");
+                }
+            }
+            // KIỂM TRA HÌNH ẢNH
+
+            if (product.ImageFile == null ||
+                product.ImageFile.Length == 0)
+            {
+                ModelState.AddModelError(
+                    nameof(Product.ImageFile),
+                    "Vui lòng chọn hình ảnh sản phẩm.");
+            }
+            else
+            {
+                // Các định dạng ảnh được phép
+                var allowedExtensions = new[]
+                {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
+        };
+
+                var extension =
+                    Path.GetExtension(product.ImageFile.FileName)
+                        .ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError(
+                        nameof(Product.ImageFile),
+                        "Chỉ chấp nhận hình ảnh có định dạng JPG, JPEG, PNG hoặc WEBP.");
+                }
+
+                // Giới hạn 5 MB
+                const long maxFileSize = 5 * 1024 * 1024;
+
+                if (product.ImageFile.Length > maxFileSize)
+                {
+                    ModelState.AddModelError(
+                        nameof(Product.ImageFile),
+                        "Kích thước hình ảnh không được vượt quá 5 MB.");
+                }
+            }
+
+            // KIỂM TRA MODEL
 
             if (!ModelState.IsValid)
             {
-                foreach (var error in ModelState.Values.SelectMany(x => x.Errors))
-                {
-                    Console.WriteLine(error.ErrorMessage);
-                }
-
-
                 ViewBag.Categories = _categoryRepo.GetAll();
 
-                return View("Product/CreateProduct", product);
+                return View(
+                    "Product/CreateProduct",
+                    product);
             }
-
-
-
-            if (product.ImageFile != null)
+            // UPLOAD HÌNH ẢNH
+            string folder = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot/img/products");
+            if (!Directory.Exists(folder))
             {
-                string folder = Path.Combine(
-                    Directory.GetCurrentDirectory(),
-                    "wwwroot/img/products");
-
-
-                if (!Directory.Exists(folder))
-                    Directory.CreateDirectory(folder);
-
-
-
-                string fileName =
-                    Guid.NewGuid() +
-                    Path.GetExtension(product.ImageFile.FileName);
-
-
-
-                string path =
-                    Path.Combine(folder, fileName);
-
-
-
-                using (var stream = new FileStream(path, FileMode.Create))
-                {
-                    await product.ImageFile.CopyToAsync(stream);
-                }
-
-
-
-                product.ImageUrl =
-                    "/img/products/" + fileName;
+                Directory.CreateDirectory(folder);
             }
+            string fileName =
+                Guid.NewGuid() +
+                Path.GetExtension(product.ImageFile!.FileName);
 
-
-
+            string path = Path.Combine(
+                folder,
+                fileName);
+            using (var stream =
+                new FileStream(path, FileMode.Create))
+            {
+                await product.ImageFile.CopyToAsync(stream);
+            }
+            product.ImageUrl =
+                "/img/products/" + fileName;
+            // LƯU SẢN PHẨM
             _productRepo.Add(product);
             _productRepo.Save();
-
-            TempData["Success"] = "Thêm sản phẩm thành công.";
-
-            return RedirectToAction(nameof(ProductList));
+            TempData["Success"] =
+                "Thêm sản phẩm thành công.";
+            return RedirectToAction(
+                nameof(ProductList));
         }
 
         public IActionResult EditProduct(int id)
@@ -415,64 +462,171 @@ namespace PetFeast.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> EditProduct(Product product)
         {
-            if (ModelState.IsValid)
+            ModelState.Remove(nameof(Product.CategoryId));
+
+            if (product.CategoryId <= 0)
             {
-                var oldProduct = _productRepo.GetById(product.ProductId);
+                ModelState.AddModelError(
+                    nameof(Product.CategoryId),
+                    "Vui lòng chọn danh mục.");
+            }
+            else
+            {
+                var categoryExists = await _context.Categories
+                    .AnyAsync(c => c.CategoryId == product.CategoryId);
 
-                if (oldProduct == null)
-                    return NotFound();
-
-                if (product.ImageFile != null)
+                if (!categoryExists)
                 {
-                    string folder = Path.Combine(
-                        Directory.GetCurrentDirectory(),
-                        "wwwroot/img/products");
-
-                    if (!Directory.Exists(folder))
-                        Directory.CreateDirectory(folder);
-
-                    string fileName =
-                        Guid.NewGuid() +
-                        Path.GetExtension(product.ImageFile.FileName);
-
-                    string path = Path.Combine(folder, fileName);
-
-                    using (var stream =
-                        new FileStream(path, FileMode.Create))
-                    {
-                        await product.ImageFile.CopyToAsync(stream);
-                    }
-
-                    oldProduct.ImageUrl =
-                        "/img/products/" + fileName;
+                    ModelState.AddModelError(
+                        nameof(Product.CategoryId),
+                        "Danh mục sản phẩm không hợp lệ.");
                 }
-
-                oldProduct.ProductName = product.ProductName;
-                oldProduct.Price = product.Price;
-                oldProduct.Quantity = product.Quantity;
-                oldProduct.Description = product.Description;
-
-                oldProduct.Brand = product.Brand;
-                oldProduct.Origin = product.Origin;
-                oldProduct.TargetPet = product.TargetPet;
-                oldProduct.Ingredients = product.Ingredients;
-                oldProduct.Nutrition = product.Nutrition;
-                oldProduct.Usage = product.Usage;
-                oldProduct.Storage = product.Storage;
-                oldProduct.Warning = product.Warning;
-
-                oldProduct.CategoryId = product.CategoryId;
-                oldProduct.DiscountPercent = product.DiscountPercent;
-
-                _productRepo.Save();
-                TempData["Success"] = "Cập nhật sản phẩm thành công.";
-                return RedirectToAction(nameof(ProductList));
+            }
+            if (product.Price < 0)
+            {
+                ModelState.AddModelError(
+                    nameof(Product.Price),
+                    "Giá sản phẩm không được nhỏ hơn 0.");
+            }
+            if (product.Quantity < 0)
+            {
+                ModelState.AddModelError(
+                    nameof(Product.Quantity),
+                    "Số lượng sản phẩm không được nhỏ hơn 0.");
             }
 
-            ViewBag.Categories = _categoryRepo.GetAll();
-            return View("Product/EditProduct", product);
+            if (product.DiscountPercent < 0 ||
+                product.DiscountPercent > 100)
+            {
+                ModelState.AddModelError(
+                    nameof(Product.DiscountPercent),
+                    "Phần trăm giảm giá phải từ 0 đến 100.");
+            }
+            if (product.ImageFile != null &&
+                product.ImageFile.Length > 0)
+            {
+                var allowedExtensions = new[]
+                {
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".webp"
+        };
+
+                var extension =
+                    Path.GetExtension(product.ImageFile.FileName)
+                        .ToLowerInvariant();
+
+                if (!allowedExtensions.Contains(extension))
+                {
+                    ModelState.AddModelError(
+                        nameof(Product.ImageFile),
+                        "Chỉ chấp nhận hình ảnh có định dạng JPG, JPEG, PNG hoặc WEBP.");
+                }
+
+                const long maxFileSize = 5 * 1024 * 1024;
+
+                if (product.ImageFile.Length > maxFileSize)
+                {
+                    ModelState.AddModelError(
+                        nameof(Product.ImageFile),
+                        "Kích thước hình ảnh không được vượt quá 5 MB.");
+                }
+            }
+
+            var oldProduct = _productRepo.GetById(product.ProductId);
+
+            if (oldProduct == null)
+            {
+                return NotFound();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Categories = _categoryRepo.GetAll();
+
+                return View(
+                    "Product/EditProduct",
+                    product);
+            }
+            if (product.ImageFile != null &&
+                product.ImageFile.Length > 0)
+            {
+                string folder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot/img/products");
+
+                if (!Directory.Exists(folder))
+                {
+                    Directory.CreateDirectory(folder);
+                }
+
+                string fileName =
+                    Guid.NewGuid() +
+                    Path.GetExtension(product.ImageFile.FileName);
+
+                string path =
+                    Path.Combine(folder, fileName);
+
+                using (var stream =
+                    new FileStream(path, FileMode.Create))
+                {
+                    await product.ImageFile.CopyToAsync(stream);
+                }
+
+                oldProduct.ImageUrl =
+                    "/img/products/" + fileName;
+            }
+
+            oldProduct.ProductName =
+                product.ProductName;
+
+            oldProduct.Price =
+                product.Price;
+
+            oldProduct.Quantity =
+                product.Quantity;
+
+            oldProduct.Description =
+                product.Description;
+
+            oldProduct.Brand =
+                product.Brand;
+
+            oldProduct.Origin =
+                product.Origin;
+
+            oldProduct.TargetPet =
+                product.TargetPet;
+
+            oldProduct.Ingredients =
+                product.Ingredients;
+
+            oldProduct.Nutrition =
+                product.Nutrition;
+
+            oldProduct.Usage =
+                product.Usage;
+
+            oldProduct.Storage =
+                product.Storage;
+
+            oldProduct.Warning =
+                product.Warning;
+
+            oldProduct.CategoryId =
+                product.CategoryId;
+
+            oldProduct.DiscountPercent =
+                product.DiscountPercent;
+            _productRepo.Save();
+            TempData["Success"] =
+                "Cập nhật sản phẩm thành công.";
+            return RedirectToAction(
+                nameof(ProductList));
         }
 
         public IActionResult DeleteProduct(int id)

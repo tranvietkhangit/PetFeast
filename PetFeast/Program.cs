@@ -25,22 +25,29 @@ builder.Services.AddDbContext<PetFeastDBContext>(options =>
 
 // Email
 builder.Services.AddScoped<EmailService>();
-
 // Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
-    // Bắt buộc xác nhận Email trước khi đăng nhập
+    // Đăng nhập
     options.SignIn.RequireConfirmedEmail = true;
-
-    // Không bắt buộc xác nhận tài khoản theo cơ chế mặc định
     options.SignIn.RequireConfirmedAccount = false;
 
     // Email không được trùng
     options.User.RequireUniqueEmail = true;
+
+    // LOCKOUT
+
+    // Cho phép khóa tài khoản
+    options.Lockout.AllowedForNewUsers = true;
+
+    // Sai tối đa 5 lần
+    options.Lockout.MaxFailedAccessAttempts = 5;
+
+    // Khóa 5 phút
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 })
 .AddEntityFrameworkStores<PetFeastDBContext>()
 .AddDefaultTokenProviders();
-
 
 builder.Services.ConfigureApplicationCookie(options =>
 {

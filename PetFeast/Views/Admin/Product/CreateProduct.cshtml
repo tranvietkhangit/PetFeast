@@ -35,7 +35,7 @@
                   enctype="multipart/form-data"
                   class="admin-form">
 
-                <div asp-validation-summary="All"
+                <div asp-validation-summary="ModelOnly"
                      class="text-danger mb-3">
                 </div>
 
@@ -70,12 +70,24 @@
                             </label>
 
                             <select asp-for="CategoryId"
-                                    class="form-select"
-                                    asp-items="@(new SelectList(ViewBag.Categories, "CategoryId", "CategoryName"))">
-                                <option value="">
+                                    class="form-select">
+
+                                <option value="0">
                                     -- Chọn danh mục --
                                 </option>
+
+                                @foreach (var category in ViewBag.Categories)
+                                {
+                                    <option value="@category.CategoryId">
+                                        @category.CategoryName
+                                    </option>
+                                }
+
                             </select>
+
+                            <span asp-validation-for="CategoryId"
+                                  class="text-danger">
+                            </span>
                         </div>
 
                     </div>
@@ -110,7 +122,8 @@
                                    class="form-control"
                                    type="number"
                                    min="0"
-                                   max="100" />
+                                   max="100"
+                                   value="0" />
                         </div>
                     </div>
 
@@ -301,7 +314,15 @@
                     <input asp-for="ImageFile"
                            class="form-control"
                            type="file"
-                           accept="image/*" />
+                           accept=".jpg,.jpeg,.png,.webp" />
+
+                    <span asp-validation-for="ImageFile"
+                          class="text-danger">
+                    </span>
+
+                    <small class="text-muted">
+                        Định dạng: JPG, JPEG, PNG, WEBP. Kích thước tối đa 5 MB.
+                    </small>
                 </div>
 
                 <div class="admin-form-actions">
