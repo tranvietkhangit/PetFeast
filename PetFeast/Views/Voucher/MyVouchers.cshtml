@@ -54,30 +54,19 @@
                             <hr />
 
                             <p>
-                                <strong>Mã voucher:</strong>
+                                <i class="bi bi-cart-check"></i>
+                                Đơn tối thiểu:
+                                <strong>
+                                    @item.Voucher.MinimumOrderAmount.ToString("N0")đ
+                                </strong>
                             </p>
-
-                            <div class="input-group mb-3">
-
-                                <input type="text"
-                                       class="form-control"
-                                       value="@item.VoucherCode"
-                                       readonly />
-
-                                <button class="btn btn-outline-secondary"
-                                        type="button"
-                                        onclick="copyVoucher('@item.VoucherCode')">
-
-                                    <i class="bi bi-copy"></i>
-
-                                </button>
-
-                            </div>
 
                             <p>
                                 <i class="bi bi-calendar"></i>
                                 HSD:
-                                @item.Voucher.ExpiryDate.ToString("dd/MM/yyyy")
+                                <strong>
+                                    @item.Voucher.ExpiryDate.ToString("dd/MM/yyyy")
+                                </strong>
                             </p>
 
 
@@ -132,35 +121,3 @@
     }
 
 </div>
-
-
-@section Scripts
-{
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-
-            document.addEventListener("click", function (event) {
-
-                const button =
-                    event.target.closest(".redeem-voucher-btn");
-
-                if (!button) return;
-
-                const form = button.closest("form");
-
-                if (!form) return;
-
-                const points =
-                    button.dataset.voucherPoints;
-
-                showConfirmModal(
-                    `Bạn có chắc muốn đổi ${points} điểm lấy voucher này?`,
-                    function () {
-                        form.submit();
-                    }
-                );
-            });
-
-        });
-    </script>
-}
