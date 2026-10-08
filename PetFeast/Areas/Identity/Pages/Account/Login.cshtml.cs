@@ -53,6 +53,7 @@ namespace PetFeast.Areas.Identity.Pages.Account
         ///     directly from your code. This API may change or be removed in future releases.
         /// </summary>
         public string ReturnUrl { get; set; }
+        public bool EmailNotConfirmed { get; set; }
 
         /// <summary>
         ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
@@ -129,6 +130,37 @@ namespace PetFeast.Areas.Identity.Pages.Account
                 ModelState.AddModelError(
                     string.Empty,
                     "Không tìm thấy tài khoản với email này.");
+
+                return Page();
+            }
+            // EMAIL CHƯA ĐƯỢC XÁC NHẬN
+            if (!user.EmailConfirmed)
+            {
+                var registerUserId =
+                    HttpContext.Session.GetString("RegisterUserId");
+
+                var registerEmail =
+                    HttpContext.Session.GetString("RegisterEmail");
+
+                // Nếu Session OTP vẫn thuộc tài khoản này
+                if (registerUserId == user.Id &&
+                    string.Equals(
+                        registerEmail,
+                        user.Email,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToPage(
+                        "./VerifyRegisterOtp",
+                        new
+                        {
+                            returnUrl = returnUrl
+                        });
+                }
+
+                // Session OTP đã mất hoặc không còn hợp lệ
+                EmailNotConfirmed = true;
+
+                ModelState.AddModelError(string.Empty, "Email của tài khoản này chưa được xác nhận.");
 
                 return Page();
             }
